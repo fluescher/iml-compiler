@@ -11,34 +11,91 @@ trait IMLTokens extends Tokens {
         def chars = IMLTokenChars.this.toString()
     }
     
-    case object Program extends Token with IMLTokenChars 
-    case object EndProgram extends Token with IMLTokenChars 
-    case object Command extends Token with IMLTokenChars 
-    case object Declaration extends Token with IMLTokenChars
-    case object Var extends Token with IMLTokenChars
-    case object TypeSeparator extends Token with IMLTokenChars
+    sealed abstract class Keyword extends Token with IMLTokenChars
+    case object Program extends Keyword
+    case object Call extends Keyword
+    case object Returns extends Keyword
+    case object Local extends Keyword
+    case object Not extends Keyword
+    case object Fun extends Keyword
+    case object Global extends Keyword
+    case object Init extends Keyword
+    case object Proc extends Keyword
+    case object Skip extends Keyword
     
-    /* while */
-    case object While extends Token with IMLTokenChars 
-    case object Do extends Token with IMLTokenChars 
-    case object EndWhile extends Token with IMLTokenChars 
+    sealed abstract class ChangeMode extends Keyword
+    case object Var extends ChangeMode
+    case object Const extends ChangeMode
+
+    sealed abstract class MechMode extends Keyword
+    case object Ref extends MechMode
+    case object Copy extends MechMode
     
-    /* if */
+    /* types 14*/
+    sealed abstract class Type extends Keyword
+    case object Int extends Type
+    case object Bool extends Type
+    
+    /* flow control16 */
+    sealed abstract class FlowMode extends Keyword
+    case object InOut extends FlowMode
+    case object Out extends FlowMode
+    case object In extends FlowMode
+    
+    /* while 19*/
+    case object While extends Keyword
+    case object Do extends Keyword
+    
+    /* if 21*/
     case object If extends Token with IMLTokenChars 
-    case object Then extends Token with IMLTokenChars 
     case object Else extends Token with IMLTokenChars 
-    case object EndIf extends Token with IMLTokenChars 
     
-    /* Zuweisung */
-    case object Becomes extends Token with IMLTokenChars 
+    case class Ident(chars: String) extends Token {
+        override def toString() = "Ident("+chars+")"
+    }
     
-    /* Arith */
-    sealed class ArithOpr extends Token with IMLTokenChars 
-    case object Plus extends ArithOpr 
-    case object Minus extends ArithOpr
+    /* literals */
+    sealed abstract class Literal extends Token
+    case class IntLiteral(v: Int) extends Literal {
+        def chars = v.toString
+        override def toString() = "IntLiteral("+chars+")"
+    }
+    case class BoolLiteral(v: Boolean) extends Literal {
+        def chars = v.toString
+        override def toString() = "BoolLiteral("+chars+")"
+    }
+    case object True extends BoolLiteral(true)
+    case object False extends BoolLiteral(false)
     
-    /* Bool */
-    sealed class RelOpr extends Token with IMLTokenChars 
+    /* symbols */
+    sealed abstract class Symbol extends Token with IMLTokenChars
+    case object LParen extends Symbol
+    case object RParen extends Symbol
+    case object Comma extends Symbol
+    case object SemiColon extends Symbol
+    case object Colon extends Symbol
+    case object QuestionMark extends Symbol
+    case object ExclamationMark extends Symbol
+    case object Becomes extends Symbol
+    case object LBrace extends Symbol
+    case object RBrace extends Symbol
+    
+    /* Arith 38*/
+    sealed abstract class ArithOpr extends Symbol with IMLTokenChars 
+    
+    /* Add */
+    sealed abstract class AddOpr extends ArithOpr
+    case object Plus extends AddOpr 
+    case object Minus extends AddOpr
+    
+    /* Mult */
+    sealed abstract class MultOpr extends ArithOpr
+    case object Times extends MultOpr
+    case object Div extends MultOpr
+    case object Mod extends MultOpr
+    
+    /* Rel */
+    sealed abstract class RelOpr extends Symbol with IMLTokenChars 
     case object Equals extends RelOpr
     case object NotEquals extends RelOpr
     case object GreaterThan extends RelOpr
@@ -46,17 +103,9 @@ trait IMLTokens extends Tokens {
     case object LessThan extends RelOpr
     case object LessEqualsThan extends RelOpr
     
-    /* IO */
-    sealed class IOOpr extends Token with IMLTokenChars 
-    case object Read extends IOOpr
-    case object Print extends IOOpr
-    
-    case class Ident(chars: String) extends Token {
-        override def toString() = "Ident("+chars+")"
-    }
-    
-    case class Delimiter(chars: String) extends Token   {
-        override def toString() = "Delimiter("+chars+")"
-    }
+    /* bool */
+    sealed abstract class BoolOpr extends Keyword with IMLTokenChars
+    case object And extends BoolOpr
+    case object Or extends BoolOpr
 }
 
