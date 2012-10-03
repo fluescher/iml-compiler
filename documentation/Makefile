@@ -14,6 +14,7 @@ all: clean pdf
 
 prepare:
 	${MKDIR_CMD} ${BUILD_DIR}
+	${MKDIR_CMD} ${OUT_DIR}
 	cp template/* ${BUILD_DIR}
 
 latex: prepare
