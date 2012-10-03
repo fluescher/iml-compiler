@@ -108,4 +108,3 @@ trait IMLTokens extends Tokens {
     case object And extends BoolOpr
     case object Or extends BoolOpr
 }
-

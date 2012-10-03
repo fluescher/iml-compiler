@@ -11,16 +11,16 @@ class IMLLexical extends Lexical with IMLTokens {
     override def whitespace : Parser[Any] = rep(whitespaceChar)
 	
 	override def token: Parser[Token] =
-	    (	digit ~ rep(digit)					^^ {case first ~ last => IntLiteral((first::last mkString).toInt)}   
-	    |   identChar ~ rep(identChar | digit) 	^^ { case first ~ last => chooseIdentToken(first::last mkString)}
+	    (	digit ~ rep(digit)					^^ { case first ~ last => IntLiteral((first::last mkString).toInt) }   
+	    |   identChar ~ rep(identChar | digit) 	^^ { case first ~ last => chooseIdentToken(first::last mkString) }
 	    | 	'('									^^^	LParen
 	    |	')'									^^^ RParen
 	    |	','									^^^	Comma
 	    |   ';'									^^^ SemiColon
+	    |	':' ~ '='							^^^ Becomes
 	    |	':' 								^^^ Colon
 	    |	'?'									^^^ QuestionMark
 	    |	'!'									^^^ ExclamationMark
-	    |	':' ~ '='							^^^ Becomes
 	    | 	'{'									^^^ LBrace
 	    |	'}'									^^^ RBrace
 	    
@@ -67,7 +67,7 @@ class IMLLexical extends Lexical with IMLTokens {
         case "skip"	=> Skip
         case "true" => True
         case "var" 	=> Var
-        case "while" => While
-        case other => Ident(other)
+        case "while"=> While
+        case other  => Ident(other)
     }
 }
