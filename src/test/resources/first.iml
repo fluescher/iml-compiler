@@ -1,0 +1,16 @@
+program
+	declaration
+		var m : int;
+		var n : int
+	command
+		?m;
+		?n;
+		while m /= n do
+			if m > n then
+				m := m - n
+			else
+				n := n - m
+			endif
+		endwhile;
+		!m
+endprogram
