@@ -1,0 +1,42 @@
+\documentclass[a4paper]{template/imereport}
+\usepackage[utf8]{inputenc}
+\usepackage{ucs}
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+
+\pagestyle{myheadings}
+\markboth{Zuwanderung, Fluch oder Segen?}{Zuwanderung, Fluch oder Segen?}
+
+% Title section
+\author{Florian Lüscher\\
+Fachhochschule Nordwestschweiz\\
+\small{\texttt{<florian.luescher@students.fhnw.ch>}}
+}
+\title{Zuwanderung, Fluch oder Segen?}
+
+\begin{document}
+
+\maketitle
+
+% Einleitung
+\input{content/einleitung}
+
+% Inhalt
+\input{content/inhalt}
+
+% Schluss
+\input{content/schluss}
+
+\vspace{50pt}
+
+% Bildverzeichnis
+\listoffigures
+
+\vspace{20pt}
+
+% Quellverzeichnis
+\bibliographystyle{IEEEtran}
+\bibliography{report.bib}
+
+\end{document}
