@@ -8,13 +8,14 @@ import org.junit.Assert
 class ScannerTest {
 
     val lexer = new IMLLexical
+    import lexer._
     
     def main(args: Array[String]) {
-    	val scanner = new lexer.Scanner(Source.fromFile("src/test/resources/first.iml").mkString)
-    	printTokens(scanner.asInstanceOf[Reader[lexer.Token]])
+    	val scanner = new Scanner(Source.fromFile("src/test/resources/first.iml").mkString)
+    	printTokens(scanner.asInstanceOf[Reader[Token]])
     }
 
-    def printTokens(tokens: Reader[lexer.Token]) {
+    def printTokens(tokens: Reader[Token]) {
         if (tokens.atEnd) return
         println(tokens.first)
         printTokens(tokens.rest)
@@ -22,32 +23,32 @@ class ScannerTest {
 
     @Test
     def testReadIntLiteral() {
-        val scanner = new lexer.Scanner("123")
+        val scanner = new Scanner("123")
         
-        Assert.assertEquals(lexer.IntLiteral(123), scanner.first);
+        Assert.assertEquals(IntLiteral(123), scanner.first);
     }
     
     @Test
     def testReadIdent() {
-        val scanner = new lexer.Scanner("d1mD1")
+        val scanner = new Scanner("d1mD1")
         
-        Assert.assertEquals(lexer.Ident("d1mD1"), scanner.first)
+        Assert.assertEquals(Ident("d1mD1"), scanner.first)
     }
     
     @Test
     def testReadBecomes() {
-        val scanner = new lexer.Scanner(":=")
+        val scanner = new Scanner(":=")
         
-        Assert.assertEquals(lexer.Becomes, scanner.first)
+        Assert.assertEquals(Becomes, scanner.first)
     }
     
     @Test
     def testReadOrdinals() {
-        val scanner = new lexer.Scanner("<")
-        val both = new lexer.Scanner("<= <")
+        val scanner = new Scanner("<")
+        val both = new Scanner("<= <")
         
-        Assert.assertEquals(lexer.LessEqualsThan, both.first)
-        Assert.assertEquals(lexer.LessThan, both.rest.first)
-        Assert.assertEquals(lexer.LessThan, scanner.first)
+        Assert.assertEquals(LessEqualsThan, both.first)
+        Assert.assertEquals(LessThan, both.rest.first)
+        Assert.assertEquals(LessThan, scanner.first)
     }
 }
