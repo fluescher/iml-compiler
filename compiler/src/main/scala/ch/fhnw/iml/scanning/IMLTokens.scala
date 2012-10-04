@@ -60,7 +60,7 @@ trait IMLTokens extends Tokens {
         def chars = v.toString
         override def toString() = "IntLiteral("+chars+")"
     }
-    case class BoolLiteral(v: Boolean) extends Literal {
+    sealed abstract class BoolLiteral(v: Boolean) extends Literal {
         def chars = v.toString
         override def toString() = "BoolLiteral("+chars+")"
     }
