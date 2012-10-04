@@ -40,14 +40,14 @@ class IMLLexical extends Lexical with IMLTokens {
 	/**
 	 * Parse for the end of the input.
 	 */
-	def EOI = new Parser[Any] {
+	private def EOI = new Parser[Any] {
         def apply(in: Input) = {
             if(in.atEnd) Success(EOF, in)
             else Failure("End of input expected", in)
         }
     }
     
-	def chooseIdentToken(name: String) : Token = name match {
+	private def chooseIdentToken(name: String) : Token = name match {
         case "bool" => Bool
         case "call" => Call
         case "cand" => And
