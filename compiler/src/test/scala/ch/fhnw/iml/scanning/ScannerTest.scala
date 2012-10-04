@@ -4,6 +4,7 @@ import scala.io.Source
 import scala.util.parsing.input.Reader
 import org.junit.Test
 import org.junit.Assert
+import scala.util.parsing.input.CharArrayReader.EofCh
 
 class ScannerTest {
 
@@ -23,9 +24,10 @@ class ScannerTest {
 
     @Test
     def testReadIntLiteral() {
-        val scanner = new Scanner("123")
+        val scanner = new Scanner("123"+EofCh)
         
         Assert.assertEquals(IntLiteral(123), scanner.first);
+        Assert.assertEquals(EOF, scanner.rest.first);
     }
     
     @Test
