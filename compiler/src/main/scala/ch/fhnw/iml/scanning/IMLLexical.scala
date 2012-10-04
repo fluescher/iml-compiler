@@ -1,8 +1,7 @@
 package ch.fhnw.iml.scanning
 
+import scala.annotation.migration
 import scala.util.parsing.combinator.lexical.Lexical
-import scala.util.parsing.combinator._
-import scala.util.parsing.input.CharArrayReader.EofCh
 
 class IMLLexical extends Lexical with IMLTokens {
 
@@ -35,10 +34,19 @@ class IMLLexical extends Lexical with IMLTokens {
 	    |	'<' ~ '='							^^^ LessEqualsThan
 	    |	'<'									^^^ LessThan
 	    
-	    |	EofCh								^^^ EOF
+	    |	EOI									^^^ EOF
 	    )
 	
-	    
+	/**
+	 * Parse for the end of the input.
+	 */
+	def EOI = new Parser[Any] {
+        def apply(in: Input) = {
+            if(in.atEnd) Success(EOF, in)
+            else Failure("End of input expected", in)
+        }
+    }
+    
 	def chooseIdentToken(name: String) : Token = name match {
         case "bool" => Bool
         case "call" => Call
