@@ -40,4 +40,14 @@ class ScannerTest {
         
         Assert.assertEquals(lexer.Becomes, scanner.first)
     }
+    
+    @Test
+    def testReadOrdinals() {
+        val scanner = new lexer.Scanner("<")
+        val both = new lexer.Scanner("<= <")
+        
+        Assert.assertEquals(lexer.LessEqualsThan, both.first)
+        Assert.assertEquals(lexer.LessThan, both.rest.first)
+        Assert.assertEquals(lexer.LessThan, scanner.first)
+    }
 }
