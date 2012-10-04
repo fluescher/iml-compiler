@@ -28,7 +28,13 @@ class ScannerTest {
         val scanner = new Scanner(new CharArrayReader("123 ".toCharArray()))
         
         Assert.assertEquals(IntLiteral(123), scanner.first);
-        Assert.assertEquals(EOF, scanner.rest.first);
+    }
+    
+    @Test
+    def testEndOfInput() {
+        val scanner = new Scanner(new CharArrayReader("".toCharArray()))
+        
+        Assert.assertEquals(EOF, scanner.first);
     }
     
     @Test
