@@ -54,4 +54,13 @@ class ScannerTest {
         Assert.assertEquals(LessThan, both.rest.first)
         Assert.assertEquals(LessThan, scanner.first)
     }
+    
+    @Test
+    def testReadMultiple() {
+        val scanner = new Scanner("64<x")
+        
+        Assert.assertEquals(IntLiteral(64), scanner.first)
+        Assert.assertEquals(LessThan, scanner.rest.first)
+        Assert.assertEquals(Ident("x"), scanner.rest.rest.first)
+    }
 }
