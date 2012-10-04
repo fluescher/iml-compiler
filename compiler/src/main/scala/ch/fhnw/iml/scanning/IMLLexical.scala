@@ -5,10 +5,10 @@ import scala.util.parsing.combinator.lexical.Lexical
 
 class IMLLexical extends Lexical with IMLTokens {
 
-    def identChar = letter    
+    private def identChar = letter    
     
     override def whitespace : Parser[Any] = rep(whitespaceChar)
-	
+
 	override def token: Parser[Token] =
 	    (	digit ~ rep(digit)					^^ { case first ~ last => IntLiteral((first::last mkString).toInt) }   
 	    |   identChar ~ rep(identChar | digit) 	^^ { case first ~ last => chooseIdentToken(first::last mkString) }
