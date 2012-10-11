@@ -6,21 +6,24 @@ import org.junit.Test
 import org.junit.Assert
 import scala.util.parsing.input.CharArrayReader.EofCh
 import scala.util.parsing.input.CharArrayReader
+import org.junit.Ignore
 
 class ScannerTest {
 
     val lexer = new IMLLexical
     import lexer._
     
-    def main(args: Array[String]) {
-    	val scanner = new Scanner(Source.fromFile("src/test/resources/first.iml").mkString)
-    	printTokens(scanner.asInstanceOf[Reader[Token]])
-    }
-
     def printTokens(tokens: Reader[Token]) {
         if (tokens.atEnd) return
         println(tokens.first)
         printTokens(tokens.rest)
+    }
+    
+    @Ignore("simply prints to console")
+    @Test
+    def testScannFirstProgram() {
+        val scanner = new Scanner(Source.fromFile("src/test/resources/first.iml").mkString)
+    	printTokens(scanner.asInstanceOf[Reader[Token]])
     }
 
     @Test

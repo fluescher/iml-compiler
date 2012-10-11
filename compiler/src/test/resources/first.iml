@@ -1,16 +1,23 @@
-program
-	declaration
-		var m : int;
-		var n : int
-	command
-		?m;
-		?n;
-		while m /= n do
-			if m > n then
-				m := m - n
-			else
-				n := n - m
-			endif
-		endwhile;
-		!m
-endprogram
+program intDiv
+global
+	proc divide(in copy m:int, in copy n:int, out ref q:int, out ref r:int)
+	{
+		q init := 0;
+		r init := m;
+		while (r >= n) {
+			q := q + 1;
+			r := r - n
+		}
+	};
+	
+var m:int;
+var n:int;
+var q:int;
+var r:int
+{
+	? m init;
+	? n init;
+	call divide(m, n, q init, r init);
+	! q;
+	! r
+}
