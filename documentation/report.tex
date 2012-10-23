@@ -4,6 +4,19 @@
 \usepackage[ngerman]{babel}
 \usepackage{graphicx}
 \usepackage{wrapfig}
+\usepackage{listings}
+
+\lstset{ %
+    captionpos=b,
+    breaklines=true,
+    basicstyle=\footnotesize,
+    frame=single
+}
+
+\lstset{emph={%
+    requires, ensures, pure%
+    },emphstyle={\bfseries}
+}%
 
 \pagestyle{myheadings}
 \markboth{IML Compiler}{IML Compiler}
