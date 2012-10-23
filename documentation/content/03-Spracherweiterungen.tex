@@ -6,7 +6,7 @@ Kurze Beschreibung der Erweiterungen der Sprache. Grundsatz: Kompatibilität bei
 Funktionen/Prozeduren mit Pre und Postconditions versehen können.
 
 
-\begin{lstlisting}[caption=blubb]
+\begin{lstlisting}[caption=Definieren von pre-/postconditions]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
 requires [n > 0, call unnecessary(m, n)]
 ensures [r >= 0]

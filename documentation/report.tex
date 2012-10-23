@@ -5,18 +5,21 @@
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{beramono}
 
+\usepackage{color}
+\definecolor{bluekeywords}{rgb}{0.13,0.13,1}
+\definecolor{greencomments}{rgb}{0,0.5,0}
+\definecolor{redstrings}{rgb}{0.9,0,0}
 \lstset{ %
     captionpos=b,
     breaklines=true,
-    basicstyle=\footnotesize,
-    frame=single
+    basicstyle=\footnotesize\ttfamily,
+    frame=single,
+    keywordstyle=\color{bluekeywords}\bfseries,
+    morekeywords={proc, pure, ensures, requires, call, in, out, var, const ,init, fun, copy, ref, while}
 }
-
-\lstset{emph={%
-    requires, ensures, pure%
-    },emphstyle={\bfseries}
-}%
 
 \pagestyle{myheadings}
 \markboth{IML Compiler}{IML Compiler}
