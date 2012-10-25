@@ -5,6 +5,7 @@ import ch.fhnw.iml.scanning.IMLLexical
 import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.combinator.syntactical.TokenParsers
 import ch.fhnw.iml.scanning.IMLTokens
+import scala.util.parsing.input.Reader
 
 class IMLParsers extends TokenParsers {
     type Tokens = IMLTokens
