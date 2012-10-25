@@ -33,7 +33,7 @@ trait IMLTokens extends Tokens {
     
     /* types 14*/
     sealed abstract class Type extends Keyword
-    case object Int extends Type
+    case object Int32 extends Type
     case object Bool extends Type
     
     /* flow control16 */

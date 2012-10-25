@@ -63,7 +63,7 @@ class IMLLexical extends Lexical with IMLTokens {
         case "in"	=> In
         case "init" => Init
         case "inout"=> InOut
-        case "int" 	=> Int
+        case "int32"=> Int32
         case "local"=>Local
         case "mod" 	=> Mod
         case "not" 	=> Not
