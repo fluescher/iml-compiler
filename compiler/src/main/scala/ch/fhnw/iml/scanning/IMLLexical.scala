@@ -4,9 +4,8 @@ import scala.annotation.migration
 import scala.util.parsing.combinator.lexical.Lexical
 
 class IMLLexical extends Lexical with IMLTokens {
-
     private def identChar = letter    
-    
+
     override def whitespace : Parser[Any] = rep(whitespaceChar)
 
 	override def token: Parser[Token] =
