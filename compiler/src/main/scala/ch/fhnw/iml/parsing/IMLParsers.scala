@@ -8,5 +8,13 @@ import ch.fhnw.iml.scanning.IMLTokens
 
 class IMLParsers extends TokenParsers {
     type Tokens = IMLTokens
+    
     val lexical = new IMLLexical
+    
+    def parse(source : Reader[Char]) : AnyRef = {
+        val scanner = new lexical.Scanner(source)
+        
+        return null;
+    }
+    
 }
