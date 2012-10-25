@@ -72,4 +72,11 @@ class ScannerTest {
         Assert.assertEquals(LessThan, scanner.rest.first)
         Assert.assertEquals(Ident("x"), scanner.rest.rest.first)
     }
+    
+    @Test
+    def testUTF8() {
+        val scanner = new Scanner("üä")
+        
+        Assert.assertEquals(Ident("üä"), scanner.first)
+    }
 }
