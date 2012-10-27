@@ -7,6 +7,7 @@ import org.junit.Assert
 import scala.util.parsing.input.CharArrayReader.EofCh
 import scala.util.parsing.input.CharArrayReader
 import org.junit.Ignore
+import ch.fhnw.iml.parsing.IMLParsers
 
 class ScannerTest {
 
@@ -19,11 +20,16 @@ class ScannerTest {
         printTokens(tokens.rest)
     }
     
-    @Ignore("simply prints to console")
     @Test
     def testScannFirstProgram() {
         val scanner = new Scanner(Source.fromFile("src/test/resources/first.iml").mkString)
     	printTokens(scanner.asInstanceOf[Reader[Token]])
+    	
+    	
+    	val p = new IMLParsers()
+//        println(p.param(new Scanner("in copy m:int32").asInstanceOf[Reader[p.lexical.Token]]))
+                
+        p.parse(new CharArrayReader(Source.fromFile("src/test/resources/first.iml").mkString.toCharArray()))
     }
 
     @Test

@@ -4,4 +4,10 @@ class AST(root: Node) {
     
 }
 
-sealed abstract class Node(parent: Node, left: Node, right: Node)
+trait Node
+
+/* programs */
+
+/* Commands */
+sealed abstract class Command extends Node
+case class BlockCommand(cmds: List[Command]) extends Command

@@ -1,6 +1,6 @@
 program intDiv
 global
-	proc divide(in copy m:int, in copy n:int, out ref q:int, out ref r:int)
+	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 	{
 		q init := 0;
 		r init := m;
@@ -10,10 +10,10 @@ global
 		}
 	};
 	
-var m:int;
-var n:int;
-var q:int;
-var r:int
+var m:int32;
+var n:int32;
+var q:int32;
+var r:int32
 {
 	? m init;
 	? n init;

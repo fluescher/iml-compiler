@@ -27,7 +27,7 @@ trait IMLTokens extends Tokens {
     case object Var extends ChangeMode
     case object Const extends ChangeMode
 
-    sealed abstract class MechMode extends Keyword
+    sealed abstract class MechMode extends ChangeMode
     case object Ref extends MechMode
     case object Copy extends MechMode
     
