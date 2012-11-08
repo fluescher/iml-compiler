@@ -10,10 +10,10 @@ global
 		}
 	};
 	
-var m:int32;
-var n:int32;
-var q:int32;
-var r:int32
+	var m:int32;
+	var n:int32;
+	var q:int32;
+	var r:int32
 {
 	? m init;
 	? n init;

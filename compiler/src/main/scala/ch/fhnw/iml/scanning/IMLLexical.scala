@@ -39,7 +39,7 @@ class IMLLexical extends Lexical with IMLTokens {
 	/**
 	 * Parse for the end of the input.
 	 */
-	private def EOI = new Parser[Any] {
+	private def EOI = new Parser[Token] {
         def apply(in: Input) = {
             if(in.atEnd) Success(EOF, in)
             else Failure("End of input expected", in)

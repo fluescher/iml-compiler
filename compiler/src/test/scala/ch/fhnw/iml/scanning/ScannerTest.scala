@@ -41,9 +41,9 @@ class ScannerTest {
     
     @Test
     def testEndOfInput() {
-        val scanner = new Scanner(new CharArrayReader("".toCharArray()))
+        val scanner = new Scanner(new CharArrayReader("123".toCharArray()))
         
-        Assert.assertEquals(EOF, scanner.first);
+        Assert.assertEquals(EOF, scanner.rest.first);
     }
     
     @Test

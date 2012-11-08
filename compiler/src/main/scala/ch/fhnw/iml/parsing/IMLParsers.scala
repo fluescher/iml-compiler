@@ -18,7 +18,7 @@ class IMLParsers extends TokenParsers {
         			MultOpr, RelOpr, BoolOpr, Type}
     
     /* Programs */
-    def program = Program ~ ident ~ Global ~ cpsDecl ~ blockCmd
+    def program = Program ~ ident ~ opt(Global ~ cpsDecl) ~ blockCmd
     
     /* declarations */
     def decl = (storeDecl 
