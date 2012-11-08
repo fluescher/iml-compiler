@@ -5,7 +5,7 @@ import scala.util.parsing.combinator.lexical.Lexical
 import scala.util.matching.Regex
 
 class IMLLexical extends Lexical with IMLTokens {
-    private def identChar = elem("letter", isAsci)    
+    private def identChar = letter;  
     
     override def whitespace : Parser[Any] = rep(whitespaceChar)
 
@@ -34,7 +34,7 @@ class IMLLexical extends Lexical with IMLTokens {
 	    |	'<' ~ '='							^^^ LessEqualsThan
 	    |	'<'									^^^ LessThan
 	    
-	    |	EOI									^^^ EOF
+	    |	EOI									^^^ EOF			
 	    )
 	
 	/**
@@ -45,10 +45,6 @@ class IMLLexical extends Lexical with IMLTokens {
             if(in.atEnd) Success(EOF, in)
             else Failure("End of input expected", in)
         }
-    }
-    
-    def isAsci(e:Elem) = {
-    	(e >= 65 && e <= 90) || (e >= 97 && e <= 122);
     }
     
 	private def chooseIdentToken(name: String) : Token = name match {

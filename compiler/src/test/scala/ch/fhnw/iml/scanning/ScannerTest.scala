@@ -78,14 +78,5 @@ class ScannerTest {
         Assert.assertEquals(LessThan, scanner.rest.first)
         Assert.assertEquals(Ident("x"), scanner.rest.rest.first)
     }
-    
-    @Test
-    def testAsci() {
-    	val lexical = new IMLLexical();
-    	Assert.assertTrue(lexical.isAsci('A'));
-    	Assert.assertTrue(lexical.isAsci('Z'));
-    	Assert.assertTrue(lexical.isAsci('a'));
-    	Assert.assertTrue(lexical.isAsci('z'));
-    	Assert.assertFalse(lexical.isAsci('ä'));
-    }
+
 }
