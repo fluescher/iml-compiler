@@ -80,9 +80,12 @@ class ScannerTest {
     }
     
     @Test
-    def testUTF8() {
-        val scanner = new Scanner("üä")
-        
-        Assert.assertEquals(Ident("üä"), scanner.first)
+    def testAsci() {
+    	val lexical = new IMLLexical();
+    	Assert.assertTrue(lexical.isAsci('A'));
+    	Assert.assertTrue(lexical.isAsci('Z'));
+    	Assert.assertTrue(lexical.isAsci('a'));
+    	Assert.assertTrue(lexical.isAsci('z'));
+    	Assert.assertFalse(lexical.isAsci('ä'));
     }
 }

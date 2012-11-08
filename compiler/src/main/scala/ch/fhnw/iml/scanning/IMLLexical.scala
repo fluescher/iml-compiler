@@ -2,10 +2,11 @@ package ch.fhnw.iml.scanning
 
 import scala.annotation.migration
 import scala.util.parsing.combinator.lexical.Lexical
+import scala.util.matching.Regex
 
 class IMLLexical extends Lexical with IMLTokens {
-    private def identChar = letter    
-
+    private def identChar = elem("letter", isAsci)    
+    
     override def whitespace : Parser[Any] = rep(whitespaceChar)
 
 	override def token: Parser[Token] =
@@ -44,6 +45,10 @@ class IMLLexical extends Lexical with IMLTokens {
             if(in.atEnd) Success(EOF, in)
             else Failure("End of input expected", in)
         }
+    }
+    
+    def isAsci(e:Elem) = {
+    	(e >= 65 && e <= 90) || (e >= 97 && e <= 122);
     }
     
 	private def chooseIdentToken(name: String) : Token = name match {
