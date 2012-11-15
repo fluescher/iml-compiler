@@ -6,6 +6,8 @@ import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.combinator.syntactical.TokenParsers
 import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.input.Reader
+import ch.fhnw.iml.ast.OrOpr
+import ch.fhnw.iml.ast.AndOpr
 
 class IMLParsers extends TokenParsers {
     type Tokens = IMLTokens
@@ -15,7 +17,7 @@ class IMLParsers extends TokenParsers {
         			RParen, ChangeMode, Colon, SemiColon, Int32, Fun, Returns, Local,
         			Proc, FlowMode, Comma, Skip, Becomes, If, Else, While, Call, QuestionMark,
         			ExclamationMark, Init, LBrace, RBrace,
-        			MultOpr, RelOpr, BoolOpr, Type}
+        			MultOpr, RelOpr, BoolOpr, Type, Or, And}
     
     /* Programs */
     def program = ((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 
@@ -43,14 +45,15 @@ class IMLParsers extends TokenParsers {
             		| (procHead ~ blockCmd)
             	  )
 
-    def procHead = Proc ~ ident ~ paramList
+    def procHead = (Proc ~ ident ~ paramList) 
             	  
     def cpsDecl : Parser[Any] = decl ~ rep(SemiColon ~ decl)
     
     
     /* Parameter lists */
-    def paramList = ( (LParen ~ RParen)
-            		| (LParen ~> param ~ rep(Comma ~ param) <~ RParen))
+    def paramList = ( (LParen ~ RParen) 
+            		| (LParen ~> param ~ rep(Comma ~ param) <~ RParen)
+            		)
     
     def param = opt(flowMode) ~ opt(changeMode) ~ storeDecl
     
@@ -86,12 +89,13 @@ class IMLParsers extends TokenParsers {
 		            		   | (LParen ~> expr <~ RParen))
    
     def exprList = ( 
-            	     (LParen ~> expr ~ rep(Comma ~ expr) <~ RParen)
+            	     (LParen ~> expr ~ rep(Comma ~ expr) <~ RParen) 
             	   | (LParen ~ RParen)
             	   )
     def monadicOpr = Not | addOpr
     
-    def boolOpr = elem("boolopr", _.isInstanceOf[BoolOpr])
+    def boolOpr = (	 Or  ^^^ OrOpr
+            	   | And ^^^ AndOpr) 
     def relOpr = elem("relopr", _.isInstanceOf[RelOpr])
     def addOpr = elem("addopr", _.isInstanceOf[AddOpr])
     def multOpr = elem("multopr", _.isInstanceOf[MultOpr])
