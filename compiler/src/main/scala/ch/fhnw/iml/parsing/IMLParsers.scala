@@ -28,19 +28,23 @@ class IMLParsers extends TokenParsers {
     				 
     def storeDecl = opt(changeMode) ~ ident ~ Colon ~ imlType
 
-    def funDecl = (   (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
-    				| (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ Global ~ globImpList ~ blockCmd) 
-            		| (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ Local ~ cpsDecl ~ blockCmd)
-            		| (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ blockCmd)
+    def funDecl = (   (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
+    				| (funHead ~ Global ~ globImpList ~ blockCmd) 
+            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)
+            		| (funHead ~ blockCmd)
             	  )
     
+    def funHead = Fun ~ ident ~ paramList ~ Returns ~ storeDecl
+            	  
     def procDecl = (  
-            		  (Proc ~ ident ~ paramList ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
-    				| (Proc ~ ident ~ paramList ~ Global ~ globImpList ~ blockCmd) 
-            		| (Proc ~ ident ~ paramList ~ Local ~ cpsDecl ~ blockCmd)
-            		| (Proc ~ ident ~ paramList ~ blockCmd)
+            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
+    				| (procHead ~ Global ~ globImpList ~ blockCmd) 
+            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)
+            		| (procHead ~ blockCmd)
             	  )
 
+    def procHead = Proc ~ ident ~ paramList
+            	  
     def cpsDecl : Parser[Any] = decl ~ rep(SemiColon ~ decl)
     
     
@@ -101,7 +105,7 @@ class IMLParsers extends TokenParsers {
     
     def parse(source : Reader[Char]) : AnyRef = {
         val scanner = new lexical.Scanner(source)
-        println(program(scanner))
+        println(phrase(program)(scanner))
         
         return null;
     }
