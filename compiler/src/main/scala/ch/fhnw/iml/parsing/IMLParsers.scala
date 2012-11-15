@@ -28,19 +28,25 @@ class IMLParsers extends TokenParsers {
     				 
     def storeDecl = opt(changeMode) ~ ident ~ Colon ~ imlType
 
-    def funDecl = (Fun ~ ident ~ paramList ~ Returns ~ storeDecl 
-            			~ opt(Global ~ globImpList) 
-            			~ opt(Local ~ cpsDecl) ~ blockCmd)
+    def funDecl = (   (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
+    				| (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ Global ~ globImpList ~ blockCmd) 
+            		| (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ Local ~ cpsDecl ~ blockCmd)
+            		| (Fun ~ ident ~ paramList ~ Returns ~ storeDecl ~ blockCmd)
+            	  )
     
-    def procDecl = (Proc ~ ident ~ paramList
-            			 ~ opt(Global ~ globImpList)
-            			 ~ opt(Local ~ cpsDecl) ~ blockCmd)
+    def procDecl = (  
+            		  (Proc ~ ident ~ paramList ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
+    				| (Proc ~ ident ~ paramList ~ Global ~ globImpList ~ blockCmd) 
+            		| (Proc ~ ident ~ paramList ~ Local ~ cpsDecl ~ blockCmd)
+            		| (Proc ~ ident ~ paramList ~ blockCmd)
+            	  )
 
     def cpsDecl : Parser[Any] = decl ~ rep(SemiColon ~ decl)
     
     
     /* Parameter lists */
-    def paramList = LParen ~ opt(param ~ rep(Comma ~ param)) ~ RParen
+    def paramList = ( (LParen ~ RParen)
+            		| (LParen ~> param ~ rep(Comma ~ param) <~ RParen))
     
     def param = opt(flowMode) ~ opt(changeMode) ~ storeDecl
     
@@ -55,7 +61,8 @@ class IMLParsers extends TokenParsers {
 			| (expr ~ Becomes ~ expr)
 			| (If ~ LParen ~> expr <~ RParen ~ blockCmd ~ Else ~ blockCmd)
 			| (While ~ LParen ~> expr <~ RParen ~ blockCmd)
-			| (Call ~ ident ~ exprList ~ opt(Init ~ globInitList))
+			| (Call ~ ident ~ exprList ~ Init ~ globInitList)
+			| (Call ~ ident ~ exprList)
 			| (QuestionMark ~ expr)
 			| (ExclamationMark ~ expr))
             			
@@ -65,7 +72,7 @@ class IMLParsers extends TokenParsers {
     
     /* Expressions */
     def expr = term1 ~ rep(boolOpr ~ term1)
-    def term1 = term2 ~ opt(relOpr ~ term2)
+    def term1 = ( (term2 ~ relOpr ~ term2) | term2)
     def term2 = term3 ~ rep(addOpr ~ factor)
     def term3 = factor ~ rep(multOpr ~ factor)
     
@@ -74,7 +81,10 @@ class IMLParsers extends TokenParsers {
 		            		   | (monadicOpr ~ factor)
 		            		   | (LParen ~> expr <~ RParen))
    
-    def exprList = LParen ~> opt(expr ~ rep(Comma ~ expr)) <~ RParen
+    def exprList = ( 
+            	     (LParen ~> expr ~ rep(Comma ~ expr) <~ RParen)
+            	   | (LParen ~ RParen)
+            	   )
     def monadicOpr = Not | addOpr
     
     def boolOpr = elem("boolopr", _.isInstanceOf[BoolOpr])
