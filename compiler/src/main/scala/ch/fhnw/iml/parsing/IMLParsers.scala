@@ -18,12 +18,13 @@ class IMLParsers extends TokenParsers {
         			MultOpr, RelOpr, BoolOpr, Type}
     
     /* Programs */
-    def program = Program ~ ident ~ opt(Global ~ cpsDecl) ~ blockCmd
+    def program = ((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 
+    			|  (Program ~ ident ~ blockCmd))
     
     /* declarations */
     def decl = (storeDecl 
-            		 | funDecl 
-            		 | procDecl)
+    		 | funDecl 
+    		 | procDecl)
     				 
     def storeDecl = opt(changeMode) ~ ident ~ Colon ~ imlType
 
@@ -46,20 +47,20 @@ class IMLParsers extends TokenParsers {
     def globImpList = globImp ~ rep(Comma ~ globImp)
     
     def globImp = (opt(flowMode)
-            			~  opt(changeMode)
-            			~  ident)
+    			~  opt(changeMode)
+    			~  ident)
     
     /* Commands */
     def cmd = (Skip
 			| (expr ~ Becomes ~ expr)
-			| (If ~ LParen ~ expr ~ RParen ~ blockCmd ~ Else ~ blockCmd)
-			| (While ~ LParen ~ expr ~ RParen ~ blockCmd)
+			| (If ~ LParen ~> expr <~ RParen ~ blockCmd ~ Else ~ blockCmd)
+			| (While ~ LParen ~> expr <~ RParen ~ blockCmd)
 			| (Call ~ ident ~ exprList ~ opt(Init ~ globInitList))
 			| (QuestionMark ~ expr)
 			| (ExclamationMark ~ expr))
             			
     
-    def blockCmd : Parser[Any] = LBrace ~ cmd ~ rep(SemiColon ~ cmd) ~ RBrace
+    def blockCmd : Parser[Any] = LBrace ~> cmd ~ rep(SemiColon ~ cmd) <~ RBrace
     def globInitList = ident ~ rep(Comma ~ ident)
     
     /* Expressions */
@@ -71,9 +72,9 @@ class IMLParsers extends TokenParsers {
     def factor : Parser[Any] = ( literal
 		            		   | (ident ~ opt(Init | exprList))
 		            		   | (monadicOpr ~ factor)
-		            		   | (LParen ~ expr ~ RParen))
+		            		   | (LParen ~> expr <~ RParen))
    
-    def exprList = LParen ~ opt(expr ~ rep(Comma ~ expr)) ~ RParen
+    def exprList = LParen ~> opt(expr ~ rep(Comma ~ expr)) <~ RParen
     def monadicOpr = Not | addOpr
     
     def boolOpr = elem("boolopr", _.isInstanceOf[BoolOpr])
