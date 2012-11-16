@@ -6,8 +6,7 @@ import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.combinator.syntactical.TokenParsers
 import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.input.Reader
-import ch.fhnw.iml.ast.OrOpr
-import ch.fhnw.iml.ast.AndOpr
+import ch.fhnw.iml.ast._;
 
 class IMLParsers extends TokenParsers {
     type Tokens = IMLTokens
@@ -17,7 +16,9 @@ class IMLParsers extends TokenParsers {
         			RParen, ChangeMode, Colon, SemiColon, Int32, Fun, Returns, Local,
         			Proc, FlowMode, Comma, Skip, Becomes, If, Else, While, Call, QuestionMark,
         			ExclamationMark, Init, LBrace, RBrace,
-        			MultOpr, RelOpr, BoolOpr, Type, Or, And}
+        			MultOpr, RelOpr, BoolOpr, Type, Or, And, Ref, Copy,
+        			Equals, NotEquals, GreaterThan, GreaterEqualsThan, LessThan, LessEqualsThan,
+        			Minus, Plus, Times, Div, Mod, Bool, InOut, Out, In, Var, Const}
     
     /* Programs */
     def program = ((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 
@@ -52,12 +53,12 @@ class IMLParsers extends TokenParsers {
     
     /* Parameter lists */
     def paramList = ( (LParen ~ RParen) 
-            		| (LParen ~> param ~ rep(Comma ~ param) <~ RParen)
+            		| (LParen ~> param ~ rep(Comma ~> param) <~ RParen)
             		)
     
     def param = opt(flowMode) ~ opt(changeMode) ~ storeDecl
     
-    def globImpList = globImp ~ rep(Comma ~ globImp)
+    def globImpList = globImp ~ rep(Comma ~> globImp)
     
     def globImp = (opt(flowMode)
     			~  opt(changeMode)
@@ -75,7 +76,7 @@ class IMLParsers extends TokenParsers {
             			
     
     def blockCmd : Parser[Any] = LBrace ~> cmd ~ rep(SemiColon ~ cmd) <~ RBrace
-    def globInitList = ident ~ rep(Comma ~ ident)
+    def globInitList = ident ~ rep(Comma ~> ident)
     
     /* Expressions */
     def expr = term1 ~ rep(boolOpr ~ term1)
@@ -83,29 +84,54 @@ class IMLParsers extends TokenParsers {
     def term2 = term3 ~ rep(addOpr ~ factor)
     def term3 = factor ~ rep(multOpr ~ factor)
     
-    def factor : Parser[Any] = ( literal
-		            		   | (ident ~ opt(Init | exprList))
-		            		   | (monadicOpr ~ factor)
-		            		   | (LParen ~> expr <~ RParen))
+    def factor : Parser[Any] = ( literal 
+		            		   | (ident ~ Init)
+		            		   | (ident ~ exprList)
+		            		   | ident
+		            		   | (monadicOpr ~ factor)			^^ {case opr ~ fac => MonadicExpr(opr, fac)}
+		            		   | (LParen ~> expr <~ RParen)) 	^^ {case rest => rest}
    
     def exprList = ( 
-            	     (LParen ~> expr ~ rep(Comma ~ expr) <~ RParen) 
-            	   | (LParen ~ RParen)
+            	     (LParen ~> expr ~ rep(Comma ~> expr) <~ RParen) ^^ {case first ~ rest => first::rest} 
+            	   | (LParen ~ RParen) ^^^ List()
             	   )
-    def monadicOpr = Not | addOpr
+            	   
+    def monadicOpr: Parser[Opr] = (notOpr | addOpr)
+    
+    def notOpr :Parser[Opr] = accept(Not) ^^^ NotOpr
     
     def boolOpr = (	 Or  ^^^ OrOpr
             	   | And ^^^ AndOpr) 
-    def relOpr = elem("relopr", _.isInstanceOf[RelOpr])
-    def addOpr = elem("addopr", _.isInstanceOf[AddOpr])
-    def multOpr = elem("multopr", _.isInstanceOf[MultOpr])
-    def imlType = elem("type", _.isInstanceOf[Type])
-    def flowMode = elem("flowmode", _.isInstanceOf[FlowMode])
-    def changeMode = elem("changemode", _.isInstanceOf[ChangeMode])
-    def ident = elem("identifier", _.isInstanceOf[Ident])
+    def relOpr = (	 Equals 			^^^ EqualsOpr
+    			   | NotEquals 			^^^ NotEqualsOpr
+    			   | GreaterThan 		^^^ GreaterThanOpr
+    			   | GreaterEqualsThan 	^^^ GreaterEqualsThanOpr
+    			   | LessThan 			^^^ LessThanOpr
+    			   | LessEqualsThan 	^^^ LessEqualsThanOpr)
+    			   
+    def addOpr:Parser[Opr] = (	 Plus 	^^^ PlusOpr
+    			   		      | Minus 	^^^ MinusOpr)
+    			   
+    def multOpr = (  Times 	^^^ TimesOpr
+    			   | Div 	^^^ DivOpr
+    			   | Mod 	^^^ ModOpr)
+    			   
+    def imlType = (  Int32 	^^^ Int32Ast
+    			   | Bool 	^^^ BoolAst)
+    			   
+    def flowMode = ( InOut	^^^ InOutFlow
+    			   | Out	^^^ OutFlow
+    			   | In		^^^ InFlow)
+    			   
+    def changeMode = ( Var 		^^^ VarAst
+    				 | Const 	^^^ ConstAst
+    				 | Ref		^^^ RefAst
+    				 | Copy		^^^ CopyAst)
+    				 
+    def ident = elem("ident", _.isInstanceOf[Ident]) ^^^ IdentAst
 
     
-    private def literal = elem("Literal", _.isInstanceOf[Literal]) ^^ { case IntLiteral(x) => x }
+    private def literal = elem("Literal", _.isInstanceOf[Literal]) ^^ { case IntLiteral(x) => IntLiteralExpression(x) }
     
     def parse(source : Reader[Char]) : AnyRef = {
         val scanner = new lexical.Scanner(source)
