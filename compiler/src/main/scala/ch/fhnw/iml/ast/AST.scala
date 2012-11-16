@@ -14,14 +14,18 @@ case class BlockCommand(cmds: List[Command]) extends Command
 case class SkipCommand extends Command
 case class AssiCommand(expr1: Expr, expr2: Expr) extends Command
 case class CondCommand(expr: Expr, cmd1: Command, cmd2: Command) extends Command
-
+case class WhileCommand(expr: Expr, cmd: Command) extends Command
+case class ProcCallComand(f: IdentAst, exprs:List[Expr], idents:List[IdentAst]) extends Command
+case class InputCommand(expr: Expr) extends Command
+case class OutputCommand(expr: Expr) extends Command
+ 
 /* Expressions */
 sealed abstract class Expr extends Node
 case class BoolLiteralExpression(value: Boolean) extends Expr
 case class IntLiteralExpression(value: Int) extends Expr
-case class StoreExpr(i: String, isInitialization: Boolean) extends Expr
-case class VarAccess(i: String) extends Expr
-case class FunCallExpr(i: String, exprs:List[Expr]) extends Expr
+case class StoreExpr(i: IdentAst, isInitialization: Boolean) extends Expr
+case class VarAccess(i: IdentAst) extends Expr
+case class FunCallExpr(i: IdentAst, exprs:List[Expr]) extends Expr
 case class MonadicExpr(opr: Opr, expr: Expr) extends Expr
 case class DyadicExpr(opr: Opr, expr1: Expr, expr2: Expr) extends Expr
 

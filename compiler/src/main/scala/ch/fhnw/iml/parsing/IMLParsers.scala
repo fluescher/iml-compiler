@@ -29,7 +29,7 @@ class IMLParsers extends TokenParsers {
     		 | funDecl 
     		 | procDecl)
     				 
-    def storeDecl = opt(changeMode) ~ ident ~ Colon ~ imlType
+    def storeDecl = opt(changeMode) ~ ident ~ Colon ~> imlType
 
     def funDecl = (   (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
     				| (funHead ~ Global ~ globImpList ~ blockCmd) 
@@ -48,7 +48,7 @@ class IMLParsers extends TokenParsers {
 
     def procHead = (Proc ~ ident ~ paramList) 
             	  
-    def cpsDecl : Parser[Any] = decl ~ rep(SemiColon ~ decl)
+    def cpsDecl : Parser[Any] = decl ~ rep(SemiColon ~> decl)
     
     
     /* Parameter lists */
@@ -65,18 +65,17 @@ class IMLParsers extends TokenParsers {
     			~  ident)
     
     /* Commands */
-    def cmd = (Skip
-			| (expr ~ Becomes ~ expr)
-			| (If ~ LParen ~> expr <~ RParen ~ blockCmd ~ Else ~ blockCmd)
-			| (While ~ LParen ~> expr <~ RParen ~ blockCmd)
-			| (Call ~ ident ~ exprList ~ Init ~ globInitList)
-			| (Call ~ ident ~ exprList)
-			| (QuestionMark ~ expr)
-			| (ExclamationMark ~ expr))
-            			
+    def cmd : Parser[Command] = (Skip 											^^ {case s => SkipCommand()}
+			| (expr ~ Becomes ~ expr) 											^^ {case e1 ~ _ ~ e2 => AssiCommand(e1, e2) }
+			| (If ~ LParen ~ expr ~ RParen ~ blockCmd ~ Else ~ blockCmd)		^^ {case _ ~ _ ~ ex ~ _ ~ cmd1 ~ _ ~ cmd2 => CondCommand(ex, cmd1, cmd2)}
+			| (While ~ LParen ~ expr ~ RParen ~ blockCmd)						^^ {case _ ~ _ ~ ex ~ _ ~ cmd1 => WhileCommand(ex, cmd1)}
+			| (Call ~ ident ~ exprList ~ Init ~ globInitList)					^^ {case _ ~ name ~ list ~ _ ~ initlist => ProcCallComand(name, list, initlist)}
+			| (Call ~ ident ~ exprList)											^^ {case _ ~ name ~ list => ProcCallComand(name, list, List())}
+			| (QuestionMark ~> expr)											^^ {case ex => InputCommand(ex)}
+			| (ExclamationMark ~> expr)											^^ {case ex => OutputCommand(ex)})  			
     
-    def blockCmd : Parser[Any] = LBrace ~> cmd ~ rep(SemiColon ~ cmd) <~ RBrace
-    def globInitList = ident ~ rep(Comma ~> ident)
+    def blockCmd : Parser[Command] = LBrace ~> cmd ~ rep(SemiColon ~> cmd) <~ RBrace ^^ {case c ~ rest => BlockCommand(c::rest)}
+    def globInitList = ident ~ rep(Comma ~> ident) ^^ {case i ~ rest => i::rest}
     
     /* Expressions */
     def expr = term1 ~ rep(boolOpr ~ term1)     ^^ {case t1 ~ rest => toDyadicExpr(t1, rest)}
@@ -92,9 +91,9 @@ class IMLParsers extends TokenParsers {
     }
     												
     def factor : Parser[Expr] = ( literal 						^^ {case l => l}
-		            		   | (ident ~ Init)					^^ {case i ~ init => StoreExpr(i.chars, true)}
-		            		   | (ident ~ exprList)				^^ {case i ~ list => FunCallExpr(i.chars, list)}
-		            		   | ident							^^ {case i => VarAccess(i.chars) }
+		            		   | (ident ~ Init)					^^ {case i ~ init => StoreExpr(i, true)}
+		            		   | (ident ~ exprList)				^^ {case i ~ list => FunCallExpr(i, list)}
+		            		   | ident							^^ {case i => VarAccess(i) }
 		            		   | (monadicOpr ~ factor)			^^ {case opr ~ fac => MonadicExpr(opr, fac)}
 		            		   | (LParen ~> expr <~ RParen) 	^^ {case rest => rest} )
    
