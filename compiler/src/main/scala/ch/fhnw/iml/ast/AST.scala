@@ -14,6 +14,7 @@ case class BlockCommand(cmds: List[Command]) extends Command
 
 /* Expressions */
 sealed abstract class Expr extends Node
+case class BoolLiteralExpression(value: Boolean) extends Expr
 case class IntLiteralExpression(value: Int) extends Expr
 case class StoreExpr(i: String, isInitialization: Boolean) extends Expr
 case class FunCallExpr /* RoutineCall */extends Expr
@@ -49,7 +50,7 @@ case object OutFlow extends Flow
 case object InFlow extends Flow
 
 /* Ident */
-case object IdentAst extends Node
+case class IdentAst(chars: String) extends Node
 
 sealed abstract class ChangeModeAst extends Node
 case object VarAst extends ChangeModeAst

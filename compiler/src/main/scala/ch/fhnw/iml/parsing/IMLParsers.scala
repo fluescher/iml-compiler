@@ -6,7 +6,7 @@ import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.combinator.syntactical.TokenParsers
 import ch.fhnw.iml.scanning.IMLTokens
 import scala.util.parsing.input.Reader
-import ch.fhnw.iml.ast._;
+import ch.fhnw.iml.ast._
 
 class IMLParsers extends TokenParsers {
     type Tokens = IMLTokens
@@ -15,7 +15,7 @@ class IMLParsers extends TokenParsers {
     import lexical.{Not, AddOpr, Literal, IntLiteral, Program, Ident, Global, LParen, 
         			RParen, ChangeMode, Colon, SemiColon, Int32, Fun, Returns, Local,
         			Proc, FlowMode, Comma, Skip, Becomes, If, Else, While, Call, QuestionMark,
-        			ExclamationMark, Init, LBrace, RBrace,
+        			ExclamationMark, Init, LBrace, RBrace, True, False,
         			MultOpr, RelOpr, BoolOpr, Type, Or, And, Ref, Copy,
         			Equals, NotEquals, GreaterThan, GreaterEqualsThan, LessThan, LessEqualsThan,
         			Minus, Plus, Times, Div, Mod, Bool, InOut, Out, In, Var, Const}
@@ -79,26 +79,33 @@ class IMLParsers extends TokenParsers {
     def globInitList = ident ~ rep(Comma ~> ident)
     
     /* Expressions */
-    def expr = term1 ~ rep(boolOpr ~ term1)
-    def term1 = ( (term2 ~ relOpr ~ term2) | term2)
-    def term2 = term3 ~ rep(addOpr ~ factor)
-    def term3 = factor ~ rep(multOpr ~ factor)
+    def expr = term1 ~ rep(boolOpr ~ term1)     ^^ {case t1 ~ rest => toDyadicExpr(t1, rest)}
+    def term1 = ( (term2 ~ relOpr ~ term2) 		^^ {case t1 ~ opr ~ t2 => DyadicExpr(opr, t1, t2)}
+    			  | term2 						^^ {case t2 => t2}
+    			) 
+    def term2 = term3 ~ rep(addOpr ~ factor) 	^^ { case t3 ~ rest => toDyadicExpr(t3, rest)}
+    def term3 = factor ~ rep(multOpr ~ factor) 	^^ {	case fac ~ rest => toDyadicExpr(fac, rest) }
     
-    def factor : Parser[Any] = ( literal 
-		            		   | (ident ~ Init)
-		            		   | (ident ~ exprList)
-		            		   | ident
+    def toDyadicExpr(e:Expr, l:List[Opr ~ Expr]) : Expr = l match {
+      case List() => e
+      case (o~ex)::rest => 	DyadicExpr(o, e, toDyadicExpr(ex, rest))										  
+    }
+    												
+    def factor : Parser[Expr] = ( literal 						^^ {case l => l}
+		            		   | (ident ~ Init)					^^ {case i ~ init => StoreExpr(i.chars, true)}
+		            		   | (ident ~ exprList)				^^ {case i ~ list => FunCallExpr}
+		            		   | ident							^^ {case i => i }
 		            		   | (monadicOpr ~ factor)			^^ {case opr ~ fac => MonadicExpr(opr, fac)}
-		            		   | (LParen ~> expr <~ RParen)) 	^^ {case rest => rest}
+		            		   | (LParen ~> expr <~ RParen) 	^^ {case rest => rest} )
    
     def exprList = ( 
             	     (LParen ~> expr ~ rep(Comma ~> expr) <~ RParen) ^^ {case first ~ rest => first::rest} 
             	   | (LParen ~ RParen) ^^^ List()
             	   )
             	   
-    def monadicOpr: Parser[Opr] = (notOpr | addOpr)
+    def monadicOpr = (notOpr | addOpr)
     
-    def notOpr :Parser[Opr] = accept(Not) ^^^ NotOpr
+    def notOpr = accept(Not) ^^^ NotOpr
     
     def boolOpr = (	 Or  ^^^ OrOpr
             	   | And ^^^ AndOpr) 
@@ -128,10 +135,12 @@ class IMLParsers extends TokenParsers {
     				 | Ref		^^^ RefAst
     				 | Copy		^^^ CopyAst)
     				 
-    def ident = elem("ident", _.isInstanceOf[Ident]) ^^^ IdentAst
+    def ident = elem("ident", _.isInstanceOf[Ident]) ^^ {case i => IdentAst(i.chars)}
 
     
-    private def literal = elem("Literal", _.isInstanceOf[Literal]) ^^ { case IntLiteral(x) => IntLiteralExpression(x) }
+    private def literal = elem("Literal", _.isInstanceOf[Literal]) ^^ { case IntLiteral(x) => IntLiteralExpression(x) 
+																	    case True => BoolLiteralExpression(true)
+																	    case False => BoolLiteralExpression(false)}
     
     def parse(source : Reader[Char]) : AnyRef = {
         val scanner = new lexical.Scanner(source)
