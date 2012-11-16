@@ -93,8 +93,8 @@ class IMLParsers extends TokenParsers {
     												
     def factor : Parser[Expr] = ( literal 						^^ {case l => l}
 		            		   | (ident ~ Init)					^^ {case i ~ init => StoreExpr(i.chars, true)}
-		            		   | (ident ~ exprList)				^^ {case i ~ list => FunCallExpr}
-		            		   | ident							^^ {case i => i }
+		            		   | (ident ~ exprList)				^^ {case i ~ list => FunCallExpr(i.chars, list)}
+		            		   | ident							^^ {case i => VarAccess(i.chars) }
 		            		   | (monadicOpr ~ factor)			^^ {case opr ~ fac => MonadicExpr(opr, fac)}
 		            		   | (LParen ~> expr <~ RParen) 	^^ {case rest => rest} )
    

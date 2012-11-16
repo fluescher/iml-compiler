@@ -1,7 +1,7 @@
 package ch.fhnw.iml.ast
 
 class AST(root: Node) {
-    
+
 }
 
 trait Node
@@ -11,13 +11,17 @@ trait Node
 /* Commands */
 sealed abstract class Command extends Node
 case class BlockCommand(cmds: List[Command]) extends Command
+case class SkipCommand extends Command
+case class AssiCommand(expr1: Expr, expr2: Expr) extends Command
+case class CondCommand(expr: Expr, cmd1: Command, cmd2: Command) extends Command
 
 /* Expressions */
 sealed abstract class Expr extends Node
 case class BoolLiteralExpression(value: Boolean) extends Expr
 case class IntLiteralExpression(value: Int) extends Expr
 case class StoreExpr(i: String, isInitialization: Boolean) extends Expr
-case class FunCallExpr /* RoutineCall */extends Expr
+case class VarAccess(i: String) extends Expr
+case class FunCallExpr(i: String, exprs:List[Expr]) extends Expr
 case class MonadicExpr(opr: Opr, expr: Expr) extends Expr
 case class DyadicExpr(opr: Opr, expr1: Expr, expr2: Expr) extends Expr
 
@@ -32,7 +36,7 @@ case object GreaterThanOpr extends Opr
 case object GreaterEqualsThanOpr extends Opr
 case object LessThanOpr extends Opr
 case object LessEqualsThanOpr extends Opr
-case object PlusOpr extends Opr 
+case object PlusOpr extends Opr
 case object MinusOpr extends Opr
 case object TimesOpr extends Opr
 case object DivOpr extends Opr
