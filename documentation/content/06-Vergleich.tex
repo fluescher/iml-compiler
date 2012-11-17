@@ -1,4 +1,75 @@
 \section{Vergleich mit anderen Programmiersprachen}
+In diesem Abschnitt wird der gewählte Entwurf mit Implementierungen
+für andere Sprachen verglichen.
 
+\subsection{Java / C(++)}
+Die meistverwendeten Sprachen Java, sowie C(++) enthalten keine Unterstützung des Compilers 
+zur Definition von pre-/postconditions auf Methoden. Jedoch gibt es die Möglichkeit 
+über \textit{Assertions} Bedingungen im Code zu definieren, welche zu einem Programmabbruch führen.
+Darüber hat ein Programmierer die Möglichkeit conditions zu formulieren. Diese können jedoch über weite
+Teile des Quellcodes verteilt sein und es ist für einen anderen Programmierer nicht 
+sofort ersichtlich welche pre-/postconditions daraus abgeleitet werden können. Im speziellen 
+Fall von Java ist es zudem so, dass die Ausführung von Assertions defaultmässig nicht aktiviert 
+ist. Daher ist der Nutzen solcher Assertions leider nur gering. Da diese Sprachen jedoch 
+sehr weit verbreitet sind haben sich zahlreiche Frameworks entwickelt, welche es erlauben
+zusätzliche Bedingungen an Methodenaufrufe zu knüpfen. Diese sind jedoch nicht im Compiler integriert
+und haben sich daher auch nicht weit verbreitet.
 
+\subsection{C\# (.NET Framework)}
 
+Für die Common Language Runtime (CLR) von Microsoft gilt eigentlich dasselbe wie für die Sprachen 
+Java und C(++). Es muss jedoch erwähnt werden, dass von Microsoft Research Tools entwickelt wurden, 
+die in dieser Form in keiner der obengennanten Sprachen umgesetzt wurden. Das Framework 
+\textit{Code Contracts} ermöglicht es dem Programmierer über statische Methodenaufrufe 
+conditions(oder eben contracts) zu formulieren (ähnlich wie Assertions). 
+Danach ist es dem Framework jedoch möglich, daraus sowohl Laufzeitchecks als auch 
+Dokumentationsdateien zu generieren. Viel interessanter ist jedoch die Möglichkeit einen 
+statischen Checker zu benutzen, welcher Contracts bereits zur compile-time überprüfen 
+kann \cite{MS:StaticAnalysis}.
+
+\subsection{Eiffel}
+Die Sprache Eiffel enthält sehr ähnliche Implementierung wie die von uns für IML gewählte. Durch
+die objektorientierte Natur von Eiffel unterstützt sie zusätzlich Klasseninvarianten, wie auch die
+Vererbung von conditions. Den Zugriff auf pre-execution-state von Variablen wir über das 
+Keyword \textit{old} ermöglicht.
+
+\subsection{D}
+Die Sprache D\cite{D:Main}, welche C++ weiterentickeln soll, ermöglicht es sowohl Klassen-Invarianten,
+als auch conditions auf der Ebene eines Statements zu definieren. Da auch diese Sprache objektorientiert 
+ist, wurden Klasseninvarianten implementiert. Es ist jedoch nicht möglich innerhalb der Postcondition 
+auf den Zustand von Variablen vor der Ausführung des bodys zuzugreifen.\newline
+
+\begin{lstlisting}[caption=Beispiel in D]
+in 
+{ 
+    assert(x >= 0);
+} 
+out (result) 
+{
+    assert((result * result) <= x && (result+1) * (result+1) >= x);
+} 
+body
+{
+    ... code ...
+}
+\end{lstlisting}
+
+\subsection{Ada}
+Ada erlaubt die Definition von pre-postconditions auf Ebene von Prozeduren/Funktionten und Subtypen 
+seit der Version 2012. Subtypen sind
+dabei bereits eine Art von Einschränkung, welche vom Comiler als Typ aufgefasst werden und daher bereits
+bei der Kompilationszeit erkannt werden. Seit Ada 2012 ist es jedoch auch möglich, solche Subtypen 
+mit dynamischen und statischen Prädikaten zu versehen. Dabei werden die dynamischen zur Laufzeit 
+überprüft, während die statischen viele Überprüfungen bereits zur Kompilationszeit
+ durchführen können. Auch 
+Ada erlaubt den Zugriff auf Zustand vor der Ausführung der Prozedur. \newline
+
+\begin{lstlisting}[caption=Beispiel in Ada 2012,language=Ada]
+procedure Update_Person (P : in out Person)
+   with Post => P.Sex = P.Sex'Old 
+                and P.Birth_Date = P.Birth_Date'Old;
+
+function Inc(X: Integer) return Integer
+   with Pre  => X /= Integer'Last,
+        Post => Inc'Result = X'Old+1;
+\end{lstlisting}
