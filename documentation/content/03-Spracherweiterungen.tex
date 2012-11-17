@@ -4,22 +4,26 @@ Ein wichtiges Kriterium für unsere Erweiterungen war es, die Kompatibliität vo
 zur Standard-IML beizubehalten. Es muss möglich sein, bereits vorhandene Programme
 auch mit dem erweiterten Compiler zu kompilieren und eine äquivalentes Programm zu 
 erhalten. Dies macht es zudem leichter, bestehende IML Programme um pre-/postconditions
-zu erweitern. In den folgenden Abschnitten wird festgehalten, in welchem Ausmass dies 
-gelingen kann. Diee vollständige Grammatik der Sprache ist im Anhang \ref{sec:fullgrammar} 
+zu erweitern.
+Die vollständige Grammatik der Sprache ist im Anhang \ref{sec:fullgrammar} 
 ersichtlich. Weitere funktionierende sowie nicht funktionierende beispiele sind in den Anhängen
-\ref{sec:good_example}, \ref{sec:bad_examples} zu finden.
+\ref{sec:good_examples} und \ref{sec:bad_examples} zu finden.
 
 \subsection{Pre-/Postconditions}
 Das definieren von pre- und postconditions sollte direkt beim Deklarieren
 der Prozedur oder der Funktion ermöglicht werden. So sind die Garantien
 für den Programmierer auf einen Blick ersichtlich und erleichern so 
 das Verständnis der Prozedur. In Listing \ref{lst:first} ist ein Beispiel 
-einer Prozedur mit conditions ersichtlich.
-
-
+einer Prozedur mit conditions ersichtlich. Das Label "dump\_condition" dient dazu, im
+Falle eines Fehlschlags der darauffolgenden condition hilfreiche Fehlermeldungen generieren zu können.
+In Folge des Fehlens eines String-Literals wird ein Ident verwendet.
+Als conditions können alle Expressions verwendet
+werden, welche zu einem boolean Typ ausgewertet werden. Mehr dazu wird im 
+Kapitel \ref{sec:constraints} erleutert.
+\newline
 \begin{lstlisting}[caption=Beispiele von pre-/postconditions,label={lst:first}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
-requires [n > 0, unnecessary(m, n)]
+requires [n > 0, dumb_condition: unnecessary(m, n)]
 ensures [r >= 0]
 {
     q init := 0;
@@ -30,6 +34,49 @@ ensures [r >= 0]
         r := r-n;
     }
 }
+\end{lstlisting}
+
+\subsubsection{Lexikalische Syntax}
+Es wurden die in Listing \ref{lst:terminals} ersichtlichen neuen Terminale eingeführt.
+\begin{lstlisting}[caption=Liste neuer Terminalsymbole,label=lst:terminals]
+[           (Token: LBRACKET)
+]           (Token: RBRACKET)
+requires    (Token: REQUIRES)
+ensures     (Token: ENSURES)
+\end{lstlisting}
+
+\newpage
+\subsubsection{Grammatikalische Syntax}
+Die Grammatik wurde um neue nichtterminal Symbole erweitert. Zudem wurden die NTS funDecl und 
+procDecl erweitert, damit nun die conditions an die Deklaration gehängt werden können. Die angepassten
+Symbole sind in Listing \ref{lst:decls} dokumentiert.
+\newline
+\begin{lstlisting}[caption=Neue nichtterminal Symbole]
+requires        ::= REQUIRES conditionList
+ensures         ::= ENSURES  conditionList
+
+conditionList   ::= LBRACKET [condition {COMMA condition}] RBRACKET
+condition       ::= [IDENT COLON] expr
+
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Angepasste nichtterminal Symbole,label=lst:decls]
+
+funDecl     ::= FUN IDENT paramList
+                RETURNS storeDecl
+                [GLOBAL globImpList]
+                [LOCAL cpsDecl] 
+                [requires]
+                [ensures]
+                blockCmd
+
+procDecl    ::= PROC IDENT paramList
+                [GLOBAL globImpList]
+                [LOCAL cpsDecl]
+                [requires]
+                [ensures]
+                blockCmd
+
 \end{lstlisting}
 
 
@@ -47,8 +94,8 @@ Wir haben uns für das Definieren einer reservierten Funktion namens \textit{old
 entschieden. Dies hat den Vorteil, dass die Grammatik nicht komplexer wird. Jedoch 
 muss ein neuer Kontext-Check eingeführt werden, welcher überprüft, dass kein Namenskonflikt
 mit einer existierenden Funktion auftritt. Zudem muss überprüft werden, ob \textit{old} 
-nur innerhalb von postconditions auftritt.
-
+nur innerhalb von postconditions auftritt. Ein Beispiel ist in Listing \ref{lst:old_state} zu sehen.
+\newpage
 \begin{lstlisting}[caption=Beispiel eines Zugriffs auf alten Zustand,label={lst:old_state}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
 ensures [old(n) > r]
@@ -63,12 +110,11 @@ ensures [old(n) > r]
 }
 \end{lstlisting}
 
-\newpage
-%\begin{figure*}[h]
-%	\begin{center}
-%		\includegraphics[width=0.9\textwidth]{images/Zuwanderungssaldo_Bericht_2.png}
-%	\end{center}
-%	\caption{Verlauf der Zuwanderung nach Herkunftsländern in Tausend \cite[S. 18]{ADMIN:Bericht}}
-%	\label{fig:zuwanderungsaldi}
-%\end{figure*}
+\subsubsection{Lexikalische Syntax}
+Es sind keine Änderungen notwendig.
 
+\subsubsection{Grammatikalische Syntax}
+Es sind keine Änderungen notwendig.
+
+
+\newpage

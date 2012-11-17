@@ -6,14 +6,20 @@ decl        ::= storeDecl
 
 storeDecl   ::= [CHANGEMODE] IDENT COLON TYPE
 
-fundDecl    ::= FUN IDENT paramList
+funDecl     ::= FUN IDENT paramList
                 RETURNS storeDecl
                 [GLOBAL globImpList]
-                [LOCAL cpsDecl] blockCmd
+                [LOCAL cpsDecl] 
+                [requires]
+                [ensures]
+                blockCmd
 
 procDecl    ::= PROC IDENT paramList
                 [GLOBAL globImpList]
-                [LOCAL cpsDecl] blockCmd
+                [LOCAL cpsDecl]
+                [requires]
+                [ensures]
+                blockCmd
 
 cpdDecl     ::= decl {SEMICOLON decl}
 
@@ -47,3 +53,10 @@ factor      ::= LITERAL
 
 exprList    ::= LPAREN [expr {COMMA expr}] RPAREN
 monadicOpr  ::= NOT | ADDOPR
+
+requires        ::= REQUIRES conditionList
+ensures         ::= ENSURES  conditionList
+
+conditionList   ::= LBRACKET [condition {COMMA condition}] RBRACKET
+condition       ::= [IDENT COLON] expr
+
