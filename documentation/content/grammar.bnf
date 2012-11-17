@@ -1,0 +1,49 @@
+program     ::= PROGRAM IDENT [GLOBAL cpsDecl] blockCmd
+
+decl        ::= storeDecl
+              | funDecl
+              | procDecl
+
+storeDecl   ::= [CHANGEMODE] IDENT COLON TYPE
+
+fundDecl    ::= FUN IDENT paramList
+                RETURNS storeDecl
+                [GLOBAL globImpList]
+                [LOCAL cpsDecl] blockCmd
+
+procDecl    ::= PROC IDENT paramList
+                [GLOBAL globImpList]
+                [LOCAL cpsDecl] blockCmd
+
+cpdDecl     ::= decl {SEMICOLON decl}
+
+paramList   ::= LPAREN [param {COMMA param}] RPAREN
+param       ::= [FLOWMODE] [MECHMODE] storeDecl
+globImpList ::= globImp {COMMA globImp}
+globImp     ::= [FLOWMODE] [CHANGEMODE] IDENT
+
+cmd         ::= SKIP
+              | expr BECOMES expr
+              | IF LPAREN expr RPAREN blockCmd ELSE blockCmd
+              | WHILE LPAREN expr RPAREN blockCmd
+              | CALL IDENT exprList [INIT globInitList]
+              | QUESTMARK expr
+              | EXCLAMARK expr
+
+blockCmd    ::= LBRACE cmd {SEMICOLON cmd} RBRACE
+globInitList::= IDENT {COMMA IDENT}
+
+expr        ::= term1 {BOOLOPR term1}
+term1       ::= term2 [RELOPR term2]
+term2       ::= term3 {ADDOPR term3}
+term3       ::= factor {MULTOPR factor}
+
+factor      ::= LITERAL
+              | IDENT
+              | IDENT INIT
+              | IDENT exprList
+              | monadicOpr factor
+              | LPAREN expr RPAREN
+
+exprList    ::= LPAREN [expr {COMMA expr}] RPAREN
+monadicOpr  ::= NOT | ADDOPR
