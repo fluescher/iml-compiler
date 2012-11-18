@@ -21,48 +21,50 @@ class IMLParsers extends TokenParsers {
         			Minus, Plus, Times, Div, Mod, Bool, InOut, Out, In, Var, Const}
     
     /* Programs */
-    def program = ((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 
-    			|  (Program ~ ident ~ blockCmd))
+    def program = ((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramAst(i,c,b)}
+    			|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramAst(i,null,b)}
+    			)
     
     /* declarations */
-    def decl = (storeDecl 
-    		 | funDecl 
-    		 | procDecl)
+    def decl = (storeDecl
+    		 	| funDecl
+    		 	| procDecl)
     				 
-    def storeDecl = opt(changeMode) ~ ident ~ Colon ~> imlType
+    def storeDecl : Parser[StoreDecl] = ((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(null), i, t)})
 
-    def funDecl = (   (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
-    				| (funHead ~ Global ~ globImpList ~ blockCmd) 
-            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)
-            		| (funHead ~ blockCmd)
+    def funDecl : Parser[FunDecl] = (   
+    				(funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case f ~ _ ~ g ~ _ ~ c ~ b => FunDecl(f,g,c,b)}
+    				| (funHead ~ Global ~ globImpList ~ blockCmd) 					^^ {case f ~ _ ~ g ~ b => FunDecl(f,g,null,b)}
+            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)						^^ {case f ~ _ ~ c ~ b => FunDecl(f,null,c,b)}
+            		| (funHead ~ blockCmd)											^^ {case f ~ b => FunDecl(f,null,null,b)}
             	  )
     
-    def funHead = Fun ~ ident ~ paramList ~ Returns ~ storeDecl
+    def funHead = ((Fun ~ ident ~ paramList ~ Returns ~ storeDecl) ^^ {case _ ~ i ~ p ~ _ ~ s => FunHead(i,p,s)})
             	  
-    def procDecl = (  
-            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)
-    				| (procHead ~ Global ~ globImpList ~ blockCmd) 
-            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)
-            		| (procHead ~ blockCmd)
+    def procDecl : Parser[ProcDecl] = (  
+            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,g,c,b)}
+    				| (procHead ~ Global ~ globImpList ~ blockCmd) 						^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,g,null,b)}
+            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)							^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,null,c,b)}
+            		| (procHead ~ blockCmd)												^^ {case p ~ b => new ProcDecl(p,null,null, b)}
             	  )
 
-    def procHead = (Proc ~ ident ~ paramList) 
+    def procHead = ((Proc ~ ident ~ paramList) ^^ {case _ ~ i ~ p => ProcHead(i, p)})
             	  
-    def cpsDecl : Parser[Any] = decl ~ rep(SemiColon ~> decl)
+    def cpsDecl = (decl ~ rep(SemiColon ~> decl) ^^ {case first ~ rest => CpsDecl(first::rest)})
     
     
     /* Parameter lists */
-    def paramList = ( (LParen ~ RParen) 
-            		| (LParen ~> param ~ rep(Comma ~> param) <~ RParen)
+    def paramList  = ( (LParen ~ RParen) 								^^ {case _ => ParameterList(List())}
+            		| (LParen ~> param ~ rep(Comma ~> param) <~ RParen)	^^ {case first ~ rest => ParameterList(first::rest)}
             		)
     
-    def param = opt(flowMode) ~ opt(changeMode) ~ storeDecl
+    def param = opt(flowMode) ~ opt(mechMode) ~ storeDecl ^^ {case f ~ c ~ s => Parameter(f.getOrElse(null), c.getOrElse(null), s)}
     
-    def globImpList = globImp ~ rep(Comma ~> globImp)
+    def globImpList = globImp ~ rep(Comma ~> globImp) ^^ {case first ~ rest => GlobalImportList(first::rest)}
     
-    def globImp = (opt(flowMode)
-    			~  opt(changeMode)
-    			~  ident)
+    def globImp = ((opt(flowMode) ~  opt(changeMode) ~  ident) ^^ {case f ~ c ~ i => GlobalImport(f.getOrElse(null), c.getOrElse(null),i)})
+    
+    			
     
     /* Commands */
     def cmd : Parser[Command] = (Skip 											^^ {case s => SkipCommand()}
@@ -74,7 +76,7 @@ class IMLParsers extends TokenParsers {
 			| (QuestionMark ~> expr)											^^ {case ex => InputCommand(ex)}
 			| (ExclamationMark ~> expr)											^^ {case ex => OutputCommand(ex)})  			
     
-    def blockCmd : Parser[Command] = LBrace ~> cmd ~ rep(SemiColon ~> cmd) <~ RBrace ^^ {case c ~ rest => BlockCommand(c::rest)}
+    def blockCmd : Parser[BlockCommand] = LBrace ~> cmd ~ rep(SemiColon ~> cmd) <~ RBrace ^^ {case c ~ rest => BlockCommand(c::rest)}
     def globInitList = ident ~ rep(Comma ~> ident) ^^ {case i ~ rest => i::rest}
     
     /* Expressions */
@@ -130,9 +132,10 @@ class IMLParsers extends TokenParsers {
     			   | In		^^^ InFlow)
     			   
     def changeMode = ( Var 		^^^ VarAst
-    				 | Const 	^^^ ConstAst
-    				 | Ref		^^^ RefAst
-    				 | Copy		^^^ CopyAst)
+    				 | Const 	^^^ ConstAst )
+
+    def mechMode = ( Ref		^^^ RefAst
+    			   | Copy		^^^ CopyAst)
     				 
     def ident = elem("ident", _.isInstanceOf[Ident]) ^^ {case i => IdentAst(i.chars)}
 
