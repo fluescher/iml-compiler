@@ -33,19 +33,19 @@ class IMLParsers extends TokenParsers {
     def storeDecl : Parser[StoreDecl] = ((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(null), i, t)})
 
     def funDecl : Parser[FunDecl] = (   
-    				(funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case f ~ _ ~ g ~ _ ~ c ~ b => FunDecl(f,g,c,b)}
-    				| (funHead ~ Global ~ globImpList ~ blockCmd) 					^^ {case f ~ _ ~ g ~ b => FunDecl(f,g,null,b)}
-            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)						^^ {case f ~ _ ~ c ~ b => FunDecl(f,null,c,b)}
-            		| (funHead ~ blockCmd)											^^ {case f ~ b => FunDecl(f,null,null,b)}
+    				(funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case f ~ _ ~ g ~ _ ~ c ~ b => FunDecl(f,Some(g),Some(c),b)}
+    				| (funHead ~ Global ~ globImpList ~ blockCmd) 					^^ {case f ~ _ ~ g ~ b => FunDecl(f,Some(g),None,b)}
+            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)						^^ {case f ~ _ ~ c ~ b => FunDecl(f,None,Some(c),b)}
+            		| (funHead ~ blockCmd)											^^ {case f ~ b => FunDecl(f,None,None,b)}
             	  )
     
     def funHead = ((Fun ~ ident ~ paramList ~ Returns ~ storeDecl) ^^ {case _ ~ i ~ p ~ _ ~ s => FunHead(i,p,s)})
             	  
     def procDecl : Parser[ProcDecl] = (  
-            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,g,c,b)}
-    				| (procHead ~ Global ~ globImpList ~ blockCmd) 						^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,g,null,b)}
-            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)							^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,null,c,b)}
-            		| (procHead ~ blockCmd)												^^ {case p ~ b => new ProcDecl(p,null,null, b)}
+            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,Some(g),Some(c),b)}
+    				| (procHead ~ Global ~ globImpList ~ blockCmd) 						^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,Some(g),None,b)}
+            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)							^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,None,Some(c),b)}
+            		| (procHead ~ blockCmd)												^^ {case p ~ b => new ProcDecl(p,None,None, b)}
             	  )
 
     def procHead = ((Proc ~ ident ~ paramList) ^^ {case _ ~ i ~ p => ProcHead(i, p)})
