@@ -22,6 +22,8 @@ class IMLLexical extends Lexical with IMLTokens {
 	    |	'!'									^^^ ExclamationMark
 	    | 	'{'									^^^ LBrace
 	    |	'}'									^^^ RBrace
+	    |   '['									^^^ LBracket
+	    |	']'									^^^ RBracket
 	    
 	    |	'*'									^^^ Times
 	    |   '+'									^^^ Plus
@@ -76,6 +78,8 @@ class IMLLexical extends Lexical with IMLTokens {
         case "true" => True
         case "var" 	=> Var
         case "while"=> While
+        case "ensures" => Ensures
+        case "requires" => Requires
         case other  => Ident(other)
     }
 }

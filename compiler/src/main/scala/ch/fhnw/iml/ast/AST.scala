@@ -64,12 +64,16 @@ case class IdentAst(chars: String) extends Node
 /* Declarations */
 sealed abstract class Decl extends Node
 case class StoreDecl(change: ChangeModeAst, i: IdentAst, t: TypeAst) extends Decl
-case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], cmd: BlockCommand) extends Decl
-case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], cmd: BlockCommand) extends Decl
+case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
+case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class CpsDecl(decls: List[Decl]) extends Decl
 
 case class FunHead(i: IdentAst, params: ParameterList, store: StoreDecl)
 case class ProcHead(i: IdentAst, params: ParameterList)
+
+/* Conditions */
+case class Condition(name: Option[IdentAst], expr: Expr) extends Node
+case class ConditionList(conditions: List[Condition]) extends Node
 
 /* Parameter  */
 sealed abstract class Param extends Node

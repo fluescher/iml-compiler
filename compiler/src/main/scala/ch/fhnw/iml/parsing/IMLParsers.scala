@@ -18,7 +18,8 @@ class IMLParsers extends TokenParsers {
         			ExclamationMark, Init, LBrace, RBrace, True, False,
         			MultOpr, RelOpr, BoolOpr, Type, Or, And, Ref, Copy,
         			Equals, NotEquals, GreaterThan, GreaterEqualsThan, LessThan, LessEqualsThan,
-        			Minus, Plus, Times, Div, Mod, Bool, InOut, Out, In, Var, Const}
+        			Minus, Plus, Times, Div, Mod, Bool, InOut, Out, In, Var, Const,
+        			LBracket, RBracket, Ensures, Requires}
     
     /* Programs */
     def program = ((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramAst(i,c,b)}
@@ -33,24 +34,65 @@ class IMLParsers extends TokenParsers {
     def storeDecl : Parser[StoreDecl] = ((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(null), i, t)})
 
     def funDecl : Parser[FunDecl] = (   
-    				(funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case f ~ _ ~ g ~ _ ~ c ~ b => FunDecl(f,Some(g),Some(c),b)}
-    				| (funHead ~ Global ~ globImpList ~ blockCmd) 					^^ {case f ~ _ ~ g ~ b => FunDecl(f,Some(g),None,b)}
-            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)						^^ {case f ~ _ ~ c ~ b => FunDecl(f,None,Some(c),b)}
-            		| (funHead ~ blockCmd)											^^ {case f ~ b => FunDecl(f,None,None,b)}
+    				  (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,Some(g),Some(c),Some(r),Some(e),b)}
+            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ b => new FunDecl(p,Some(g),Some(c),Some(r),None,b)}
+            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ ensure ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ e ~ b => new FunDecl(p,Some(g),Some(c),None,Some(e),b)}
+            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)						^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new FunDecl(p,Some(g),Some(c),None,None,b)}
+            		
+    				| (funHead ~ Global ~ globImpList ~ require ~ ensure ~ blockCmd) 					^^ {case p ~ _ ~ g ~ r ~ e ~ b => new FunDecl(p,Some(g),None,Some(r),Some(e),b)}
+    				| (funHead ~ Global ~ globImpList ~ require ~ blockCmd) 							^^ {case p ~ _ ~ g ~ r ~  b => new FunDecl(p,Some(g),None,Some(r),None,b)}
+    				| (funHead ~ Global ~ globImpList ~ ensure ~ blockCmd) 								^^ {case p ~ _ ~ g ~ e ~ b => new FunDecl(p,Some(g),None,None,Some(e),b)}
+    				| (funHead ~ Global ~ globImpList ~ blockCmd) 										^^ {case p ~ _ ~ g ~ b => new FunDecl(p,Some(g),None,None,None,b)}
+    				
+    				| (funHead ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)							^^ {case p ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,None,Some(c),Some(r),Some(e),b)}
+    				| (funHead ~ Local ~ cpsDecl ~ require ~ blockCmd)									^^ {case p ~ _ ~ c ~ r ~ b => new FunDecl(p,None,Some(c),Some(r),None,b)}
+    				| (funHead ~ Local ~ cpsDecl ~ ensure ~ blockCmd)									^^ {case p ~ _ ~ c ~ e ~ b => new FunDecl(p,None,Some(c),None,Some(e),b)}
+            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)											^^ {case p ~ _ ~ c ~ b => new FunDecl(p,None,Some(c),None,None,b)}
+            		
+            		| (funHead ~ require ~ ensure ~ blockCmd)											^^ {case p ~ r ~ e ~ b => new FunDecl(p,None,None,Some(r),Some(e),b)}
+            		| (funHead ~ require ~ blockCmd)													^^ {case p ~ r ~ b => new FunDecl(p,None,None,Some(r),None,b)}
+            		| (funHead ~ ensure ~ blockCmd)														^^ {case p ~ e ~ b => new FunDecl(p,None,None,None,Some(e),b)}
+            		| (funHead ~ blockCmd)																^^ {case p ~ b => new FunDecl(p,None,None,None,None,b)}
             	  )
     
     def funHead = ((Fun ~ ident ~ paramList ~ Returns ~ storeDecl) ^^ {case _ ~ i ~ p ~ _ ~ s => FunHead(i,p,s)})
             	  
     def procDecl : Parser[ProcDecl] = (  
-            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,Some(g),Some(c),b)}
-    				| (procHead ~ Global ~ globImpList ~ blockCmd) 						^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,Some(g),None,b)}
-            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)							^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,None,Some(c),b)}
-            		| (procHead ~ blockCmd)												^^ {case p ~ b => new ProcDecl(p,None,None, b)}
+            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new ProcDecl(p,Some(g),Some(c),Some(r),Some(e),b)}
+            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ b => new ProcDecl(p,Some(g),Some(c),Some(r),None,b)}
+            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ ensure ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ e ~ b => new ProcDecl(p,Some(g),Some(c),None,Some(e),b)}
+            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)					^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,Some(g),Some(c),None,None,b)}
+            		
+    				| (procHead ~ Global ~ globImpList ~ require ~ ensure ~ blockCmd) 					^^ {case p ~ _ ~ g ~ r ~ e ~ b => new ProcDecl(p,Some(g),None,Some(r),Some(e),b)}
+    				| (procHead ~ Global ~ globImpList ~ require ~ blockCmd) 							^^ {case p ~ _ ~ g ~ r ~  b => new ProcDecl(p,Some(g),None,Some(r),None,b)}
+    				| (procHead ~ Global ~ globImpList ~ ensure ~ blockCmd) 							^^ {case p ~ _ ~ g ~ e ~ b => new ProcDecl(p,Some(g),None,None,Some(e),b)}
+    				| (procHead ~ Global ~ globImpList ~ blockCmd) 										^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,Some(g),None,None,None,b)}
+    				
+    				| (procHead ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)						^^ {case p ~ _ ~ c ~ r ~ e ~ b => new ProcDecl(p,None,Some(c),Some(r),Some(e),b)}
+    				| (procHead ~ Local ~ cpsDecl ~ require ~ blockCmd)									^^ {case p ~ _ ~ c ~ r ~ b => new ProcDecl(p,None,Some(c),Some(r),None,b)}
+    				| (procHead ~ Local ~ cpsDecl ~ ensure ~ blockCmd)									^^ {case p ~ _ ~ c ~ e ~ b => new ProcDecl(p,None,Some(c),None,Some(e),b)}
+            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)											^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,None,Some(c),None,None,b)}
+            		
+            		| (procHead ~ require ~ ensure ~ blockCmd)											^^ {case p ~ r ~ e ~ b => new ProcDecl(p,None,None,Some(r),Some(e),b)}
+            		| (procHead ~ require ~ blockCmd)													^^ {case p ~ r ~ b => new ProcDecl(p,None,None,Some(r),None,b)}
+            		| (procHead ~ ensure ~ blockCmd)													^^ {case p ~ e ~ b => new ProcDecl(p,None,None,None,Some(e),b)}
+            		| (procHead ~ blockCmd)																^^ {case p ~ b => new ProcDecl(p,None,None,None,None,b)}
             	  )
 
     def procHead = ((Proc ~ ident ~ paramList) ^^ {case _ ~ i ~ p => ProcHead(i, p)})
             	  
     def cpsDecl = (decl ~ rep(SemiColon ~> decl) ^^ {case first ~ rest => CpsDecl(first::rest)})
+    
+    
+    /* Pre-Postconditions */
+    def require		= Requires ~> conditionList	
+    def ensure		= Ensures ~> conditionList
+    
+    def conditionList = (
+            			LBracket ~> condition ~ rep(Comma ~> condition) <~ RBracket			^^ {case cond ~ rest  => ConditionList(cond::rest)}
+    				  | LBracket ~ RBracket													^^^ ConditionList(List())
+    				  )
+    def condition = opt(ident <~ Colon) ~ expr												^^ {case i ~ expr => Condition(i, expr) }
     
     
     /* Parameter lists */

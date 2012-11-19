@@ -22,6 +22,8 @@ trait IMLTokens extends Tokens {
     case object Init extends Keyword
     case object Proc extends Keyword
     case object Skip extends Keyword
+    case object Ensures extends Keyword
+    case object Requires extends Keyword
     
     sealed abstract class ChangeMode extends Keyword
     case object Var extends ChangeMode
@@ -79,6 +81,8 @@ trait IMLTokens extends Tokens {
     case object Becomes extends Symbol
     case object LBrace extends Symbol
     case object RBrace extends Symbol
+    case object LBracket extends Symbol
+    case object RBracket extends Symbol
     
     /* Arith 38*/
     sealed abstract class ArithOpr extends Symbol with IMLTokenChars 
