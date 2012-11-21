@@ -1,0 +1,83 @@
+
+\begin{lstlisting}[caption=Beispiele von pre-/postconditions in Prozeduren]
+proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
+requires [n > 0]
+ensures [r >= 0]
+{
+    q init := 0;
+    r init := m;
+
+    while(r >= n) {
+        q := q+1;
+        r := r-n;
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Beispiele von pre-/postconditions in Funktionen mit mehreren Conditions]
+fun gcd(in copy a:int32, in copy b:int32) returns r:int32
+requires [a > 0, b > 0]
+ensures [r > 0]
+{
+    r init := 0;
+    
+    if (a == 0) {
+        r := b;
+    } else {
+        while (b /= 0) {
+            if (a > b) {
+                a := a - b;
+            } else {
+                b := b - a;
+            }
+        }
+    }
+
+    r := a
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Beispiele von pre-/postconditions in Funktionen]
+fun multiply(in copy m:int32, in copy n:int32) returns r:int32
+requires [n > 0]
+{
+    i init := 0;
+    r init := m;
+
+    while(i < n) {
+        i := i+1;
+        r := r+m;
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Beispiele von pre-/postconditions mit Funktion in der Condition List]
+fun multiply(in copy m:int32, in copy n:int32) returns r:int32
+requires [positive:isPositive(n)]
+{
+    i init := 0;
+    r init := m;
+
+    while(i < n) {
+        i := i+1;
+        r := r+m;
+    }
+}
+fun isPositive(in copy n:int32) returns r:bool
+{
+    r init := false;
+    if(n>0) {
+        r := true;
+    } else {
+        r := false;
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Beispiele von pre-/postconditions mit old Fuktion]
+proc twoTimes(in copy m:int32, out ref r:int32)
+ensures [old(m) = (r - m)]
+{
+    r init := m + m;
+}
+\end{lstlisting}
