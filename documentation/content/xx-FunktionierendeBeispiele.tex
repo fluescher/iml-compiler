@@ -1,5 +1,5 @@
 
-\begin{lstlisting}[caption=Beispiele von pre-/postconditions in Prozeduren]
+\begin{lstlisting}[caption=Pre-/postconditions in Prozeduren]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
 requires [n > 0]
 ensures [r >= 0]
@@ -14,7 +14,7 @@ ensures [r >= 0]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Beispiele von pre-/postconditions in Funktionen mit mehreren Conditions]
+\begin{lstlisting}[caption=Pre-/postconditions in Funktionen mit mehreren Conditions]
 fun gcd(in copy a:int32, in copy b:int32) returns r:int32
 requires [a > 0, b > 0]
 ensures [r > 0]
@@ -37,7 +37,7 @@ ensures [r > 0]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Beispiele von pre-/postconditions in Funktionen]
+\begin{lstlisting}[caption=Pre-/postconditions in Funktionen]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
 requires [n > 0]
 {
@@ -51,7 +51,7 @@ requires [n > 0]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Beispiele von pre-/postconditions mit Funktion in der Condition List]
+\begin{lstlisting}[caption=Pre-/postconditions mit Funktion in der Condition List]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
 requires [positive:isPositive(n)]
 {
@@ -74,9 +74,9 @@ fun isPositive(in copy n:int32) returns r:bool
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Beispiele von pre-/postconditions mit old Fuktion]
+\begin{lstlisting}[caption=Pre-/postconditions mit old Funktion]
 proc twoTimes(in copy m:int32, out ref r:int32)
-ensures [old(m) = (r - m)]
+ensures [old(m) == (r - m)]
 {
     r init := m + m;
 }

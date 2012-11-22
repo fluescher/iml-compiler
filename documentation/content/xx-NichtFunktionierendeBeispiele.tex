@@ -1,4 +1,3 @@
-
 \begin{lstlisting}[caption=Wert einer Variable in der pre-/postcondition ändern]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
 requires [n := 0]
@@ -14,7 +13,7 @@ ensures [r := 12 + 1]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Zugriff auf eine Variable mit der old Funktion, welche nicht Vorhanden ist.]
+\begin{lstlisting}[caption=Zugriff auf nicht vorhandene Variable in der old Funktion]
 fun gcd(in copy a:int32, in copy b:int32) returns r:int32
 requires [a > 0, b > 0]
 ensures [old(x) > 0]
@@ -74,9 +73,9 @@ fun notBool(in copy n:int32) returns r:int32
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=????]
+\begin{lstlisting}[caption=Test]
 proc twoTimes(in copy m:int32, out ref r:int32)
-ensures [old(m) = (r - m)]
+ensures [old(m) == (r - m)]
 {
     r init := m + m;
 }
