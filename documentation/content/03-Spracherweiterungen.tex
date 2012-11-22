@@ -45,7 +45,7 @@ requires    (Token: REQUIRES)
 ensures     (Token: ENSURES)
 \end{lstlisting}
 
-\newpage
+%\newpage
 \subsubsection{Grammatikalische Syntax}
 Die Grammatik wurde um neue nichtterminal Symbole erweitert. Zudem wurden die NTS funDecl und 
 procDecl erweitert, damit nun die conditions an die Deklaration gehängt werden können. Die angepassten
@@ -95,7 +95,7 @@ entschieden. Dies hat den Vorteil, dass die Grammatik nicht komplexer wird. Jedo
 muss ein neuer Kontext-Check eingeführt werden, welcher überprüft, dass kein Namenskonflikt
 mit einer existierenden Funktion auftritt. Zudem muss überprüft werden, ob \textit{old} 
 nur innerhalb von postconditions auftritt. Ein Beispiel ist in Listing \ref{lst:old_state} zu sehen.
-\newpage
+%\newpage
 \begin{lstlisting}[caption=Beispiel eines Zugriffs auf alten Zustand,label={lst:old_state}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
 ensures [old(n) > r]
