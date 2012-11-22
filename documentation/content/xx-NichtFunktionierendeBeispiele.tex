@@ -1,0 +1,83 @@
+
+\begin{lstlisting}[caption=Wert einer Variable in der pre-/postcondition ändern]
+proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
+requires [n := 0]
+ensures [r := 12 + 1]
+{
+    q init := 0;
+    r init := m;
+
+    while(r >= n) {
+        q := q+1;
+        r := r-n;
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Zugriff auf eine Variable mit der old Funktion, welche nicht Vorhanden ist.]
+fun gcd(in copy a:int32, in copy b:int32) returns r:int32
+requires [a > 0, b > 0]
+ensures [old(x) > 0]
+{
+    r init := 0;
+    
+    if (a == 0) {
+        r := b;
+    } else {
+        while (b /= 0) {
+            if (a > b) {
+                a := a - b;
+            } else {
+                b := b - a;
+            }
+        }
+    }
+
+    r := a
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Eine nicht Boolsche Expression in der Condition List]
+fun multiply(in copy m:int32, in copy n:int32) returns r:int32
+requires [n + 0]
+{
+    i init := 0;
+    r init := m;
+
+    while(i < n) {
+        i := i+1;
+        r := r+m;
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Eine Funktion in der Condition List welche keinen Boolschen Wert zurückliefert]
+fun multiply(in copy m:int32, in copy n:int32) returns r:int32
+requires [positive:notBool(n)]
+{
+    i init := 0;
+    r init := m;
+
+    while(i < n) {
+        i := i+1;
+        r := r+m;
+    }
+}
+fun notBool(in copy n:int32) returns r:int32
+{
+    r init := 10;
+    if(n>0) {
+        r := 5;
+    } else {
+        r := 7;
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=????]
+proc twoTimes(in copy m:int32, out ref r:int32)
+ensures [old(m) = (r - m)]
+{
+    r init := m + m;
+}
+\end{lstlisting}
