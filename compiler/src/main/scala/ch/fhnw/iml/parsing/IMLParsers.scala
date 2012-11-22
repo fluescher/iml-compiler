@@ -111,10 +111,10 @@ class IMLParsers extends TokenParsers {
     /* Commands */
     def cmd : Parser[Command] = (Skip 											^^ {case s => SkipCommand()}
 			| (expr ~ Becomes ~ expr) 											^^ {case e1 ~ _ ~ e2 => AssiCommand(e1, e2) }
-			| (If ~ LParen ~ expr ~ RParen ~ blockCmd ~ Else ~ blockCmd)		^^ {case _ ~ _ ~ ex ~ _ ~ cmd1 ~ _ ~ cmd2 => CondCommand(ex, cmd1, cmd2)}
-			| (While ~ LParen ~ expr ~ RParen ~ blockCmd)						^^ {case _ ~ _ ~ ex ~ _ ~ cmd1 => WhileCommand(ex, cmd1)}
-			| (Call ~ ident ~ exprList ~ Init ~ globInitList)					^^ {case _ ~ name ~ list ~ _ ~ initlist => ProcCallComand(name, list, initlist)}
-			| (Call ~ ident ~ exprList)											^^ {case _ ~ name ~ list => ProcCallComand(name, list, List())}
+			| (If ~ LParen ~> expr ~ RParen ~ blockCmd ~ Else ~ blockCmd)		^^ {case ex ~ _ ~ cmd1 ~ _ ~ cmd2 => CondCommand(ex, cmd1, cmd2)}
+			| (While ~ LParen ~> expr ~ RParen ~ blockCmd)						^^ {case ex ~ _ ~ cmd1 => WhileCommand(ex, cmd1)}
+			| (Call ~> ident ~ exprList ~ Init ~ globInitList)					^^ {case name ~ list ~ _ ~ initlist => ProcCallComand(name, list, initlist)}
+			| (Call ~> ident ~ exprList)										^^ {case name ~ list => ProcCallComand(name, list, List())}
 			| (QuestionMark ~> expr)											^^ {case ex => InputCommand(ex)}
 			| (ExclamationMark ~> expr)											^^ {case ex => OutputCommand(ex)})  			
     
