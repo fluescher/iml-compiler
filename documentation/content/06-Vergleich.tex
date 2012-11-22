@@ -25,7 +25,8 @@ conditions(oder eben contracts) zu formulieren (ähnlich wie Assertions).
 Danach ist es dem Framework jedoch möglich, daraus sowohl Laufzeitchecks als auch 
 Dokumentationsdateien zu generieren. Viel interessanter ist jedoch die Möglichkeit einen 
 statischen Checker zu benutzen, welcher Contracts bereits zur compile-time überprüfen 
-kann \cite{MS:StaticAnalysis}.
+kann \cite{MS:StaticAnalysis}. Dies geht viel weiter als unsere Imeplementirung für IML, 
+ist jedoch nicht direkt in der Sprache enthalten.
 
 \subsection{Eiffel}
 Die Sprache Eiffel enthält sehr ähnliche Implementierung wie die von uns für IML gewählte. Durch
@@ -34,7 +35,7 @@ Vererbung von conditions. Den Zugriff auf pre-execution-state von Variablen wir 
 Keyword \textit{old} ermöglicht.
 
 \subsection{D}
-Die Sprache D\cite{D:Main}, welche C++ weiterentickeln soll, ermöglicht es sowohl Klassen-Invarianten,
+Die Sprache D\cite{D:Main}, welche C++ weiterentwickeln soll, ermöglicht es sowohl Klassen-Invarianten,
 als auch conditions auf der Ebene eines Statements zu definieren. Da auch diese Sprache objektorientiert 
 ist, wurden Klasseninvarianten implementiert. Es ist jedoch nicht möglich innerhalb der Postcondition 
 auf den Zustand von Variablen vor der Ausführung des bodys zuzugreifen.\newline
