@@ -1,14 +1,14 @@
 \begin{lstlisting}[caption=Wert einer Variable in der pre-/postcondition ändern]
-proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
+proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 requires [n := 0]
 ensures [r := 12 + 1]
 {
     q init := 0;
     r init := m;
 
-    while(r >= n) {
-        q := q+1;
-        r := r-n;
+    while (r >= n) {
+        q := q + 1;
+        r := r - n
     }
 }
 \end{lstlisting}
@@ -20,19 +20,18 @@ ensures [old(x) > 0]
 {
     r init := 0;
     
-    if (a == 0) {
-        r := b;
+    if (a = 0) {
+        r := b
     } else {
         while (b /= 0) {
             if (a > b) {
-                a := a - b;
+                a := a - b
             } else {
-                b := b - a;
+                b := b - a
             }
-        }
+        };
+        r := a
     }
-
-    r := a
 }
 \end{lstlisting}
 
@@ -43,9 +42,9 @@ requires [n + 0]
     i init := 0;
     r init := m;
 
-    while(i < n) {
-        i := i+1;
-        r := r+m;
+    while (i < n) {
+        i := i + 1;
+        r := r + m
     }
 }
 \end{lstlisting}
@@ -57,26 +56,24 @@ requires [positive:notBool(n)]
     i init := 0;
     r init := m;
 
-    while(i < n) {
-        i := i+1;
-        r := r+m;
+    while (i < n) {
+        i := i + 1;
+        r := r + m
     }
 }
+
 fun notBool(in copy n:int32) returns r:int32
 {
-    r init := 10;
-    if(n>0) {
-        r := 5;
-    } else {
-        r := 7;
-    }
+    r init := 10
 }
 \end{lstlisting}
 
 \begin{lstlisting}[caption=Test]
 proc twoTimes(in copy m:int32, out ref r:int32)
-ensures [old(m) == (r - m)]
+ensures [old(m) = (r - m)]
 {
-    r init := m + m;
+    r init := m + m
 }
 \end{lstlisting}
+
+Beispiel mit zugriff auf globale Variable welche nicht in der globalImportList ist.

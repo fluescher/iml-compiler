@@ -22,8 +22,8 @@ werden, welche zu einem boolean Typ ausgewertet werden. Mehr dazu wird im
 Kapitel \ref{sec:constraints} erleutert.
 \newline
 \begin{lstlisting}[caption=Beispiele von pre-/postconditions,label={lst:first}]
-proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
-requires [n > 0, dumb_condition: unnecessary(m, n)]
+proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
+requires [n > 0, dumbCondition: unnecessary(m, n)]
 ensures [r >= 0]
 {
     q init := 0;
@@ -31,7 +31,7 @@ ensures [r >= 0]
 
     while(r >= n) {
         q := q+1;
-        r := r-n;
+        r := r-n
     }
 }
 \end{lstlisting}
@@ -97,7 +97,7 @@ mit einer existierenden Funktion auftritt. Zudem muss überprüft werden, ob \te
 nur innerhalb von postconditions auftritt. Ein Beispiel ist in Listing \ref{lst:old_state} zu sehen.
 %\newpage
 \begin{lstlisting}[caption=Beispiel eines Zugriffs auf alten Zustand,label={lst:old_state}]
-proc divide(in copy m:int32, in copy n:int32, out ref q:int, out ref r:int32)
+proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 ensures [old(n) > r]
 {
     q init := 0;
@@ -105,7 +105,7 @@ ensures [old(n) > r]
 
     while(r >= n) {
         q := q+1;
-        r := r-n;
+        r := r-n
     }
 }
 \end{lstlisting}

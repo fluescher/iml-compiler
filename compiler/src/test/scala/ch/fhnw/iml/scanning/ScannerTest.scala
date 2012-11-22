@@ -22,14 +22,14 @@ class ScannerTest {
     
     @Test
     def testScannFirstProgram() {
-        val scanner = new Scanner(Source.fromFile("src/test/resources/first.iml").mkString)
+        val scanner = new Scanner(Source.fromFile("src/test/resources/bsp2.iml").mkString)
     	printTokens(scanner.asInstanceOf[Reader[Token]])
     	
     	
     	val p = new IMLParsers()
 //        println(p.param(new Scanner("in copy m:int32").asInstanceOf[Reader[p.lexical.Token]]))
                 
-        p.parse(new CharArrayReader(Source.fromFile("src/test/resources/first.iml").mkString.toCharArray()))
+        p.parse(new CharArrayReader(Source.fromFile("src/test/resources/bsp2.iml").mkString.toCharArray()))
     }
 
     @Test
