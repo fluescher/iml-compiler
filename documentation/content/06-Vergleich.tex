@@ -3,7 +3,7 @@ In diesem Abschnitt wird der gewählte Entwurf mit Implementierungen
 für andere Sprachen verglichen.
 
 \subsection{Java / C(++)}
-Die meistverwendeten Sprachen Java, sowie C(++) enthalten keine Unterstützung des Compilers 
+Die meist verwendeten Sprachen Java, sowie C(++) enthalten keine Unterstützung des Compilers 
 zur Definition von pre-/postconditions auf Methoden. Jedoch gibt es die Möglichkeit 
 über \textit{Assertions} Bedingungen im Code zu definieren, welche zu einem Programmabbruch führen.
 Darüber hat ein Programmierer die Möglichkeit conditions zu formulieren. Diese können jedoch über weite
@@ -25,7 +25,7 @@ conditions(oder eben contracts) zu formulieren (ähnlich wie Assertions).
 Danach ist es dem Framework möglich, daraus sowohl Laufzeitchecks als auch 
 Dokumentationsdateien zu generieren. Viel interessanter ist jedoch die Möglichkeit einen 
 statischen Checker zu benutzen, welcher Contracts bereits zur compile-time überprüfen 
-kann \cite{MS:StaticAnalysis}. Dies geht viel weiter als unsere Imeplementirung für IML, 
+kann \cite{MS:StaticAnalysis}. Dies geht viel weiter als unsere Implementirung für IML, 
 ist jedoch nicht direkt in der Sprache enthalten.
 
 \subsection{Eiffel}
@@ -56,11 +56,11 @@ body
 \end{lstlisting}
 
 \subsection{Ada}
-Ada erlaubt die Definition von pre-postconditions auf Ebene von Prozeduren/Funktionten und Subtypen 
+Ada erlaubt die Definition von pre-postconditions auf Ebene von Prozeduren/Funktionen und Subtypen 
 seit der Version 2012. Subtypen sind
-dabei bereits eine Art von Einschränkung, welche vom Comiler als Typ aufgefasst werden und daher bereits
+dabei bereits eine Art von Einschränkung, welche vom Compiler als Typ aufgefasst werden und daher bereits
 bei der Kompilationszeit erkannt werden. Seit Ada 2012 ist es jedoch auch möglich, solche Subtypen 
-mit dynamischen und statischen Prädikaten zu versehen. Dabei werden die dynamischen zur Laufzeit 
+mit dynamischen und statischen Prädikaten zu versehen. Dabei werden die dynamischen 
 überprüft, während die statischen viele Überprüfungen bereits zur Kompilationszeit
  durchführen können. Auch 
 Ada erlaubt den Zugriff auf Zustand vor der Ausführung der Prozedur. \newline
