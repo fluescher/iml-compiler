@@ -49,7 +49,7 @@ requires [n + 0]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Eine Funktion in der Condition List welche keinen Boolschen Wert zurückliefert]
+\begin{lstlisting}[caption=Eine Funktion in der Condition List welche keinen boolschen Wert zurückliefert]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
 requires [positive:notBool(n)]
 {
@@ -68,12 +68,13 @@ fun notBool(in copy n:int32) returns r:int32
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Test]
+\begin{lstlisting}[caption=Beispiel mit Zugriff auf globale Variable, welche nicht in der globalImportList importiert wurde]
 proc twoTimes(in copy m:int32, out ref r:int32)
-ensures [old(m) = (r - m)]
+ensures [g > 10]
 {
     r init := m + m
-}
-\end{lstlisting}
+};
 
-Beispiel mit Zugriff auf globale Variable welche nicht in der globalImportList importiert wurde.
+var g:int32
+
+\end{lstlisting}
