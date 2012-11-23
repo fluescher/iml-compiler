@@ -1,13 +1,14 @@
 \section{Kontext- und Typeinschränkungen}
 \label{sec:constraints}
-In den folgenden Kapitel werden die nötigen Kontext Checks beschrieben.
+In diesem Kapitel werden die nötigen Kontext Checks beschrieben.
 
 \subsection{Kontext Einschränkungen}
 
-Grundsätzlich: kein State Ändern. Durch Trennung expr cmd  und übrige checks bereits erreicht.
+Für conditions gilt grundsätzlich, dass bei ihrer Ausführung kein State verändert werden 
+darf. In IML wurde dies durch die saubere Trennung von Expressions und Commands sowie die standard
+Kontext Checks bereits erreicht. Trotzem sind einige Weitere Einschränkungen nötig.
 
 \begin{itemize}
-
 
 \item Die Funktion old() darf nur innerhalb von postconditions aufgerufen werden.
 \item Es darf keine weitere Funktion mit dem Namen old deklariert werden.
@@ -16,7 +17,7 @@ Grundsätzlich: kein State Ändern. Durch Trennung expr cmd  und übrige checks 
 
 \end{itemize}
 
-\subsubsection{Variablenzugriff}
+\subsubsection{Speicherzugriff}
 
 \begin{itemize}
 \item In Preconditions kann auf alle initialisierten Variablen und Konstanten zugegriffen werden, welche 
