@@ -98,6 +98,8 @@ entschieden. Dies hat den Vorteil, dass die Grammatik nicht komplexer wird. Jedo
 muss ein neuer Kontext-Check eingeführt werden, welcher überprüft, dass kein Namenskonflikt
 mit einer existierenden Funktion auftritt. Zudem muss überprüft werden, ob \textit{old} 
 nur innerhalb von postconditions auftritt. Ein Beispiel ist in Listing \ref{lst:old_state} zu sehen.
+Diese Variante schränkt die Abwärtskompatibilität leider ein, da keine Programme verwendet 
+werden können, welche eine Routine namens \textit{old} definiert haben.
 %\newpage
 \begin{lstlisting}[caption=Beispiel eines Zugriffs auf alten Zustand,label={lst:old_state}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
