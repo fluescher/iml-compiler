@@ -100,7 +100,7 @@ mit einer existierenden Funktion auftritt. Zudem muss überprüft werden, ob \te
 nur innerhalb von postconditions auftritt. Ein Beispiel ist in Listing \ref{lst:old_state} zu sehen.
 Diese Variante schränkt die Abwärtskompatibilität leider ein, da keine Programme verwendet 
 werden können, welche eine Routine namens \textit{old} definiert haben.
-\newpage
+%\newpage
 \begin{lstlisting}[caption=Beispiel eines Zugriffs auf alten Zustand,label={lst:old_state}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 ensures [old(n) > r]
