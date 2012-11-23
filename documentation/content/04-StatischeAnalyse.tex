@@ -6,22 +6,31 @@ In den folgenden Kapitel werden die nötigen Kontext Checks beschrieben.
 
 Grundsätzlich: kein State Ändern. Durch Trennung expr cmd  und übrige checks bereits erreicht.
 
-* Die Funktion old() darf nur innerhalb von postconditions aufgerufen werden.
-* Es darf keine weitere Funktion mit dem Namen old deklariert werden.
-* Das Label einer Condition muss innerhalb der Condition List einmalig sein.
-* Expressions innerhalb der Conditions müssen einen boolschen Wert erzeugen.
+\begin{itemize}
+
+
+\item Die Funktion old() darf nur innerhalb von postconditions aufgerufen werden.
+\item Es darf keine weitere Funktion mit dem Namen old deklariert werden.
+\item Das Label einer Condition muss innerhalb der Condition List einmalig sein.
+\item Expressions innerhalb der Conditions müssen einen boolschen Wert erzeugen.
+
+\end{itemize}
 
 \subsubsection{Variablenzugriff}
 
-* In Preconditions kann auf alle initialisierten Variablen und Konstanten zugegriffen werden, welche 
+\begin{itemize}
+\item In Preconditions kann auf alle initialisierten Variablen und Konstanten zugegriffen werden, welche 
 in der Parameterliste oder der Global Import List definiert wurden. Auf lokal deklarierte Variablen 
-kann nicht zugegriffen werden.
-* In Postconditions kann auf alle Variablen und Konstanten zugegriffen werden, welche auch in 
+kann nicht zugegriffen werden. Da out-Parameter nicht initialisiert sind, stehen sie nicht zur
+Verfügung.
+\item In Postconditions kann auf alle Variablen und Konstanten zugegriffen werden, welche auch in 
 Preconditions möglich sind. Zusätzlich sind alle lokal definierten Variablen und Konstanten verfügbar.
-* In Postconditions von Funktionen kann auf den Return Wert zugegriffen werden.
-* In Postconditions von Prozeduren kann auf out Parameter zugegriffen werden.
-* Die Funktion old() kann nicht auf Konstanten benutzt werden.
-* Die Funktion old() kann nur auf Variablen benutzt werden, welche in der Precondition verfügbar wären.
+\item In Postconditions von Funktionen kann auf die Returnvariable zugegriffen werden.
+\item In Postconditions von Prozeduren kann auf out-Parameter zugegriffen werden.
+\item Die Funktion old() kann nicht auf Konstanten benutzt werden.
+\item Die Funktion old() kann nur auf Variablen benutzt werden, welche in der Precondition verfügbar wären.
+
+\end{itemize}
 
 %\newpage
 

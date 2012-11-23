@@ -11,6 +11,18 @@ global
 			r := r - n
 		}
 	};
+	fun multiply(in copy m:int32, in copy n:int32)
+	returns r:int32
+	requires [positive:isPositive(n)]
+	{
+		i init := 0;
+		r init := m;
+		while (i < n) {
+			i := i + 1;
+			r := r + m
+		}
+	};
+	
 	
 	var m:int32;
 	var n:int32;

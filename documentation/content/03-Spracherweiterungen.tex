@@ -14,12 +14,15 @@ Das definieren von pre- und postconditions sollte direkt beim Deklarieren
 der Prozedur oder der Funktion ermöglicht werden. So sind die Garantien
 für den Programmierer auf einen Blick ersichtlich und erleichern so 
 das Verständnis der Prozedur. In Listing \ref{lst:first} ist ein Beispiel 
-einer Prozedur mit conditions ersichtlich. Das Label "dump\_condition" dient dazu, im
+einer Prozedur mit conditions ersichtlich. Das Label "dumpCondition" dient dazu, im
 Falle eines Fehlschlags der darauffolgenden condition hilfreiche Fehlermeldungen generieren zu können.
 In Folge des Fehlens eines String-Literals wird ein Ident verwendet.
 Als conditions können alle Expressions verwendet
 werden, welche zu einem boolean Typ ausgewertet werden. Mehr dazu wird im 
 Kapitel \ref{sec:constraints} erleutert.
+Es wird ebenfalls erlaubt, eine leere Condition List zu definieren. Dies erlaubt es dem Programmierer
+zu zeigen dass er an Pre-/Postconditions gedacht hat, die Routine aber beispielsweise für alle
+Eingaben funktioniert.
 \newline
 \begin{lstlisting}[caption=Beispiele von pre-/postconditions,label={lst:first}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
