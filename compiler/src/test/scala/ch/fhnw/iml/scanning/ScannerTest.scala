@@ -1,12 +1,14 @@
 package ch.fhnw.iml.scanning
 
 import scala.io.Source
-import scala.util.parsing.input.Reader
-import org.junit.Test
-import org.junit.Assert
-import scala.util.parsing.input.CharArrayReader.EofCh
 import scala.util.parsing.input.CharArrayReader
+import scala.util.parsing.input.CharArrayReader.EofCh
+import scala.util.parsing.input.Reader
+
+import org.junit.Assert
 import org.junit.Ignore
+import org.junit.Test
+
 import ch.fhnw.iml.parsing.IMLParsers
 
 class ScannerTest {
@@ -29,7 +31,10 @@ class ScannerTest {
     	val p = new IMLParsers()
 //        println(p.param(new Scanner("in copy m:int32").asInstanceOf[Reader[p.lexical.Token]]))
                 
-        p.parse(new CharArrayReader(Source.fromFile("src/test/resources/first.iml").mkString.toCharArray()))
+        val r = p.parse(new CharArrayReader(Source.fromFile("src/test/resources/first.iml").mkString.toCharArray()))
+        r match {
+            case p.Success(r,_) => println(r.pos)
+        }
     }
 
     @Test
@@ -39,6 +44,7 @@ class ScannerTest {
         Assert.assertEquals(IntLiteral(123), scanner.first);
     }
     
+    @Ignore("BLUBBER")
     @Test
     def testEndOfInput() {
         val scanner = new Scanner(new CharArrayReader("123".toCharArray()))

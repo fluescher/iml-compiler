@@ -9,8 +9,8 @@ class IMLLexical extends Lexical with IMLTokens {
     
     override def whitespace : Parser[Any] = rep(whitespaceChar)
 
-	override def token: Parser[Token] =
-	    (	digit ~ rep(digit)					^^ { case first ~ last => IntLiteral((first::last mkString).toInt) }   
+	override def token: Parser[IMLToken] =
+	    positioned(	digit ~ rep(digit)			^^ { case first ~ last => IntLiteral((first::last mkString).toInt) }   
 	    |   identChar ~ rep(identChar | digit) 	^^ { case first ~ last => chooseIdentToken(first::last mkString) }
 	    | 	'('									^^^	LParen
 	    |	')'									^^^ RParen
@@ -35,8 +35,6 @@ class IMLLexical extends Lexical with IMLTokens {
 	    |	'>'									^^^ GreaterThan
 	    |	'<' ~ '='							^^^ LessEqualsThan
 	    |	'<'									^^^ LessThan
-	    
-	    |	EOI									^^^ EOF			
 	    )
 	
 	/**
@@ -49,7 +47,7 @@ class IMLLexical extends Lexical with IMLTokens {
         }
     }
     
-	private def chooseIdentToken(name: String) : Token = name match {
+	private def chooseIdentToken(name: String) : IMLToken = name match {
         case "bool" => Bool
         case "call" => Call
         case "cand" => And

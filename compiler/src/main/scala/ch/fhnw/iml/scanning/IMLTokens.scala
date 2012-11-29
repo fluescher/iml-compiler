@@ -1,6 +1,7 @@
 package ch.fhnw.iml.scanning
 
 import scala.util.parsing.combinator.token.Tokens
+import scala.util.parsing.input.Positional
 
 trait IMLTokens extends Tokens {
     /**
@@ -11,7 +12,9 @@ trait IMLTokens extends Tokens {
         def chars = IMLTokenChars.this.toString()
     }
     
-    sealed abstract class Keyword extends Token with IMLTokenChars
+    trait IMLToken extends Token with Positional
+    
+    sealed abstract class Keyword extends IMLToken with IMLTokenChars
     case object Program extends Keyword
     case object Call extends Keyword
     case object Returns extends Keyword
@@ -49,15 +52,15 @@ trait IMLTokens extends Tokens {
     case object Do extends Keyword
     
     /* if 21*/
-    case object If extends Token with IMLTokenChars 
-    case object Else extends Token with IMLTokenChars 
+    case object If extends IMLToken with IMLTokenChars 
+    case object Else extends IMLToken with IMLTokenChars 
     
-    case class Ident(chars: String) extends Token {
+    case class Ident(chars: String) extends IMLToken {
         override def toString() = "Ident("+chars+")"
     }
     
     /* literals */
-    sealed abstract class Literal extends Token
+    sealed abstract class Literal extends IMLToken
     case class IntLiteral(v: Int) extends Literal {
         def chars = v.toString
         override def toString() = "IntLiteral("+chars+")"
@@ -70,7 +73,7 @@ trait IMLTokens extends Tokens {
     case object False extends BoolLiteral(false)
     
     /* symbols */
-    sealed abstract class Symbol extends Token with IMLTokenChars
+    sealed abstract class Symbol extends IMLToken with IMLTokenChars
     case object LParen extends Symbol
     case object RParen extends Symbol
     case object Comma extends Symbol

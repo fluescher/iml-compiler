@@ -1,10 +1,12 @@
 package ch.fhnw.iml.ast
 
+import scala.util.parsing.input.Positional
+
 class AST(root: Node) {
 
 }
 
-trait Node
+trait Node extends Positional
 
 /* programs */
 case class ProgramAst(i: IdentAst, cps: CpsDecl, cmd: BlockCommand) extends Node
@@ -68,8 +70,8 @@ case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[
 case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class CpsDecl(decls: List[Decl]) extends Decl
 
-case class FunHead(i: IdentAst, params: ParameterList, store: StoreDecl)
-case class ProcHead(i: IdentAst, params: ParameterList)
+case class FunHead(i: IdentAst, params: ParameterList, store: StoreDecl) extends Node
+case class ProcHead(i: IdentAst, params: ParameterList) extends Node
 
 /* Conditions */
 case class Condition(name: Option[IdentAst], expr: Expr) extends Node
