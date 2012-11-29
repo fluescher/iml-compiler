@@ -22,14 +22,15 @@ class IMLParsers extends TokenParsers {
         			LBracket, RBracket, Ensures, Requires}
     
     /* Programs */
-    def program = positioned((Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramAst(i,c,b)}
-    			|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramAst(i,null,b)}
-    			)
+    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b)}
+    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,null,b)}
+    						)
     
     /* declarations */
-    def decl = positioned(storeDecl
-    		 	| funDecl
-    		 	| procDecl)
+    def decl = positioned( storeDecl
+		    		 	 | funDecl
+		    		 	 | procDecl
+		    		 	 )
     				 
     def storeDecl : Parser[StoreDecl] = positioned((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(null), i, t)})
 
@@ -166,20 +167,20 @@ class IMLParsers extends TokenParsers {
     			   | Div 	^^^ DivOpr
     			   | Mod 	^^^ ModOpr)
     			   
-    def imlType = positioned(  Int32 	^^^ Int32Ast
-    			   | Bool 	^^^ BoolAst)
+    def imlType = positioned(  Int32 	^^^ Int32Node
+    			   | Bool 	^^^ BoolNode)
     			   
     def flowMode = positioned( InOut	^^^ InOutFlow
     			   | Out	^^^ OutFlow
     			   | In		^^^ InFlow)
     			   
-    def changeMode = positioned( Var 		^^^ VarAst
-    				 | Const 	^^^ ConstAst )
+    def changeMode = positioned( Var 		^^^ VarNode
+    				 | Const 	^^^ ConstNode )
 
-    def mechMode = positioned( Ref		^^^ RefAst
-    			   | Copy		^^^ CopyAst)
+    def mechMode = positioned( Ref		^^^ RefNode
+    			   | Copy		^^^ CopyNode)
     				 
-    def ident = positioned(elem("ident", _.isInstanceOf[Ident]) ^^ {case i => IdentAst(i.chars)})
+    def ident = positioned(elem("ident", _.isInstanceOf[Ident]) ^^ {case i => IdentNode(i.chars)})
 
     
     private def literal = positioned(elem("Literal", _.isInstanceOf[Literal]) ^^ { case IntLiteral(x) => IntLiteralExpression(x) 

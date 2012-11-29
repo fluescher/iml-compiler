@@ -9,7 +9,7 @@ class AST(root: Node) {
 trait Node extends Positional
 
 /* programs */
-case class ProgramAst(i: IdentAst, cps: CpsDecl, cmd: BlockCommand) extends Node
+case class ProgramNode(i: IdentNode, cps: CpsDecl, cmd: BlockCommand) extends Node
 
 /* Commands */
 sealed abstract class Command extends Node
@@ -18,7 +18,7 @@ case class SkipCommand extends Command
 case class AssiCommand(expr1: Expr, expr2: Expr) extends Command
 case class CondCommand(expr: Expr, cmd1: Command, cmd2: Command) extends Command
 case class WhileCommand(expr: Expr, cmd: Command) extends Command
-case class ProcCallComand(f: IdentAst, exprs: List[Expr], idents: List[IdentAst]) extends Command
+case class ProcCallComand(f: IdentNode, exprs: List[Expr], idents: List[IdentNode]) extends Command
 case class InputCommand(expr: Expr) extends Command
 case class OutputCommand(expr: Expr) extends Command
 
@@ -26,9 +26,9 @@ case class OutputCommand(expr: Expr) extends Command
 sealed abstract class Expr extends Node
 case class BoolLiteralExpression(value: Boolean) extends Expr
 case class IntLiteralExpression(value: Int) extends Expr
-case class StoreExpr(i: IdentAst, isInitialization: Boolean) extends Expr
-case class VarAccess(i: IdentAst) extends Expr
-case class FunCallExpr(i: IdentAst, exprs: List[Expr]) extends Expr
+case class StoreExpr(i: IdentNode, isInitialization: Boolean) extends Expr
+case class VarAccess(i: IdentNode) extends Expr
+case class FunCallExpr(i: IdentNode, exprs: List[Expr]) extends Expr
 case class MonadicExpr(opr: Opr, expr: Expr) extends Expr
 case class DyadicExpr(opr: Opr, expr1: Expr, expr2: Expr) extends Expr
 
@@ -50,9 +50,9 @@ case object DivOpr extends Opr
 case object ModOpr extends Opr
 
 /* types */
-sealed abstract class TypeAst extends Node
-case object Int32Ast extends TypeAst
-case object BoolAst extends TypeAst
+sealed abstract class TypeNode extends Node
+case object Int32Node extends TypeNode
+case object BoolNode extends TypeNode
 
 /* flow control */
 sealed abstract class Flow extends Node
@@ -61,34 +61,34 @@ case object OutFlow extends Flow
 case object InFlow extends Flow
 
 /* Ident */
-case class IdentAst(chars: String) extends Node
+case class IdentNode(chars: String) extends Node
 
 /* Declarations */
 sealed abstract class Decl extends Node
-case class StoreDecl(change: ChangeModeAst, i: IdentAst, t: TypeAst) extends Decl
+case class StoreDecl(change: ChangeModeNode, i: IdentNode, t: TypeNode) extends Decl
 case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class CpsDecl(decls: List[Decl]) extends Decl
 
-case class FunHead(i: IdentAst, params: ParameterList, store: StoreDecl) extends Node
-case class ProcHead(i: IdentAst, params: ParameterList) extends Node
+case class FunHead(i: IdentNode, params: ParameterList, store: StoreDecl) extends Node
+case class ProcHead(i: IdentNode, params: ParameterList) extends Node
 
 /* Conditions */
-case class Condition(name: Option[IdentAst], expr: Expr) extends Node
+case class Condition(name: Option[IdentNode], expr: Expr) extends Node
 case class ConditionList(conditions: List[Condition]) extends Node
 
 /* Parameter  */
 sealed abstract class Param extends Node
-case class GlobalImport(flow: Flow, change: ChangeModeAst, i: IdentAst) extends Param
+case class GlobalImport(flow: Flow, change: ChangeModeNode, i: IdentNode) extends Param
 case class GlobalImportList(globals: List[GlobalImport]) extends Param
-case class Parameter(flow: Flow, mech: MechModeAst, store: StoreDecl) extends Param
+case class Parameter(flow: Flow, mech: MechModeNode, store: StoreDecl) extends Param
 case class ParameterList(params: List[Parameter]) extends Param
 
 /* Change Mode */
-sealed abstract class ChangeModeAst extends Node
-case object VarAst extends ChangeModeAst
-case object ConstAst extends ChangeModeAst
+sealed abstract class ChangeModeNode extends Node
+case object VarNode extends ChangeModeNode
+case object ConstNode extends ChangeModeNode
 
-sealed abstract class MechModeAst extends ChangeModeAst
-case object RefAst extends MechModeAst
-case object CopyAst extends MechModeAst
+sealed abstract class MechModeNode extends ChangeModeNode
+case object RefNode extends MechModeNode
+case object CopyNode extends MechModeNode
