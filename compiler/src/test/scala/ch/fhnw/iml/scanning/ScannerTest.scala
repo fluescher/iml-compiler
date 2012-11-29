@@ -34,6 +34,7 @@ class ScannerTest {
         val r = p.parse(new CharArrayReader(Source.fromFile("src/test/resources/first.iml").mkString.toCharArray()))
         r match {
             case p.Success(r,_) => println(r.pos)
+            case _ => println("Error parsing")
         }
     }
 
