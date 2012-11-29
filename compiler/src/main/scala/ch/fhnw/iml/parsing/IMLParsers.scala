@@ -167,8 +167,8 @@ class IMLParsers extends TokenParsers {
     			   | Div 	^^^ DivOpr
     			   | Mod 	^^^ ModOpr)
     			   
-    def imlType = positioned(  Int32 	^^^ Int32Node
-    			   | Bool 	^^^ BoolNode)
+    def imlType = (  Int32 				^^^ ch.fhnw.iml.ast.Int32
+    			   | Bool 				^^^ ch.fhnw.iml.ast.Bool)
     			   
     def flowMode = positioned( InOut	^^^ InOutFlow
     			   | Out	^^^ OutFlow

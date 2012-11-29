@@ -2,7 +2,7 @@ package ch.fhnw.iml.ast
 
 import scala.util.parsing.input.Positional
 
-class AST(root: Node) {
+class AST(val root: Node) {
 
 }
 
@@ -50,9 +50,9 @@ case object DivOpr extends Opr
 case object ModOpr extends Opr
 
 /* types */
-sealed abstract class TypeNode extends Node
-case object Int32Node extends TypeNode
-case object BoolNode extends TypeNode
+sealed abstract class Type
+case object Int32 extends Type
+case object Bool extends Type
 
 /* flow control */
 sealed abstract class Flow extends Node
@@ -65,7 +65,7 @@ case class IdentNode(chars: String) extends Node
 
 /* Declarations */
 sealed abstract class Decl extends Node
-case class StoreDecl(change: ChangeModeNode, i: IdentNode, t: TypeNode) extends Decl
+case class StoreDecl(change: ChangeModeNode, i: IdentNode, t: Type) extends Decl
 case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class CpsDecl(decls: List[Decl]) extends Decl
@@ -92,3 +92,7 @@ case object ConstNode extends ChangeModeNode
 sealed abstract class MechModeNode extends ChangeModeNode
 case object RefNode extends MechModeNode
 case object CopyNode extends MechModeNode
+
+sealed abstract class Scope
+case object Local extends Scope
+case object Global extends Scope
