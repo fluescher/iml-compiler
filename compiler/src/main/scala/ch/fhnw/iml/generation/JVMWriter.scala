@@ -90,7 +90,7 @@ object JVMWriter {
     }
     
     def writeCmd(cmd: Command)(implicit scope: Scope) = cmd match {
-        case SkipCommand 	=> println("NOP"); scope.method.visitInsn(NOP); 
+        case SkipCommand 	=> scope.method.visitInsn(NOP); 
         case _ 				=> 
     }
 }
