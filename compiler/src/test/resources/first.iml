@@ -1,5 +1,6 @@
 program intDiv
 global
+	var m:int32;
 	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 	requires [n > 0]
 	ensures [somePost: (((((((r < n))))))) ]
@@ -24,7 +25,7 @@ global
 	};
 	
 	
-	var m:int32;
+	
 	var n:int32;
 	var q:int32;
 	var r:int32

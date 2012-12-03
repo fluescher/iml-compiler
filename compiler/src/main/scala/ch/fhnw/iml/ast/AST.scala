@@ -2,9 +2,7 @@ package ch.fhnw.iml.ast
 
 import scala.util.parsing.input.Positional
 
-class AST(val root: Node) {
-
-}
+case class AST(val root: ProgramNode)
 
 trait Node extends Positional
 

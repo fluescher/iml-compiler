@@ -31,7 +31,7 @@ class ScannerTest {
     	val p = new IMLParsers()
 //        println(p.param(new Scanner("in copy m:int32").asInstanceOf[Reader[p.lexical.Token]]))
                 
-        val r = p.parse(new CharArrayReader(Source.fromFile("src/test/resources/first.iml").mkString.toCharArray()))
+        val r = p.parse(Source.fromFile("src/test/resources/first.iml").mkString)
         r match {
             case p.Success(r,_) => println(r.pos)
             case _ => println("Error parsing")

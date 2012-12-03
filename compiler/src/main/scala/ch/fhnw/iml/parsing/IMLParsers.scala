@@ -187,7 +187,7 @@ class IMLParsers extends TokenParsers {
 																	    case True => BoolLiteralExpression(true)
 																	    case False => BoolLiteralExpression(false)})
     
-    def parse(source : Reader[Char]) = {
+    def parse(source : String) = {
         val scanner = new lexical.Scanner(source)
        
         phrase(program)(scanner)
