@@ -12,24 +12,26 @@ import org.objectweb.asm.MethodVisitor
 
 object JVMWriter {
     
+    val JVM_V5 = 49
+    
     type FrameSize = (Int, Int)
     case class Scope(writer: ClassWriter, method: MethodVisitor)
     
-    def apply(ast: AST) {
+    def apply(ast: AST, filename : String = "dynamic") {
         val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
-        fileWriter.write(generateClass(ast))
+        fileWriter.write(generateClass(ast, filename))
         fileWriter.close
     }
 
-    def generateClass(ast: AST) = {
+    def generateClass(ast: AST, filename: String) = {
         implicit val writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        writeProgram(ast.root)
+        writeProgram(ast.root, filename)
         writer.toByteArray
     }
 
-    def writeProgram(p: ProgramNode)(implicit writer: ClassWriter) {
-        writer.visit(49, ACC_PUBLIC + ACC_SUPER, p.i.chars, null, "java/lang/Object", null)
-        writer.visitSource(p.i.chars + ".java", null)
+    def writeProgram(p: ProgramNode, filename: String)(implicit writer: ClassWriter) {
+        writer.visit(JVM_V5, ACC_PUBLIC + ACC_SUPER, p.i.chars, null, "java/lang/Object", null)
+        writer.visitSource(filename, null)
         writeConstructor()
         writeEntryPoint(p)
         writeMain(p)
@@ -50,7 +52,7 @@ object JVMWriter {
     }
 
     def writeEntryPoint(p: ProgramNode)(implicit writer: ClassWriter) {
-        val entry = writer.visitMethod(ACC_PUBLIC,
+        val entry = writer.visitMethod(ACC_PUBLIC + ACC_FINAL,
                 p.i.chars,
                 "()V",
                 null,
@@ -80,7 +82,7 @@ object JVMWriter {
         main.visitMethodInsn(INVOKEVIRTUAL, p.i.chars, p.i.chars, "()V")
         
         main.visitInsn(RETURN)
-        main.visitMaxs(1, 1) /* maxstack, maxlocals */
+        main.visitMaxs(2, 2) /* maxstack, maxlocals */
         main.visitEnd()
     }
     

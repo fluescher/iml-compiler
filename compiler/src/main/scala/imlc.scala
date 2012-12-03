@@ -2,6 +2,7 @@ import ch.fhnw.iml.parsing.IMLParsers
 import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.ast.AST
+import java.io.File
 
 object imlc extends App {
     
@@ -14,7 +15,7 @@ object imlc extends App {
 		val writer = JVMWriter
 		
 		parser.parse(code) match {
-	        case parser.Success(prog, _) => writer(AST(prog))
+	        case parser.Success(prog, _) => writer(AST(prog),new File(args(0)).getName())
 	        case _ => println ("BLUBBER BLUBBER")
 	    }
     }
