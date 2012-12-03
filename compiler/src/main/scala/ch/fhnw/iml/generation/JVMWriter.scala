@@ -13,8 +13,8 @@ import org.objectweb.asm.MethodVisitor
 object JVMWriter {
     
     val JVM_V5 = 49
+    val IGNORED = 0
     
-    type FrameSize = (Int, Int)
     case class Scope(writer: ClassWriter, method: MethodVisitor)
     
     def apply(ast: AST, filename : String = "dynamic") {
@@ -47,7 +47,7 @@ object JVMWriter {
             "()V")
         
         constructor.visitInsn(RETURN)
-        constructor.visitMaxs(1, 1)
+        constructor.visitMaxs(IGNORED,IGNORED)
         constructor.visitEnd()
     }
 
@@ -57,12 +57,11 @@ object JVMWriter {
                 "()V",
                 null,
                 null)
-        implicit val scope = Scope(writer, entry)
-                
-        val maxStack = writeBlock(p.cmd, (1,1))
-        entry.visitInsn(RETURN)
         
-        entry.visitMaxs(maxStack._1,maxStack._2)
+        implicit val scope = Scope(writer, entry)
+        writeBlock(p.cmd)
+        entry.visitInsn(RETURN)
+        entry.visitMaxs(IGNORED,IGNORED)
         entry.visitEnd()
     }
     
@@ -81,19 +80,17 @@ object JVMWriter {
         /* call entry point */
         main.visitMethodInsn(INVOKEVIRTUAL, p.i.chars, p.i.chars, "()V")
         
+        main.visitMaxs(IGNORED,IGNORED);
         main.visitInsn(RETURN)
-        main.visitMaxs(2, 2) /* maxstack, maxlocals */
         main.visitEnd()
     }
     
-    def writeBlock(block: BlockCommand, frame: FrameSize)(implicit scope: Scope): FrameSize = {
-        block.cmds.map(writeCmd).foldLeft(frame)(max)
+    def writeBlock(block: BlockCommand)(implicit scope: Scope) {
+        block.cmds.map(writeCmd)
     }
     
-    def writeCmd(cmd: Command)(implicit scope: Scope): FrameSize = cmd match {
-        case SkipCommand 	=> println("NOP"); scope.method.visitInsn(NOP); (0,0)
-        case _ 				=> (0,0)
+    def writeCmd(cmd: Command)(implicit scope: Scope) = cmd match {
+        case SkipCommand 	=> println("NOP"); scope.method.visitInsn(NOP); 
+        case _ 				=> 
     }
-    
-    def max(frame1: FrameSize, frame2: FrameSize) = (math.max(frame1._1, frame2._1), math.max(frame1._2, frame2._2))
 }
