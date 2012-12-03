@@ -1,14 +1,19 @@
 package ch.fhnw.iml.generation
 
 import java.io.FileOutputStream
-
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes._
-
 import ch.fhnw.iml.ast.AST
+import ch.fhnw.iml.ast.BlockCommand
+import ch.fhnw.iml.ast.Command
 import ch.fhnw.iml.ast.ProgramNode
+import ch.fhnw.iml.ast.SkipCommand
+import org.objectweb.asm.MethodVisitor
 
 object JVMWriter {
+    
+    type FrameSize = (Int, Int)
+    
     def apply(ast: AST) {
         val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
         fileWriter.write(generateClass(ast))
@@ -30,27 +35,17 @@ object JVMWriter {
     }
 
     def writeConstructor()(implicit writer: ClassWriter) {
-        val constructor = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-        constructor.visitVarInsn(ALOAD, 0);
+        val constructor = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null)
+        constructor.visitVarInsn(ALOAD, 0)
         /* make super call */
         constructor.visitMethodInsn(INVOKESPECIAL,
             "java/lang/Object",
             "<init>",
-            "()V");
+            "()V")
         
-        constructor.visitFieldInsn(GETSTATIC,
-            "java/lang/System",
-            "out",
-            "Ljava/io/PrintStream;");
-        constructor.visitLdcInsn("hello");
-        constructor.visitMethodInsn(INVOKEVIRTUAL,
-            "java/io/PrintStream",
-            "println",
-            "(Ljava/lang/String;)V");
-        
-        constructor.visitInsn(RETURN);
-        constructor.visitMaxs(2, 1);
-        constructor.visitEnd();
+        constructor.visitInsn(RETURN)
+        constructor.visitMaxs(1, 1)
+        constructor.visitEnd()
     }
 
     def writeEntryPoint(p: ProgramNode)(implicit writer: ClassWriter) {
@@ -59,12 +54,13 @@ object JVMWriter {
                 "()V",
                 null,
                 null)
+        implicit val scope = Scope(writer, entry)
                 
-        entry.visitInsn(NOP)
+        val maxStack = writeBlock(p.cmd, (1,1))
         entry.visitInsn(RETURN)
         
-        entry.visitMaxs(1,1)
-        entry.visitEnd();
+        entry.visitMaxs(maxStack._1,maxStack._2)
+        entry.visitEnd()
     }
     
     def writeMain(p: ProgramNode)(implicit writer: ClassWriter) {
@@ -82,8 +78,22 @@ object JVMWriter {
         /* call entry point */
         main.visitMethodInsn(INVOKEVIRTUAL, p.i.chars, p.i.chars, "()V")
         
-        main.visitInsn(RETURN);
-        main.visitMaxs(2, 1); /* maxstack, maxlocals */
-        main.visitEnd();
+        main.visitInsn(RETURN)
+        main.visitMaxs(1, 1) /* maxstack, maxlocals */
+        main.visitEnd()
     }
+    
+    def writeBlock(block: BlockCommand, frame: FrameSize)(implicit scope: Scope): FrameSize = {
+        block.cmds.map(writeCmd).foldLeft(frame)(max)
+    }
+    
+    def writeCmd(cmd: Command)(implicit scope: Scope): FrameSize = cmd match {
+        case SkipCommand 	=> println("NOP"); scope.method.visitInsn(NOP); (0,0)
+        case _ 				=> (0,0)
+    }
+    
+    def max(frame1: FrameSize, frame2: FrameSize) = (math.max(frame1._1, frame2._1), math.max(frame1._2, frame2._2))
+    
+    
+    case class Scope(writer: ClassWriter, method: MethodVisitor)
 }

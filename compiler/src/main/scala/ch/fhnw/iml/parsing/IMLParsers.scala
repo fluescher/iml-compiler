@@ -110,7 +110,7 @@ class IMLParsers extends TokenParsers {
     			
     
     /* Commands */
-    def cmd : Parser[Command] = positioned(Skip 								^^ {case s => SkipCommand()}
+    def cmd : Parser[Command] = positioned(Skip 								^^ {case s => SkipCommand}
 			| (expr ~ Becomes ~ expr) 											^^ {case e1 ~ _ ~ e2 => AssiCommand(e1, e2) }
 			| (If ~ LParen ~> expr ~ RParen ~ blockCmd ~ Else ~ blockCmd)		^^ {case ex ~ _ ~ cmd1 ~ _ ~ cmd2 => CondCommand(ex, cmd1, cmd2)}
 			| (While ~ LParen ~> expr ~ RParen ~ blockCmd)						^^ {case ex ~ _ ~ cmd1 => WhileCommand(ex, cmd1)}

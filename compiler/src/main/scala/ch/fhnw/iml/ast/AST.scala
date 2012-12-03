@@ -12,7 +12,7 @@ case class ProgramNode(i: IdentNode, cps: CpsDecl, cmd: BlockCommand) extends No
 /* Commands */
 sealed abstract class Command extends Node
 case class BlockCommand(cmds: List[Command]) extends Command
-case class SkipCommand extends Command
+case object SkipCommand extends Command
 case class AssiCommand(expr1: Expr, expr2: Expr) extends Command
 case class CondCommand(expr: Expr, cmd1: Command, cmd2: Command) extends Command
 case class WhileCommand(expr: Expr, cmd: Command) extends Command
