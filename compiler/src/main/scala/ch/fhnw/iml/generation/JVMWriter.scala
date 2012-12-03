@@ -13,6 +13,7 @@ import org.objectweb.asm.MethodVisitor
 object JVMWriter {
     
     type FrameSize = (Int, Int)
+    case class Scope(writer: ClassWriter, method: MethodVisitor)
     
     def apply(ast: AST) {
         val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
@@ -93,7 +94,4 @@ object JVMWriter {
     }
     
     def max(frame1: FrameSize, frame2: FrameSize) = (math.max(frame1._1, frame2._1), math.max(frame1._2, frame2._2))
-    
-    
-    case class Scope(writer: ClassWriter, method: MethodVisitor)
 }
