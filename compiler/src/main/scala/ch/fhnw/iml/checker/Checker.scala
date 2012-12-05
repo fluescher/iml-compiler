@@ -2,7 +2,7 @@ package ch.fhnw.iml.checker
 
 import ch.fhnw.iml.ast.AST
 import ch.fhnw.iml.ast.Node
-import ch.fhnw.iml.ast.ChangeModeNode
+import ch.fhnw.iml.ast.ChangeMode
 import ch.fhnw.iml.ast.Type
 import ch.fhnw.iml.ast.Scope
 

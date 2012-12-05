@@ -18,7 +18,7 @@ object TypeChecker extends Checker {
 	}
 	
 	def typeCheck(n: Node) : TypeCheckResult = n match {
-	    case ProgramNode(_, c, block) 		=> typeCheck(c)
+	    case ProgramNode(_, c, block, tbl) 		=> typeCheck(c)
 	    case StoreDecl(change, id, t)		=> TypeCheckSuccess(t)
 	}
 	

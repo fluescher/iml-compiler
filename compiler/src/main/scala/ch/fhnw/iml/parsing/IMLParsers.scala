@@ -1,18 +1,19 @@
 package ch.fhnw.iml.parsing
 
 import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.combinator.syntactical.TokenParsers
+import scala.util.parsing.input.Reader
+
+import ch.fhnw.iml.ast._
 import ch.fhnw.iml.scanning.IMLLexical
 import ch.fhnw.iml.scanning.IMLTokens
-import scala.util.parsing.combinator.syntactical.TokenParsers
 import ch.fhnw.iml.scanning.IMLTokens
-import scala.util.parsing.input.Reader
-import ch.fhnw.iml.ast._
 
 class IMLParsers extends TokenParsers {
     type Tokens = IMLTokens
     
     val lexical = new IMLLexical
-    import lexical.{Not, AddOpr, Literal, IntLiteral, Program, Ident, Global, LParen, 
+    import lexical.{Not, AddOpr, Literal, IntLiteral, Program, Global, LParen, 
         			RParen, ChangeMode, Colon, SemiColon, Int32, Fun, Returns, Local,
         			Proc, FlowMode, Comma, Skip, Becomes, If, Else, While, Call, QuestionMark,
         			ExclamationMark, Init, LBrace, RBrace, True, False,
@@ -180,7 +181,7 @@ class IMLParsers extends TokenParsers {
     def mechMode = positioned( Ref		^^^ RefNode
     			   | Copy		^^^ CopyNode)
     				 
-    def ident = positioned(elem("ident", _.isInstanceOf[Ident]) ^^ {case i => IdentNode(i.chars)})
+    def ident = positioned(elem("ident", _.isInstanceOf[lexical.Ident]) ^^ {case i => ch.fhnw.iml.ast.Ident(i.chars)})
 
     
     private def literal = positioned(elem("Literal", _.isInstanceOf[Literal]) ^^ { case IntLiteral(x) => IntLiteralExpression(x) 
