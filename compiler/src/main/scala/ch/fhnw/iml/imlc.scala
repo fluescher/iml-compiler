@@ -1,8 +1,11 @@
+package ch.fhnw.iml
+
 import ch.fhnw.iml.parsing.IMLParsers
 import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.generation.JVMWriter
-import ch.fhnw.iml.ast.AST
 import java.io.File
+import ch.fhnw.iml.ast.AST.apply
+import ch.fhnw.iml.ast.AST
 
 object imlc extends App {
     
