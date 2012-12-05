@@ -17,6 +17,24 @@ import ch.fhnw.iml.ast.GlobalImport
 import ch.fhnw.iml.ast.FunctionSymbol
 import ch.fhnw.iml.ast.ProcedureSymbol
 
+
+/**
+ * Calling conventions:
+ * 
+ * fun (a, b, c)
+ * ret d
+ * local
+ * 	e
+ * 
+ * maps to the following local variable indized:
+ * 
+ * a: 0
+ * b: 1
+ * c: 2
+ * e: 3
+ * d: 4 (return value is alway the last local variable)
+ * 
+ */
 object SymbolChecker extends Checker {
     type CombinationResult[A,B] = (A, Option[CheckError[B]])
     
@@ -78,7 +96,10 @@ object SymbolChecker extends Checker {
 	}
 	
 	private def visitFunDecl(global: SymbolTable)(f: FunDecl): CheckResult[FunDecl] = {
-		combine(combine(combine(visitFunParams, visitReturn),visitGlobalFunImport(global)),visitFunLocals(global))(f) 
+		combine(combine(combine(visitFunParams, visitReturn),visitGlobalFunImport(global)),visitFunLocals(global))(f) match {
+		    case CheckSuccess(f) => CheckSuccess(updateReturnValueIndex(f))
+		    case e => e
+		}
 	}
 	
 	private def visitGlobalFunImport(global: SymbolTable)(f: FunDecl) : CheckResult[FunDecl] = {
@@ -215,8 +236,28 @@ object SymbolChecker extends Checker {
 	    }
 	}
 	
+	private def updateReturnValueIndex(f: FunDecl) = {
+	    val ret = getReturnValue(f.symbols)
+	    val nret = StorageSymbol(ret.id, ret.t, ret.decl, true, false, false, -1, localCount(f.symbols), false)
+	    FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, SymbolTable(f.symbols.functions, f.symbols.procs, f.symbols.stores.updated(ret.id, nret)))
+	}
+	
+	private def getReturnValue(syms: SymbolTable) = {
+	    var r: StorageSymbol = null
+		for((k,v) <- syms.stores if v.isRet) {
+			r = v   
+		}
+		r
+	}
+	
 	private def addStorageSymbol(table: SymbolTable, sym: StorageSymbol) = {
 	    SymbolTable(table.functions, table.procs, table.stores + (sym.id -> sym))
+	}
+	
+	private def localCount(symbols: SymbolTable) = {
+	    var i = 0
+	    for((k,v) <- symbols.stores if v.isArgument || !(v.isGlobal || v.isRet)) i += 1
+	    i
 	}
 	
 	private def argumentCount(symbols: SymbolTable) = {
