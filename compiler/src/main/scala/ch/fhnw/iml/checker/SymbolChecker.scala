@@ -35,7 +35,7 @@ object SymbolChecker extends Checker {
 	
 	private def reduceGlobals(left: CombinationResult[SymbolTable,AST], right: StoreDecl) : CombinationResult[SymbolTable,AST] = left match {
 	    case (l, None) if l.stores.contains(right.i) => (l, Some(CheckError("Variable " + right.i + " already declared.", right))) 
-	    case (l, None) => (SymbolTable(l.functions, l.procs, (l.stores + (right.i -> StorageSymbol(right.i, right.t, false, true, false, -1, -1, false)))), None)
+	    case (l, None) => (SymbolTable(l.functions, l.procs, (l.stores + (right.i -> StorageSymbol(right.i, right.t, right, false, true, false, -1, -1, false)))), None)
 		case (l, Some(e)) => (l, Some(e))
 	}
 	
@@ -103,7 +103,7 @@ object SymbolChecker extends Checker {
 	private def reduceGlobals(global: SymbolTable)(left: CombinationResult[SymbolTable,GlobalImport], right: GlobalImport) : CombinationResult[SymbolTable,GlobalImport] = left match {
 	   	case (l, None) if l.stores.contains(right.i) 		=> (l, Some(CheckError("Variable " + right.i + " already declared.", right))) 
 	   	case (l, None) if !global.stores.contains(right.i) 	=> (l, Some(CheckError("Variable " + right.i + " is not declared as global.", right))) 
-	    case (l, None) 										=> (addStorageSymbol(l, StorageSymbol(right.i, global.stores.get(right.i).get.t, false, true, false, -1, -1, false)), None)
+	    case (l, None) 										=> (addStorageSymbol(l, StorageSymbol(right.i, global.stores.get(right.i).get.t, global.stores.get(right.i).get.decl, false, true, false, -1, -1, false)), None)
 		case (l, Some(e)) 									=> (l, Some(e))
 	}
 	
@@ -122,7 +122,7 @@ object SymbolChecker extends Checker {
 	private def visitReturn(f: FunDecl): CheckResult[FunDecl] = {
 	    val ret = f.head.store
 	    if(f.symbols.stores.contains(ret.i)) CheckError("Variable for return value is already defined.", ret)
-	    else CheckSuccess(FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, addStorageSymbol(f.symbols, StorageSymbol(ret.i, ret.t, true, false, false, -1, 0, false))))
+	    else CheckSuccess(FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, addStorageSymbol(f.symbols, StorageSymbol(ret.i, ret.t, ret, true, false, false, -1, 0, false))))
 	}
 	
 	private def visitFunParams(f: FunDecl):CheckResult[FunDecl] = visitParams(f.head.params) match {
@@ -139,7 +139,7 @@ object SymbolChecker extends Checker {
 	
 	private def reduceLocals(left: (CombinationResult[SymbolTable,StoreDecl], Int), right: StoreDecl) : (CombinationResult[SymbolTable,StoreDecl], Int) = left match {
 	   	case ((l, None), i) if l.stores.contains(right.i) => ((l, Some(CheckError("Variable " + right.i + " already declared.", right))) ,i)
-	    case ((l, None), i) => ((addStorageSymbol(l, StorageSymbol(right.i, right.t, false, false, false, -1, i+1, false)), None), i+1)
+	    case ((l, None), i) => ((addStorageSymbol(l, StorageSymbol(right.i, right.t, right, false, false, false, -1, i+1, false)), None), i+1)
 		case ((l, Some(e)), i) => ((l, Some(e)),i)
 	}
 	
@@ -152,7 +152,7 @@ object SymbolChecker extends Checker {
 	
 	private def reduceParams(left: CombinationResult[SymbolTable,Parameter], right: Parameter) : CombinationResult[SymbolTable,Parameter] = left match {
 	   	case (l, None) if l.stores.contains(right.store.i) => (l, Some(CheckError("Variable " + right.store.i + " already declared.", right))) 
-	    case (l, None) => (addStorageSymbol(l, StorageSymbol(right.store.i, right.store.t, false, false, true, l.stores.size+1, -1, false)), None)
+	    case (l, None) => (addStorageSymbol(l, StorageSymbol(right.store.i, right.store.t, right.store, false, false, true, l.stores.size+1, -1, false)), None)
 		case (l, Some(e)) => (l, Some(e))
 	}
 

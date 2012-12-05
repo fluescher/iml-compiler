@@ -101,5 +101,5 @@ object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 
 case class ProcedureSymbol(id: Ident, decl: ProcDecl)
 case class FunctionSymbol(id: Ident, decl: FunDecl)
-case class StorageSymbol(id: Ident, t: Type, isRet: Boolean, isGlobal: Boolean, isArgument: Boolean, argpos: Int, localpos: Int, isInitialized: Boolean)
+case class StorageSymbol(id: Ident, t: Type, decl: StoreDecl, isRet: Boolean, isGlobal: Boolean, isArgument: Boolean, argpos: Int, localpos: Int, isInitialized: Boolean)
 
