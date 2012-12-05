@@ -2,6 +2,10 @@ program intDiv
 global
 	var m:int32;
 	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
+	global
+		r
+	local 
+		var b : int32
 	requires [n > 0]
 	ensures [somePost: (((((((r < n))))))) ]
 	{
@@ -14,6 +18,8 @@ global
 	};
 	fun multiply(in copy m:int32, in copy n:int32)
 	returns r:int32
+	local 
+		var b : int32
 	requires [positive:isPositive(n)]
 	{
 		i init := 0;

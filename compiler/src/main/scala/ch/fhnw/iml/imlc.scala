@@ -25,7 +25,7 @@ object imlc extends App {
 	            case CheckSuccess(a) => writer(a,new File(args(0)).getName())
 	            case e => println(e)
 	        } 
-	        case _ => println ("BLUBBER BLUBBER")
+	        case e => println ("BLUBBER BLUBBER: " + e)
 	    }
     }
 	
