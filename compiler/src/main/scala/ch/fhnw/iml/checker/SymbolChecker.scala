@@ -122,7 +122,7 @@ object SymbolChecker extends Checker {
 	private def visitReturn(f: FunDecl): CheckResult[FunDecl] = {
 	    val ret = f.head.store
 	    if(f.symbols.stores.contains(ret.i)) CheckError("Variable for return value is already defined.", ret)
-	    else CheckSuccess(FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, addStorageSymbol(f.symbols, StorageSymbol(ret.i, ret.t, ret, true, false, false, -1, 0, false))))
+	    else CheckSuccess(FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, addStorageSymbol(f.symbols, StorageSymbol(ret.i, ret.t, ret, true, false, false, -1, -1, false))))
 	}
 	
 	private def visitFunParams(f: FunDecl):CheckResult[FunDecl] = visitParams(f.head.params) match {
@@ -131,7 +131,7 @@ object SymbolChecker extends Checker {
 	}
 	
 	private def visitLocals(local: SymbolTable)(locals: List[StoreDecl]) = {
-	    locals.foldLeft(((local, None):CombinationResult[SymbolTable,StoreDecl]),0)(reduceLocals) match {
+	    locals.foldLeft(((local, None):CombinationResult[SymbolTable,StoreDecl]), argumentCount(local)-1)(reduceLocals) match { 
 	        case  ((l, None), i) => CheckSuccess(l)
 	        case ((_, Some(e)),_)=> CheckError(e.msg, e.node)
 	    }
@@ -152,7 +152,7 @@ object SymbolChecker extends Checker {
 	
 	private def reduceParams(left: CombinationResult[SymbolTable,Parameter], right: Parameter) : CombinationResult[SymbolTable,Parameter] = left match {
 	   	case (l, None) if l.stores.contains(right.store.i) => (l, Some(CheckError("Variable " + right.store.i + " already declared.", right))) 
-	    case (l, None) => (addStorageSymbol(l, StorageSymbol(right.store.i, right.store.t, right.store, false, false, true, l.stores.size+1, -1, false)), None)
+	    case (l, None) => (addStorageSymbol(l, StorageSymbol(right.store.i, right.store.t, right.store, false, false, true, l.stores.size, -1, false)), None)
 		case (l, Some(e)) => (l, Some(e))
 	}
 
@@ -217,6 +217,12 @@ object SymbolChecker extends Checker {
 	
 	private def addStorageSymbol(table: SymbolTable, sym: StorageSymbol) = {
 	    SymbolTable(table.functions, table.procs, table.stores + (sym.id -> sym))
+	}
+	
+	private def argumentCount(symbols: SymbolTable) = {
+	    var i = 0
+	    for((k,v) <- symbols.stores if v.isArgument) i += 1
+	    i
 	}
 	
 	private def onlyVars(a: Decl) = a.isInstanceOf[StoreDecl]
