@@ -7,7 +7,7 @@ case class AST(val root: ProgramNode)
 trait Node extends Positional
 
 /* programs */
-case class ProgramNode(i: IdentNode, cps: CpsDecl, cmd: BlockCommand) extends Node
+case class ProgramNode(i: IdentNode, cps: CpsDecl, cmd: BlockCommand, symbols: SymbolTable) extends Node
 
 /* Commands */
 sealed abstract class Command extends Node
@@ -64,9 +64,9 @@ case class IdentNode(chars: String) extends Node
 /* Declarations */
 sealed abstract class Decl extends Node
 case class StoreDecl(change: ChangeModeNode, i: IdentNode, t: Type) extends Decl
-case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
-case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand) extends Decl
 case class CpsDecl(decls: List[Decl]) extends Decl
+case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand, symbols: SymbolTable) extends Decl
+case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand, symbols: SymbolTable) extends Decl
 
 case class FunHead(i: IdentNode, params: ParameterList, store: StoreDecl) extends Node
 case class ProcHead(i: IdentNode, params: ParameterList) extends Node
@@ -94,3 +94,11 @@ case object CopyNode extends MechModeNode
 sealed abstract class Scope
 case object Local extends Scope
 case object Global extends Scope
+
+/* Symbol tables */
+case class SymbolTable(functions: Map[IdentNode,FunctionSymbol], stores: Map[IdentNode,StorageSymbol])
+object EmptyTable extends SymbolTable(Map.empty, Map.empty)
+
+case class FunctionSymbol
+case class StorageSymbol
+

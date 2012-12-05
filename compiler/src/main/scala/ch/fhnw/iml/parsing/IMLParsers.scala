@@ -22,8 +22,8 @@ class IMLParsers extends TokenParsers {
         			LBracket, RBracket, Ensures, Requires}
     
     /* Programs */
-    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b)}
-    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,null,b)}
+    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b,null)}
+    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,null,b, null)}
     						)
     
     /* declarations */
@@ -35,49 +35,49 @@ class IMLParsers extends TokenParsers {
     def storeDecl : Parser[StoreDecl] = positioned((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(null), i, t)})
 
     def funDecl : Parser[FunDecl] = positioned(   
-    				  (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,Some(g),Some(c),Some(r),Some(e),b)}
-            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ b => new FunDecl(p,Some(g),Some(c),Some(r),None,b)}
-            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ ensure ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ e ~ b => new FunDecl(p,Some(g),Some(c),None,Some(e),b)}
-            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)						^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new FunDecl(p,Some(g),Some(c),None,None,b)}
+    				  (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,Some(g),Some(c),Some(r),Some(e),b,EmptyTable)}
+            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ b => new FunDecl(p,Some(g),Some(c),Some(r),None,b,EmptyTable)}
+            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ ensure ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ e ~ b => new FunDecl(p,Some(g),Some(c),None,Some(e),b,EmptyTable)}
+            		| (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)						^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new FunDecl(p,Some(g),Some(c),None,None,b,EmptyTable)}
             		
-    				| (funHead ~ Global ~ globImpList ~ require ~ ensure ~ blockCmd) 					^^ {case p ~ _ ~ g ~ r ~ e ~ b => new FunDecl(p,Some(g),None,Some(r),Some(e),b)}
-    				| (funHead ~ Global ~ globImpList ~ require ~ blockCmd) 							^^ {case p ~ _ ~ g ~ r ~  b => new FunDecl(p,Some(g),None,Some(r),None,b)}
-    				| (funHead ~ Global ~ globImpList ~ ensure ~ blockCmd) 								^^ {case p ~ _ ~ g ~ e ~ b => new FunDecl(p,Some(g),None,None,Some(e),b)}
-    				| (funHead ~ Global ~ globImpList ~ blockCmd) 										^^ {case p ~ _ ~ g ~ b => new FunDecl(p,Some(g),None,None,None,b)}
+    				| (funHead ~ Global ~ globImpList ~ require ~ ensure ~ blockCmd) 					^^ {case p ~ _ ~ g ~ r ~ e ~ b => new FunDecl(p,Some(g),None,Some(r),Some(e),b,EmptyTable)}
+    				| (funHead ~ Global ~ globImpList ~ require ~ blockCmd) 							^^ {case p ~ _ ~ g ~ r ~  b => new FunDecl(p,Some(g),None,Some(r),None,b,EmptyTable)}
+    				| (funHead ~ Global ~ globImpList ~ ensure ~ blockCmd) 								^^ {case p ~ _ ~ g ~ e ~ b => new FunDecl(p,Some(g),None,None,Some(e),b,EmptyTable)}
+    				| (funHead ~ Global ~ globImpList ~ blockCmd) 										^^ {case p ~ _ ~ g ~ b => new FunDecl(p,Some(g),None,None,None,b,EmptyTable)}
     				
-    				| (funHead ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)							^^ {case p ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,None,Some(c),Some(r),Some(e),b)}
-    				| (funHead ~ Local ~ cpsDecl ~ require ~ blockCmd)									^^ {case p ~ _ ~ c ~ r ~ b => new FunDecl(p,None,Some(c),Some(r),None,b)}
-    				| (funHead ~ Local ~ cpsDecl ~ ensure ~ blockCmd)									^^ {case p ~ _ ~ c ~ e ~ b => new FunDecl(p,None,Some(c),None,Some(e),b)}
-            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)											^^ {case p ~ _ ~ c ~ b => new FunDecl(p,None,Some(c),None,None,b)}
+    				| (funHead ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)							^^ {case p ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,None,Some(c),Some(r),Some(e),b,EmptyTable)}
+    				| (funHead ~ Local ~ cpsDecl ~ require ~ blockCmd)									^^ {case p ~ _ ~ c ~ r ~ b => new FunDecl(p,None,Some(c),Some(r),None,b,EmptyTable)}
+    				| (funHead ~ Local ~ cpsDecl ~ ensure ~ blockCmd)									^^ {case p ~ _ ~ c ~ e ~ b => new FunDecl(p,None,Some(c),None,Some(e),b,EmptyTable)}
+            		| (funHead ~ Local ~ cpsDecl ~ blockCmd)											^^ {case p ~ _ ~ c ~ b => new FunDecl(p,None,Some(c),None,None,b,EmptyTable)}
             		
-            		| (funHead ~ require ~ ensure ~ blockCmd)											^^ {case p ~ r ~ e ~ b => new FunDecl(p,None,None,Some(r),Some(e),b)}
-            		| (funHead ~ require ~ blockCmd)													^^ {case p ~ r ~ b => new FunDecl(p,None,None,Some(r),None,b)}
-            		| (funHead ~ ensure ~ blockCmd)														^^ {case p ~ e ~ b => new FunDecl(p,None,None,None,Some(e),b)}
-            		| (funHead ~ blockCmd)																^^ {case p ~ b => new FunDecl(p,None,None,None,None,b)}
+            		| (funHead ~ require ~ ensure ~ blockCmd)											^^ {case p ~ r ~ e ~ b => new FunDecl(p,None,None,Some(r),Some(e),b,EmptyTable)}
+            		| (funHead ~ require ~ blockCmd)													^^ {case p ~ r ~ b => new FunDecl(p,None,None,Some(r),None,b,EmptyTable)}
+            		| (funHead ~ ensure ~ blockCmd)														^^ {case p ~ e ~ b => new FunDecl(p,None,None,None,Some(e),b,EmptyTable)}
+            		| (funHead ~ blockCmd)																^^ {case p ~ b => new FunDecl(p,None,None,None,None,b,EmptyTable)}
             	  )
     
     def funHead = positioned((Fun ~ ident ~ paramList ~ Returns ~ storeDecl) ^^ {case _ ~ i ~ p ~ _ ~ s => FunHead(i,p,s)})
             	  
     def procDecl : Parser[ProcDecl] = positioned(  
-            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new ProcDecl(p,Some(g),Some(c),Some(r),Some(e),b)}
-            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ b => new ProcDecl(p,Some(g),Some(c),Some(r),None,b)}
-            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ ensure ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ e ~ b => new ProcDecl(p,Some(g),Some(c),None,Some(e),b)}
-            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)					^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,Some(g),Some(c),None,None,b)}
+            		  (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new ProcDecl(p,Some(g),Some(c),Some(r),Some(e),b,EmptyTable)}
+            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ b => new ProcDecl(p,Some(g),Some(c),Some(r),None,b,EmptyTable)}
+            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ ensure ~ blockCmd)			^^ {case p ~ _ ~ g ~ _ ~ c ~ e ~ b => new ProcDecl(p,Some(g),Some(c),None,Some(e),b,EmptyTable)}
+            		| (procHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ blockCmd)					^^ {case p ~ _ ~ g ~ _ ~ c ~ b => new ProcDecl(p,Some(g),Some(c),None,None,b,EmptyTable)}
             		
-    				| (procHead ~ Global ~ globImpList ~ require ~ ensure ~ blockCmd) 					^^ {case p ~ _ ~ g ~ r ~ e ~ b => new ProcDecl(p,Some(g),None,Some(r),Some(e),b)}
-    				| (procHead ~ Global ~ globImpList ~ require ~ blockCmd) 							^^ {case p ~ _ ~ g ~ r ~  b => new ProcDecl(p,Some(g),None,Some(r),None,b)}
-    				| (procHead ~ Global ~ globImpList ~ ensure ~ blockCmd) 							^^ {case p ~ _ ~ g ~ e ~ b => new ProcDecl(p,Some(g),None,None,Some(e),b)}
-    				| (procHead ~ Global ~ globImpList ~ blockCmd) 										^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,Some(g),None,None,None,b)}
+    				| (procHead ~ Global ~ globImpList ~ require ~ ensure ~ blockCmd) 					^^ {case p ~ _ ~ g ~ r ~ e ~ b => new ProcDecl(p,Some(g),None,Some(r),Some(e),b,EmptyTable)}
+    				| (procHead ~ Global ~ globImpList ~ require ~ blockCmd) 							^^ {case p ~ _ ~ g ~ r ~  b => new ProcDecl(p,Some(g),None,Some(r),None,b,EmptyTable)}
+    				| (procHead ~ Global ~ globImpList ~ ensure ~ blockCmd) 							^^ {case p ~ _ ~ g ~ e ~ b => new ProcDecl(p,Some(g),None,None,Some(e),b,EmptyTable)}
+    				| (procHead ~ Global ~ globImpList ~ blockCmd) 										^^ {case p ~ _ ~ g ~ b => new ProcDecl(p,Some(g),None,None,None,b,EmptyTable)}
     				
-    				| (procHead ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)						^^ {case p ~ _ ~ c ~ r ~ e ~ b => new ProcDecl(p,None,Some(c),Some(r),Some(e),b)}
-    				| (procHead ~ Local ~ cpsDecl ~ require ~ blockCmd)									^^ {case p ~ _ ~ c ~ r ~ b => new ProcDecl(p,None,Some(c),Some(r),None,b)}
-    				| (procHead ~ Local ~ cpsDecl ~ ensure ~ blockCmd)									^^ {case p ~ _ ~ c ~ e ~ b => new ProcDecl(p,None,Some(c),None,Some(e),b)}
-            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)											^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,None,Some(c),None,None,b)}
+    				| (procHead ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)						^^ {case p ~ _ ~ c ~ r ~ e ~ b => new ProcDecl(p,None,Some(c),Some(r),Some(e),b,EmptyTable)}
+    				| (procHead ~ Local ~ cpsDecl ~ require ~ blockCmd)									^^ {case p ~ _ ~ c ~ r ~ b => new ProcDecl(p,None,Some(c),Some(r),None,b,EmptyTable)}
+    				| (procHead ~ Local ~ cpsDecl ~ ensure ~ blockCmd)									^^ {case p ~ _ ~ c ~ e ~ b => new ProcDecl(p,None,Some(c),None,Some(e),b,EmptyTable)}
+            		| (procHead ~ Local ~ cpsDecl ~ blockCmd)											^^ {case p ~ _ ~ c ~ b => new ProcDecl(p,None,Some(c),None,None,b,EmptyTable)}
             		
-            		| (procHead ~ require ~ ensure ~ blockCmd)											^^ {case p ~ r ~ e ~ b => new ProcDecl(p,None,None,Some(r),Some(e),b)}
-            		| (procHead ~ require ~ blockCmd)													^^ {case p ~ r ~ b => new ProcDecl(p,None,None,Some(r),None,b)}
-            		| (procHead ~ ensure ~ blockCmd)													^^ {case p ~ e ~ b => new ProcDecl(p,None,None,None,Some(e),b)}
-            		| (procHead ~ blockCmd)																^^ {case p ~ b => new ProcDecl(p,None,None,None,None,b)}
+            		| (procHead ~ require ~ ensure ~ blockCmd)											^^ {case p ~ r ~ e ~ b => new ProcDecl(p,None,None,Some(r),Some(e),b,EmptyTable)}
+            		| (procHead ~ require ~ blockCmd)													^^ {case p ~ r ~ b => new ProcDecl(p,None,None,Some(r),None,b,EmptyTable)}
+            		| (procHead ~ ensure ~ blockCmd)													^^ {case p ~ e ~ b => new ProcDecl(p,None,None,None,Some(e),b,EmptyTable)}
+            		| (procHead ~ blockCmd)																^^ {case p ~ b => new ProcDecl(p,None,None,None,None,b,EmptyTable)}
             	  )
 
     def procHead = positioned((Proc ~ ident ~ paramList) ^^ {case _ ~ i ~ p => ProcHead(i, p)})
