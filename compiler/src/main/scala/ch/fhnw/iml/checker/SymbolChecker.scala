@@ -13,8 +13,9 @@ import ch.fhnw.iml.ast.SymbolTable
 import ch.fhnw.iml.ast.CpsDecl
 import ch.fhnw.iml.ast.ProcDecl
 import ch.fhnw.iml.ast.StorageSymbol
-import ch.fhnw.iml.ast.StorageSymbol
 import ch.fhnw.iml.ast.GlobalImport
+import ch.fhnw.iml.ast.FunctionSymbol
+import ch.fhnw.iml.ast.ProcedureSymbol
 
 object SymbolChecker extends Checker {
     type CombinationResult[A,B] = (A, Option[CheckError[B]])
@@ -45,8 +46,25 @@ object SymbolChecker extends Checker {
 	    
 	    funDecls.foldLeft((Nil,None): CombinationResult[List[FunDecl],FunDecl])(reduceFunDecls(prg.symbols)) match {
 	        case (_, Some(e)) => CheckError(e.msg, e.node)
-	        case (l, None) => CheckSuccess(AST(ProgramNode(prg.i, CpsDecl(otherDecls ++ l), prg.cmd, prg.symbols)))
+	        case (l, None) => {
+	        	addFunDecls(prg.symbols, l) match {
+	        	    case CheckSuccess(syms) => CheckSuccess(AST(ProgramNode(prg.i, CpsDecl(otherDecls ++ l), prg.cmd, syms))) 
+	        	    case CheckError(m,n) 	=> CheckError(m,n)
+	        	}
+	        } 
 	    }
+	}
+	
+	private def addFunDecls(global: SymbolTable, l: List[FunDecl]) : CheckResult[SymbolTable] = l match {
+	    case Nil 	 => CheckSuccess(global)
+	    case x::xs  if(global.functions.contains(x.head.i)) => CheckError("Already defined this function", x)
+	    case x::xs	 => addFunDecls(SymbolTable(global.functions +(x.head.i -> FunctionSymbol(x.head.i, x)), global.procs, global.stores), xs)
+	}
+	
+	private def addProcDecls(global: SymbolTable, l: List[ProcDecl]) : CheckResult[SymbolTable] = l match {
+	    case Nil 	 => CheckSuccess(global)
+	    case x::xs  if(global.procs.contains(x.head.i)) => CheckError("Already defined this function", x)
+	    case x::xs	 => addProcDecls(SymbolTable(global.functions, global.procs +(x.head.i -> ProcedureSymbol(x.head.i, x)), global.stores), xs)
 	}
 	
 	private def reduceFunDecls(global: SymbolTable)(left: CombinationResult[List[FunDecl],FunDecl], right: FunDecl) : CombinationResult[List[FunDecl],FunDecl] = left match {
@@ -60,7 +78,7 @@ object SymbolChecker extends Checker {
 	}
 	
 	private def visitFunDecl(global: SymbolTable)(f: FunDecl): CheckResult[FunDecl] = {
-	    combine(combine(combine(visitFunParams, visitReturn),visitGlobalFunImport(global)),visitFunLocals(global))(f)
+		combine(combine(combine(visitFunParams, visitReturn),visitGlobalFunImport(global)),visitFunLocals(global))(f) 
 	}
 	
 	private def visitGlobalFunImport(global: SymbolTable)(f: FunDecl) : CheckResult[FunDecl] = {
@@ -145,7 +163,12 @@ object SymbolChecker extends Checker {
 	    
 	    funDecls.foldLeft((Nil,None): CombinationResult[List[ProcDecl],ProcDecl])(reduceProcDecls(prg.symbols)) match {
 	        case (_, Some(e)) => CheckError(e.msg, e.node)
-	        case (l, None) => CheckSuccess(AST(ProgramNode(prg.i, CpsDecl(otherDecls ++ l), prg.cmd, prg.symbols)))
+	        case (l, None) => {
+	        	addProcDecls(prg.symbols, l) match {
+	        	    case CheckSuccess(syms) => CheckSuccess(AST(ProgramNode(prg.i, CpsDecl(otherDecls ++ l), prg.cmd, syms))) 
+	        	    case CheckError(m,n) 	=> CheckError(m,n)
+	        	}
+	        }
 	    }
 	}
 	
