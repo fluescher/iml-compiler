@@ -6,6 +6,8 @@ import ch.fhnw.iml.generation.JVMWriter
 import java.io.File
 import ch.fhnw.iml.ast.AST.apply
 import ch.fhnw.iml.ast.AST
+import ch.fhnw.iml.checker.SymbolChecker
+import ch.fhnw.iml.checker.CheckSuccess
 
 object imlc extends App {
     
@@ -16,9 +18,13 @@ object imlc extends App {
     def compile(code: String) = {
 		val parser = new IMLParsers
 		val writer = JVMWriter
+		val checker = SymbolChecker
 		
 		parser.parse(code) match {
-	        case parser.Success(prog, _) => writer(AST(prog),new File(args(0)).getName())
+	        case parser.Success(prog, _) => checker(AST(prog)) match {
+	            case CheckSuccess(a) => writer(a,new File(args(0)).getName())
+	            case e => println(e)
+	        } 
 	        case _ => println ("BLUBBER BLUBBER")
 	    }
     }

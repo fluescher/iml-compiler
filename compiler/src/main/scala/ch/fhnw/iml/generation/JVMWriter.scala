@@ -12,7 +12,7 @@ import org.objectweb.asm.MethodVisitor
 
 object JVMWriter {
     
-    val JVM_V5 = 49
+    val JVM_V7 = 51
     val IGNORED = 0
     
     case class Scope(writer: ClassWriter, method: MethodVisitor)
@@ -30,7 +30,7 @@ object JVMWriter {
     }
 
     def writeProgram(p: ProgramNode, filename: String)(implicit writer: ClassWriter) {
-        writer.visit(JVM_V5, ACC_PUBLIC + ACC_SUPER, p.i.chars, null, "java/lang/Object", null)
+        writer.visit(JVM_V7, ACC_PUBLIC + ACC_SUPER, p.i.chars, null, "java/lang/Object", null)
         writer.visitSource(filename, null)
         writeConstructor()
         writeEntryPoint(p)

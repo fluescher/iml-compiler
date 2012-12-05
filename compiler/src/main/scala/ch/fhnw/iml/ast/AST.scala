@@ -96,9 +96,10 @@ case object Local extends Scope
 case object Global extends Scope
 
 /* Symbol tables */
-case class SymbolTable(functions: Map[Ident,FunctionSymbol], stores: Map[Ident,StorageSymbol])
-object EmptyTable extends SymbolTable(Map.empty, Map.empty)
+case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,ProcedureSymbol], stores: Map[Ident,StorageSymbol])
+object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 
-case class FunctionSymbol(id: Ident)
-case class StorageSymbol
+case class ProcedureSymbol(id: Ident, decl: ProcDecl)
+case class FunctionSymbol(id: Ident, decl: FunDecl)
+case class StorageSymbol(id: Ident, t: Type, isRet: Boolean, isGlobal: Boolean, isArgument: Boolean, argpos: Int, isInitialized: Boolean)
 
