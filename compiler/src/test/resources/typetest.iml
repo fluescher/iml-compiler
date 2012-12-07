@@ -1,0 +1,20 @@
+program intDiv
+global
+	var m:int32;
+	var n:int32;
+	var q:int32;
+	var r:int32
+{
+	? m init;
+	? n init;
+	q init := 0;
+	r init := m;
+	
+	while (r >= n) {
+		q := q + 1;
+		r := r - n
+	};
+	
+	! q;
+	! r
+}

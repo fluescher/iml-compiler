@@ -34,6 +34,8 @@ import ch.fhnw.iml.ast.FunCallExpr
 import ch.fhnw.iml.ast.ProcCallCommand
 import ch.fhnw.iml.ast.InputCommand
 import ch.fhnw.iml.ast.OutputCommand
+import ch.fhnw.iml.ast.NotEqualsOpr
+import ch.fhnw.iml.ast.EqualsOpr
 
 object TypeChecker extends Checker {
 	override def apply(ast: AST) = {
@@ -85,7 +87,9 @@ object TypeChecker extends Checker {
 	    case DyadicExpr(opr, expr1, expr2) => opr match {
 	        case o: ArithOpr	=> checkType(Int32)(d)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
 	        case o: BoolOpr		=> checkType(Bool)(d)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
-	        case o: RelOpr		=> checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2))
+	        case EqualsOpr		=> toOtherTypeResult(Bool)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
+	        case NotEqualsOpr	=> toOtherTypeResult(Bool)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
+	        case o: RelOpr		=> toOtherTypeResult(Bool)(checkType(Int32)(d)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2))))
 	    }
 	}
 	
@@ -121,6 +125,11 @@ object TypeChecker extends Checker {
 	        case (a, _)									 if a.isInstanceOf[CheckError[Type]]	=> a
 	        case (_, b)									 if b.isInstanceOf[CheckError[Type]]	=> b
 	    }
+	}
+	
+	def toOtherTypeResult(t: Type)(res: CheckResult[Type]): CheckResult[Type] = res match {
+	    case CheckSuccess(_) => CheckSuccess(t)
+	    case e => e
 	}
 	
 	def combineToResult(r1: CheckResult[Type], r2: CheckResult[Type]): CheckResult[Type] = r1 match {
