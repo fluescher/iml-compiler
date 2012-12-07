@@ -38,5 +38,6 @@ global
 	? n init;
 	call divide(m, n, q init, r init);
 	! q;
-	! r
+	! r;
+	! c
 }

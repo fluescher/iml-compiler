@@ -16,6 +16,7 @@ import ch.fhnw.iml.ast.StorageSymbol
 import ch.fhnw.iml.ast.GlobalImport
 import ch.fhnw.iml.ast.FunctionSymbol
 import ch.fhnw.iml.ast.ProcedureSymbol
+import ch.fhnw.iml.ast.Type
 
 
 /**
@@ -76,9 +77,9 @@ object SymbolChecker extends Checker {
 	private def addFunDecls(global: SymbolTable, l: List[FunDecl]) : CheckResult[SymbolTable] = l match {
 	    case Nil 	 => CheckSuccess(global)
 	    case x::xs  if(global.functions.contains(x.head.i)) => CheckError("Already defined this function", x)
-	    case x::xs	 => addFunDecls(SymbolTable(global.functions +(x.head.i -> FunctionSymbol(x.head.i, x)), global.procs, global.stores), xs)
+	    case x::xs	 => addFunDecls(SymbolTable(global.functions +(x.head.i -> FunctionSymbol(x.head.i, x.head.retVal.t, x)), global.procs, global.stores), xs)
 	}
-	
+
 	private def addProcDecls(global: SymbolTable, l: List[ProcDecl]) : CheckResult[SymbolTable] = l match {
 	    case Nil 	 => CheckSuccess(global)
 	    case x::xs  if(global.procs.contains(x.head.i)) => CheckError("Already defined this function", x)
@@ -141,7 +142,7 @@ object SymbolChecker extends Checker {
 	}
 	
 	private def visitReturn(f: FunDecl): CheckResult[FunDecl] = {
-	    val ret = f.head.store
+	    val ret = f.head.retVal
 	    if(f.symbols.stores.contains(ret.i)) CheckError("Variable for return value is already defined.", ret)
 	    else CheckSuccess(FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, addStorageSymbol(f.symbols, StorageSymbol(ret.i, ret.t, ret, true, false, false, -1, -1, false))))
 	}

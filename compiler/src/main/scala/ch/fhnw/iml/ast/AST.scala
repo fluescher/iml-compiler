@@ -5,7 +5,6 @@ import scala.util.parsing.input.Positional
 case class AST(val root: ProgramNode)
 
 trait Node extends Positional
-
 /* programs */
 case class ProgramNode(i: Ident, cps: CpsDecl, cmd: BlockCommand, symbols: SymbolTable) extends Node
 
@@ -16,7 +15,7 @@ case object SkipCommand extends Command
 case class AssiCommand(expr1: Expr, expr2: Expr) extends Command
 case class CondCommand(expr: Expr, cmd1: Command, cmd2: Command) extends Command
 case class WhileCommand(expr: Expr, cmd: Command) extends Command
-case class ProcCallComand(f: Ident, exprs: List[Expr], idents: List[Ident]) extends Command
+case class ProcCallCommand(f: Ident, exprs: List[Expr], idents: List[Ident]) extends Command
 case class InputCommand(expr: Expr) extends Command
 case class OutputCommand(expr: Expr) extends Command
 
@@ -32,25 +31,31 @@ case class DyadicExpr(opr: Opr, expr1: Expr, expr2: Expr) extends Expr
 
 /* Operators */
 sealed abstract class Opr extends Node
-case object NotOpr extends Opr
-case object AndOpr extends Opr
-case object OrOpr extends Opr
-case object EqualsOpr extends Opr
-case object NotEqualsOpr extends Opr
-case object GreaterThanOpr extends Opr
-case object GreaterEqualsThanOpr extends Opr
-case object LessThanOpr extends Opr
-case object LessEqualsThanOpr extends Opr
-case object PlusOpr extends Opr
-case object MinusOpr extends Opr
-case object TimesOpr extends Opr
-case object DivOpr extends Opr
-case object ModOpr extends Opr
+sealed abstract class BoolOpr extends Opr
+case object NotOpr extends BoolOpr
+case object AndOpr extends BoolOpr
+case object OrOpr extends BoolOpr
+
+sealed abstract class RelOpr extends Opr
+case object EqualsOpr extends RelOpr
+case object NotEqualsOpr extends RelOpr
+case object GreaterThanOpr extends RelOpr
+case object GreaterEqualsThanOpr extends RelOpr
+case object LessThanOpr extends RelOpr
+case object LessEqualsThanOpr extends RelOpr
+
+sealed abstract class ArithOpr extends Opr
+case object PlusOpr extends ArithOpr
+case object MinusOpr extends ArithOpr
+case object TimesOpr extends ArithOpr
+case object DivOpr extends ArithOpr
+case object ModOpr extends ArithOpr
 
 /* types */
 sealed abstract class Type
 case object Int32 extends Type
 case object Bool extends Type
+case object Void extends Type
 
 /* flow control */
 sealed abstract class Flow extends Node
@@ -68,7 +73,7 @@ case class CpsDecl(decls: List[Decl]) extends Decl
 case class FunDecl(head: FunHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand, symbols: SymbolTable) extends Decl
 case class ProcDecl(head: ProcHead, global: Option[GlobalImportList], cps: Option[CpsDecl], pre: Option[ConditionList], post: Option[ConditionList], cmd: BlockCommand, symbols: SymbolTable) extends Decl
 
-case class FunHead(i: Ident, params: ParameterList, store: StoreDecl) extends Node
+case class FunHead(i: Ident, params: ParameterList, retVal: StoreDecl) extends Node
 case class ProcHead(i: Ident, params: ParameterList) extends Node
 
 /* Conditions */
@@ -96,10 +101,21 @@ case object Local extends Scope
 case object Global extends Scope
 
 /* Symbol tables */
-case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,ProcedureSymbol], stores: Map[Ident,StorageSymbol])
+case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,ProcedureSymbol], stores: Map[Ident,StorageSymbol]) {
+    def containsStore(id: Ident) = stores.contains(id)
+    def getStoreType(id: Ident) = stores.get(id) match {
+        case Some(s) => s.t
+        case None => Void
+    }
+    def containsFunction(id: Ident) = functions.contains(id)
+    def getFunctionType(id: Ident) = functions.get(id) match {
+        case Some(f) => f.decl.head.retVal.t
+        case None	  => Void
+    }
+}
 object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 
 case class ProcedureSymbol(id: Ident, decl: ProcDecl)
-case class FunctionSymbol(id: Ident, decl: FunDecl)
+case class FunctionSymbol(id: Ident, t: Type, decl: FunDecl)
 case class StorageSymbol(id: Ident, t: Type, decl: StoreDecl, isRet: Boolean, isGlobal: Boolean, isArgument: Boolean, argpos: Int, localpos: Int, isInitialized: Boolean)
 

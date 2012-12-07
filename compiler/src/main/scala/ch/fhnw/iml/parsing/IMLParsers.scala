@@ -115,8 +115,8 @@ class IMLParsers extends TokenParsers {
 			| (expr ~ Becomes ~ expr) 											^^ {case e1 ~ _ ~ e2 => AssiCommand(e1, e2) }
 			| (If ~ LParen ~> expr ~ RParen ~ blockCmd ~ Else ~ blockCmd)		^^ {case ex ~ _ ~ cmd1 ~ _ ~ cmd2 => CondCommand(ex, cmd1, cmd2)}
 			| (While ~ LParen ~> expr ~ RParen ~ blockCmd)						^^ {case ex ~ _ ~ cmd1 => WhileCommand(ex, cmd1)}
-			| (Call ~> ident ~ exprList ~ Init ~ globInitList)					^^ {case name ~ list ~ _ ~ initlist => ProcCallComand(name, list, initlist)}
-			| (Call ~> ident ~ exprList)										^^ {case name ~ list => ProcCallComand(name, list, List())}
+			| (Call ~> ident ~ exprList ~ Init ~ globInitList)					^^ {case name ~ list ~ _ ~ initlist => ProcCallCommand(name, list, initlist)}
+			| (Call ~> ident ~ exprList)										^^ {case name ~ list => ProcCallCommand(name, list, List())}
 			| (QuestionMark ~> expr)											^^ {case ex => InputCommand(ex)}
 			| (ExclamationMark ~> expr)											^^ {case ex => OutputCommand(ex)})  			
     
@@ -136,7 +136,7 @@ class IMLParsers extends TokenParsers {
       case (o~ex)::rest => 	DyadicExpr(o, e, toDyadicExpr(ex, rest))										  
     }
     												
-    def factor : Parser[Expr] = positioned( literal 						^^ {case l => l}
+    def factor : Parser[Expr] = positioned( literal 			^^ {case l => l}
 		            		   | (ident ~ Init)					^^ {case i ~ init => StoreExpr(i, true)}
 		            		   | (ident ~ exprList)				^^ {case i ~ list => FunCallExpr(i, list)}
 		            		   | ident							^^ {case i => VarAccess(i) }
@@ -161,8 +161,8 @@ class IMLParsers extends TokenParsers {
     			   | LessThan 			^^^ LessThanOpr
     			   | LessEqualsThan 	^^^ LessEqualsThanOpr)
     			   
-    def addOpr:Parser[Opr] = positioned(	 Plus 	^^^ PlusOpr
-    			   		      | Minus 	^^^ MinusOpr)
+    def addOpr:Parser[Opr] = positioned(	  Plus 		^^^ PlusOpr
+    			   		      				| Minus 	^^^ MinusOpr)
     			   
     def multOpr = positioned(  Times 	^^^ TimesOpr
     			   | Div 	^^^ DivOpr
