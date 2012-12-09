@@ -38,7 +38,8 @@ object TypeChecker extends Checker {
 	    			.map(checkFunDecl)
 	    			.foldLeft(CheckSuccess[Type](Void):CheckResult[Type])(combineToResult)
 	
-	private def checkFunDecl(f: FunDecl): CheckResult[Type] = checkBlock(false)(f.cmd)(f.symbols)
+	private def checkFunDecl(f: FunDecl): CheckResult[Type] = 
+	    checkBlock(false)(f.cmd)(f.symbols) and checkConditions(f.pre)(f.symbols) and checkConditions(f.post)(f.symbols)
 	
 	private def checkProcDecls(n: ProgramNode): CheckResult[Type] =  
 	    n.cps.decls	.filter(_.isInstanceOf[ProcDecl])
@@ -46,11 +47,20 @@ object TypeChecker extends Checker {
 	    			.map(checkProcDecl)
 	    			.foldLeft(CheckSuccess[Type](Void):CheckResult[Type])(combineToResult)
 	
-	private def checkProcDecl(p: ProcDecl): CheckResult[Type] = checkBlock(false)(p.cmd)(p.symbols)
+	private def checkProcDecl(p: ProcDecl): CheckResult[Type] = checkBlock(false)(p.cmd)(p.symbols) and checkConditions(p.pre)(p.symbols) and checkConditions(p.post)(p.symbols)
 	
 	private def checkBlock(inMain: Boolean)(block: BlockCommand)(implicit symbols: SymbolTable): CheckResult[Type] = {
 	    block.cmds.map(checkCommand(inMain)).foldLeft(CheckSuccess[Type](Bool):CheckResult[Type])(combineToResult)
 	}
+	
+	
+	private def checkConditions(conditions: Option[ConditionList])(implicit symbols: SymbolTable): CheckResult[Type] = conditions match {
+	    case None 		=> CheckSuccess(Void)
+	    case Some(l)	=> l.conditions.map({case Condition(_, expr) => expr})
+	    							   .map(a => checkType(Bool)(a)(checkValueExpr(a)))
+	    							   .foldLeft(CheckSuccess[Type](Bool):CheckResult[Type])(combineToResult)
+	}
+	
 	
 	private def checkCommand(inMain: Boolean = false)(cmd: Command)(implicit symbols: SymbolTable):CheckResult[Type] = cmd match {
 	    case block: BlockCommand 			=> checkBlock(inMain)(block)

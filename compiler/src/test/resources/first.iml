@@ -18,7 +18,7 @@ global
 	returns r:int32
 	local 
 		var i : int32
-	requires [positive:isPositive(n)]
+	requires [positive: n > 0]
 	{
 		i init := 0;
 		r init := m;
