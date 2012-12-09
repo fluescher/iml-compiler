@@ -124,14 +124,12 @@ object TypeChecker extends Checker {
 	    case e 										=> e
 	}
 	
-	private def checkEqualTypes(n: Node)(res1: CheckResult[Type], res2: CheckResult[Type]): CheckResult[Type] = {
-	    (res1, res2) match {
-	        case (CheckSuccess(t1), CheckSuccess(t2))	 if t1 == t2 							=> CheckSuccess(t1)
-	        case (CheckSuccess(_), CheckSuccess(_))												=> CheckError("Incompatible types", n)
-	        case (a, _)									 if a.isInstanceOf[CheckError[Type]]	=> a
-	        case (_, b)									 if b.isInstanceOf[CheckError[Type]]	=> b
-	    }
-	}
+	private def checkEqualTypes(n: Node)(res1: CheckResult[Type], res2: CheckResult[Type]): CheckResult[Type] = (res1, res2) match {
+        case (CheckSuccess(t1), CheckSuccess(t2))	 if t1 == t2 							=> CheckSuccess(t1)
+        case (CheckSuccess(_), CheckSuccess(_))												=> CheckError("Incompatible types", n)
+        case (a, _)									 if a.isInstanceOf[CheckError[Type]]	=> a
+        case (_, b)									 if b.isInstanceOf[CheckError[Type]]	=> b
+    }
 	
 	private def toOtherTypeResult(t: Type)(res: CheckResult[Type]): CheckResult[Type] = res match {
 	    case CheckSuccess(_) => CheckSuccess(t)
