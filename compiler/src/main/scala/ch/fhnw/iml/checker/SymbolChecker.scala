@@ -1,22 +1,6 @@
 package ch.fhnw.iml.checker
 
-import ch.fhnw.iml.ast.AST
-import ch.fhnw.iml.ast.Decl
-import ch.fhnw.iml.ast.EmptyTable
-import ch.fhnw.iml.ast.FunDecl
-import ch.fhnw.iml.ast.Parameter
-import ch.fhnw.iml.ast.ParameterList
-import ch.fhnw.iml.ast.ProgramNode
-import ch.fhnw.iml.ast.StorageSymbol
-import ch.fhnw.iml.ast.StoreDecl
-import ch.fhnw.iml.ast.SymbolTable
-import ch.fhnw.iml.ast.CpsDecl
-import ch.fhnw.iml.ast.ProcDecl
-import ch.fhnw.iml.ast.StorageSymbol
-import ch.fhnw.iml.ast.GlobalImport
-import ch.fhnw.iml.ast.FunctionSymbol
-import ch.fhnw.iml.ast.ProcedureSymbol
-import ch.fhnw.iml.ast.Type
+import ch.fhnw.iml.ast._
 
 
 /**
@@ -33,7 +17,7 @@ import ch.fhnw.iml.ast.Type
  * b: 1
  * c: 2
  * e: 3
- * d: 4 (return value is alway the last local variable)
+ * d: 4 (return value is always the last local variable)
  * 
  */
 object SymbolChecker extends Checker {

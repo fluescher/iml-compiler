@@ -3,11 +3,7 @@ package ch.fhnw.iml.generation
 import java.io.FileOutputStream
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes._
-import ch.fhnw.iml.ast.AST
-import ch.fhnw.iml.ast.BlockCommand
-import ch.fhnw.iml.ast.Command
-import ch.fhnw.iml.ast.ProgramNode
-import ch.fhnw.iml.ast.SkipCommand
+import ch.fhnw.iml.ast._
 import org.objectweb.asm.MethodVisitor
 
 object JVMWriter {

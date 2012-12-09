@@ -5,6 +5,7 @@ import scala.util.parsing.input.Positional
 case class AST(val root: ProgramNode)
 
 trait Node extends Positional
+
 /* programs */
 case class ProgramNode(i: Ident, cps: CpsDecl, cmd: BlockCommand, symbols: SymbolTable) extends Node
 
@@ -93,8 +94,8 @@ case object VarNode extends ChangeMode
 case object ConstNode extends ChangeMode
 
 sealed abstract class MechMode extends ChangeMode
-case object RefNode extends MechMode
-case object CopyNode extends MechMode
+case object Ref extends MechMode
+case object Copy extends MechMode
 
 sealed abstract class Scope
 case object Local extends Scope
@@ -112,6 +113,7 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
         case Some(f) => f.decl.head.retVal.t
         case None	  => Void
     }
+    def containsProcedure(id: Ident) = procs.contains(id)
 }
 object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 

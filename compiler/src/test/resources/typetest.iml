@@ -10,7 +10,7 @@ global
 	q init := 0;
 	r init := m;
 	
-	while (r >= n) {
+	while (12) {
 		q := q + 1;
 		r := r - n
 	};

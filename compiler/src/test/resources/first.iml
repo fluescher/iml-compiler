@@ -17,7 +17,7 @@ global
 	fun multiply(in copy m:int32, in copy n:int32)
 	returns r:int32
 	local 
-		var b : int32
+		var i : int32
 	requires [positive:isPositive(n)]
 	{
 		i init := 0;
@@ -27,9 +27,6 @@ global
 			r := r + m
 		}
 	};
-	
-	
-	
 	var n:int32;
 	var q:int32;
 	var r:int32
@@ -37,7 +34,7 @@ global
 	? m init;
 	? n init;
 	call divide(m, n, q init, r init);
+	m := multiply(2, 2);
 	! q;
-	! r;
-	! c
+	! r
 }

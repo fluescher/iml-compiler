@@ -23,8 +23,8 @@ class IMLParsers extends TokenParsers {
         			LBracket, RBracket, Ensures, Requires}
     
     /* Programs */
-    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b,null)}
-    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,null,b, null)}
+    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b,null) }
+    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,null,b, null) }
     						)
     
     /* declarations */
@@ -178,8 +178,8 @@ class IMLParsers extends TokenParsers {
     def changeMode = positioned( Var 		^^^ VarNode
     				 | Const 	^^^ ConstNode )
 
-    def mechMode = positioned( Ref		^^^ RefNode
-    			   | Copy		^^^ CopyNode)
+    def mechMode = positioned( Ref		^^^ ch.fhnw.iml.ast.Ref
+    			   | Copy				^^^ ch.fhnw.iml.ast.Copy)
     				 
     def ident = positioned(elem("ident", _.isInstanceOf[lexical.Ident]) ^^ {case i => ch.fhnw.iml.ast.Ident(i.chars)})
 
