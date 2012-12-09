@@ -5,9 +5,29 @@ import ch.fhnw.iml.ast._
 object TypeChecker extends Checker {
 	override def apply(ast: AST) = {
 	    typeCheck(ast.root) match {
-	        case CheckSuccess(_) 	=> CheckSuccess(null)
+	        case CheckSuccess(_) 	=> CheckSuccess(ast)
 	        case CheckError(m,n)	=> CheckError(m,n)
 	    }
+	}
+	
+	/**
+	 * Determines the resulting type of an expression.
+	 * 
+	 * This function is only safe, if the expression was 
+	 * previously validated using this type checker.
+	 */
+	def getType(expr: Expr)(implicit symbols: SymbolTable): Type = expr match {
+	    case BoolLiteralExpression(_) 		=> Bool
+	    case IntLiteralExpression(_) 		=> Int32
+	    case StoreExpr(i,_)					=> symbols.getStoreType(i)
+	    case VarAccess(i)					=> symbols.getStoreType(i)
+	    case FunCallExpr(i, _)				=> symbols.getFunctionType(i)
+	    case MonadicExpr(o: ArithOpr, _)	=> Int32
+	    case MonadicExpr(o: BoolOpr, _)		=> Bool
+	    case MonadicExpr(o: RelOpr,_)		=> Void /* This should never happen. Statement only inserted because of scala compiler warning */
+	    case DyadicExpr(o: BoolOpr, _, _)	=> Bool
+	    case DyadicExpr(o: RelOpr, _, _)	=> Bool
+	    case DyadicExpr(o: ArithOpr,_ ,_)	=> Int32
 	}
 	
 	private def typeCheck(n: ProgramNode): CheckResult[Type] = checkBlock(true)(n.cmd)(n.symbols) and checkFunDecls(n) and checkProcDecls(n)
