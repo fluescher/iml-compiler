@@ -24,7 +24,7 @@ object TypeChecker extends Checker {
 	    case FunCallExpr(i, _)				=> symbols.getFunctionType(i)
 	    case MonadicExpr(o: ArithOpr, _)	=> Int32
 	    case MonadicExpr(o: BoolOpr, _)		=> Bool
-	    case MonadicExpr(o: RelOpr,_)		=> Void /* This should never happen. Statement only inserted because of scala compiler warning */
+	    case MonadicExpr(o: RelOpr,_)		=> throw new UnsupportedOperationException("This function can only be called if typecheck was successful") /* This should never happen. Statement only inserted because of scala compiler warning */
 	    case DyadicExpr(o: BoolOpr, _, _)	=> Bool
 	    case DyadicExpr(o: RelOpr, _, _)	=> Bool
 	    case DyadicExpr(o: ArithOpr,_ ,_)	=> Int32
