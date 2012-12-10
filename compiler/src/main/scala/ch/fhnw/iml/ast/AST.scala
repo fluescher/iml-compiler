@@ -114,6 +114,16 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
         case None	  => Void
     }
     def containsProcedure(id: Ident) = procs.contains(id)
+    
+    def markStorageAsInitialized(id: Ident): SymbolTable = stores.get(id) match {
+        case None => this
+        case Some(StorageSymbol(a, b, c, d, e, f, g, h, isInit)) => SymbolTable(functions, procs, stores.updated(id, StorageSymbol(a,b,c,d,e,f,g,h,true)))
+    }
+    
+    def isInitialized(id: Ident): Boolean = stores.get(id) match {
+        case None => false
+        case Some(StorageSymbol(_, _, _, _, _, _, _, _, isInit)) => isInit
+    }
 }
 object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 
