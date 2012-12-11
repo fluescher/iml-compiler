@@ -2,5 +2,5 @@ program generationTest
 global
 	var c: bool
 {
-	! 7 mod 3 + 1
+	! false or false or true
 }

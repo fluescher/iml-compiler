@@ -78,6 +78,8 @@ class IMLLexical extends Lexical with IMLTokens {
         case "while"=> While
         case "ensures" => Ensures
         case "requires" => Requires
+        case "and"	=> And
+        case "or" => Or
         case other  => Ident(other)
     }
 }

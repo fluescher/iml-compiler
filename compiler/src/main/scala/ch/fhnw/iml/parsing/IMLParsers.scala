@@ -123,11 +123,11 @@ class IMLParsers extends TokenParsers {
     def blockCmd : Parser[BlockCommand] = positioned(LBrace ~> cmd ~ rep(SemiColon ~> cmd) <~ RBrace ^^ {case c ~ rest => BlockCommand(c::rest)})
     def globInitList = ident ~ rep(Comma ~> ident) ^^ {case i ~ rest => i::rest}
     
-    /* Expressions */
-    def expr = positioned(term1 ~ rep(boolOpr ~ term1)     ^^ {case t1 ~ rest => toDyadicExpr(t1, rest)})
+    /* Expressions */ 
+    def expr = positioned(term1 ~ rep(boolOpr ~ term1)      ^^ {case t1 ~ rest => toDyadicExpr(t1, rest)})
     def term1 = positioned( (term2 ~ relOpr ~ term2) 		^^ {case t1 ~ opr ~ t2 => DyadicExpr(opr, t1, t2)}
-    			  | term2 						^^ {case t2 => t2}
-    			) 
+		    			  	| term2 						^^ {case t2 => t2}
+													    			) 
     def term2 = positioned(term3 ~ rep(addOpr ~ factor) 	^^ { case t3 ~ rest => toDyadicExpr(t3, rest)})
     def term3 = positioned(factor ~ rep(multOpr ~ factor) 	^^ { case fac ~ rest => toDyadicExpr(fac, rest) })
     
@@ -152,8 +152,8 @@ class IMLParsers extends TokenParsers {
     
     def notOpr = positioned(accept(Not) ^^^ NotOpr)
     
-    def boolOpr = positioned(	 Or  ^^^ OrOpr
-            	   | And ^^^ AndOpr) 
+    def boolOpr = positioned(	  Or  ^^^ OrOpr
+            	   				| And ^^^ AndOpr) 
     def relOpr = positioned(	 Equals 			^^^ EqualsOpr
     			   | NotEquals 			^^^ NotEqualsOpr
     			   | GreaterThan 		^^^ GreaterThanOpr

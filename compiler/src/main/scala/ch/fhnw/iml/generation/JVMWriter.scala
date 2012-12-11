@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes._
 import ch.fhnw.iml.ast._
 import org.objectweb.asm.MethodVisitor
 import ch.fhnw.iml.checker.TypeChecker
+import org.objectweb.asm.Label
 
 object JVMWriter {
     
@@ -154,30 +155,137 @@ object JVMWriter {
         case VarAccess(i)					=> writeAccessVar(i)
         case StoreExpr(i,_)					=> writeAccessVar(i)
         case FunCallExpr(_, _)				=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
-        case MonadicExpr(o,e)				=> writeMonadicExpr(o,e)
+        case MonadicExpr(o,e)				=> writeMonadicExpr(o, e)
         case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
         case _								=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
     }
     
     def writeDyadicExpr(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
-        case EqualsOpr 				=> 
-        case NotEqualsOpr 			=>
-        case GreaterThanOpr			=>
-        case GreaterEqualsThanOpr 	=>
-        case LessThanOpr			=>
-        case LessEqualsThanOpr		=> 
+        case EqualsOpr 				=> writeExpr(e1); writeExpr(e2); writeCheckEquals()
+        case NotEqualsOpr 			=> writeExpr(e1); writeExpr(e2); writeCheckNotEquals()
+        case GreaterThanOpr			=> writeExpr(e1); writeExpr(e2); writeCheckGreaterThan()
+        case GreaterEqualsThanOpr 	=> writeExpr(e1); writeExpr(e2); writeCheckGreaterEqualsThan()
+        case LessThanOpr			=> writeExpr(e1); writeExpr(e2); writeCheckLessThan()
+        case LessEqualsThanOpr		=> writeExpr(e1); writeExpr(e2); writeCheckLessEqualsThan()
         case PlusOpr			    => writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IADD);
         case MinusOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(ISUB);
         case TimesOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IMUL);
         case DivOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IDIV);
         case ModOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IREM);
-        case AndOpr					=>
-        case OrOpr					=> 
+        case AndOpr					=> writeAnd(e1, e2)
+        case OrOpr					=> writeOr(e1, e2)
         case NotOpr					=> /* not used */
     }
     
+    def writeAnd(e1: Expr, e2: Expr)(implicit scope: Scope) {
+        val returnFalse = new Label();
+        val end = new Label();
+        writeExpr(e1);
+        scope.method.visitJumpInsn(IFEQ, returnFalse)
+        writeExpr(e2);
+        scope.method.visitJumpInsn(IFEQ, returnFalse)
+        scope.method.visitInsn(ICONST_1) /* return true */
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnFalse)
+        scope.method.visitInsn(ICONST_0) /* return false */
+        scope.method.visitLabel(end)
+    }
+    
+    def writeOr(e1: Expr, e2: Expr)(implicit scope: Scope) {
+        val returnTrue = new Label();
+        val end = new Label();
+        writeExpr(e1);
+        scope.method.visitJumpInsn(IFNE, returnTrue)
+        writeExpr(e2);
+        scope.method.visitJumpInsn(IFNE, returnTrue)
+        scope.method.visitInsn(ICONST_0) /* return false */
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnTrue)
+        scope.method.visitInsn(ICONST_1) /* return true */
+        scope.method.visitLabel(end)
+    }
+    
+    def writeCheckLessThan()(implicit scope: Scope) {
+        val returnFalse = new Label();
+        val end = new Label();
+        scope.method.visitJumpInsn(IF_ICMPGE, returnFalse)
+        scope.method.visitInsn(ICONST_1)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnFalse)
+        scope.method.visitInsn(ICONST_0)
+        scope.method.visitLabel(end)
+    }
+    
+    def writeCheckLessEqualsThan()(implicit scope: Scope) {
+        val returnFalse = new Label();
+        val end = new Label();
+        scope.method.visitJumpInsn(IF_ICMPGT, returnFalse)
+        scope.method.visitInsn(ICONST_1)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnFalse)
+        scope.method.visitInsn(ICONST_0)
+        scope.method.visitLabel(end)
+    }
+    
+    def writeCheckGreaterThan()(implicit scope: Scope) {
+        val returnFalse = new Label();
+        val end = new Label();
+        scope.method.visitJumpInsn(IF_ICMPLE, returnFalse)
+        scope.method.visitInsn(ICONST_1)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnFalse)
+        scope.method.visitInsn(ICONST_0)
+        scope.method.visitLabel(end)
+    }
+    
+    def writeCheckGreaterEqualsThan()(implicit scope: Scope) {
+        val returnFalse = new Label();
+        val end = new Label();
+        scope.method.visitJumpInsn(IF_ICMPLT, returnFalse)
+        scope.method.visitInsn(ICONST_1)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnFalse)
+        scope.method.visitInsn(ICONST_0)
+        scope.method.visitLabel(end)
+    }
+    
+    def writeCheckEquals()(implicit scope: Scope) {
+        val returnFalse = new Label();
+        val end = new Label();
+        scope.method.visitJumpInsn(IF_ICMPNE, returnFalse)
+        scope.method.visitInsn(ICONST_1)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnFalse)
+        scope.method.visitInsn(ICONST_0)
+        scope.method.visitLabel(end)
+    }
+    
+    def writeCheckNotEquals()(implicit scope: Scope) {
+        val returnTrue = new Label();
+        val end = new Label();
+        scope.method.visitJumpInsn(IF_ICMPNE, returnTrue)
+        scope.method.visitInsn(ICONST_0)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(returnTrue)
+        scope.method.visitInsn(ICONST_1)
+        scope.method.visitLabel(end)
+    }
+    
     def writeMonadicExpr(o: Opr, e: Expr)(implicit scope: Scope) = o match {
-        case _		=> // TODO
+        case NotOpr		=> {
+            val returnFalse = new Label()
+            val end = new Label
+            writeExpr(e);
+            scope.method.visitJumpInsn(IFNE, returnFalse)
+            scope.method.visitInsn(ICONST_1)
+            scope.method.visitJumpInsn(GOTO, end)
+            scope.method.visitLabel(returnFalse)
+            scope.method.visitInsn(ICONST_0)
+            scope.method.visitLabel(end)
+        }
+        case MinusOpr	=> writeExpr(e); scope.method.visitInsn(INEG)
+        case PlusOpr	=> writeExpr(e);
+        case _ => 
     }
     
     def writeAccessVar(i: Ident)(implicit scope: Scope) = scope.symbols.stores.get(i) match { // TODO access arguments and local variables
