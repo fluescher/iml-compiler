@@ -1,9 +1,13 @@
 program generationTest
 global
-	fun inc(copy i: int32, copy a: int32)
+	fun inc(i: int32, a: int32)
 	returns r: int32
+	local 
+		var b: int32
 	{
-		r := i + a
+		b init := a;
+		r init := i + b;
+		b := -7
 	};
 	var c: int32
 {

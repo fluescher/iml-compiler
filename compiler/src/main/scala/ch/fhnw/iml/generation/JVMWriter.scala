@@ -1,12 +1,14 @@
 package ch.fhnw.iml.generation
 
 import java.io.FileOutputStream
+
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes._
-import ch.fhnw.iml.ast._
-import org.objectweb.asm.MethodVisitor
-import ch.fhnw.iml.checker.TypeChecker
 import org.objectweb.asm.Label
+import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes._
+
+import ch.fhnw.iml.ast._
+import ch.fhnw.iml.checker.TypeChecker
 
 object JVMWriter {
     
@@ -29,15 +31,35 @@ object JVMWriter {
         writeProgram(ast.root, filename)(Scope(ast.root.i.chars, writer, null, ast.root.symbols))
         writer.toByteArray
     }
-
+    
     def writeProgram(p: ProgramNode, filename: String)(implicit scope: Scope) {
         scope.writer.visit(JVM_V7, ACC_PUBLIC + ACC_SUPER + ACC_FINAL, p.i.chars, null, "java/lang/Object", null)
         scope.writer.visitSource(filename, null)
         writeFunctions(p)
+        writeProcedures(p)
         writeFields(p.symbols, scope)
         writeConstructor()
         writeEntryPoint(p)
         writeMain(p)
+    }
+    
+    def writeProcedures(p: ProgramNode)(implicit scope: Scope) {
+        val procs = p.cps.decls.filter(_.isInstanceOf[ProcDecl]).map(_.asInstanceOf[ProcDecl])
+        		
+        procs.map(writeProcedure)
+    }
+    
+    def writeProcedure(p: ProcDecl)(implicit scope: Scope) {
+        val cur = scope.writer.visitMethod(	ACC_PUBLIC,
+								                p.head.i.chars,
+								                getVMType(p),
+												null,
+												null)
+		val s = Scope(scope.className, scope.writer, cur, p.symbols)        
+        writeCmd(p.cmd)(s)
+        cur.visitInsn(IRETURN)
+        cur.visitMaxs(IGNORED,IGNORED)
+        cur.visitEnd()
     }
     
     def writeFunctions(p: ProgramNode)(implicit scope: Scope) {
@@ -47,18 +69,24 @@ object JVMWriter {
     }
     
     def writeFunction(f: FunDecl)(implicit scope: Scope) {
+        val funStart = new Label()
+        val funEnd = new Label()
+        
         val cur = scope.writer.visitMethod(	ACC_PUBLIC,
 								                f.head.i.chars,
 								                getVMType(f),
 												null,
 												null)
-		val s = Scope(scope.className, scope.writer, cur, f.symbols)        
+        cur.visitLabel(funStart)
+		val s = Scope(scope.className, scope.writer, cur, f.symbols)  
         writeCmd(f.cmd)(s)
+        cur.visitLabel(funEnd)
+        cur.visitVarInsn(ILOAD, getReturnIndex(f)(s))
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
         cur.visitEnd()
     }
-    
+
     def writeFields(symbols: SymbolTable, scope: Scope) {
     	for((ident, store) <- symbols.stores if store.isGlobal) {
     	    scope.writer.visitField( ACC_PUBLIC, ident.chars, getVMType(store.t).toString, null, null)
@@ -125,13 +153,13 @@ object JVMWriter {
     }
     
     def writeCmd(cmd: Command)(implicit scope: Scope): Unit = cmd match {
-        case SkipCommand 				=> scope.method.visitInsn(NOP)
-        case AssiCommand(s, e)			=> writeAssiCmd(s, e) 				
-        case OutputCommand(expr)		=> writeOutputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
-        case InputCommand(expr)			=> writeInputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
-        case WhileCommand(expr, cmd) 	=> writeWhile(expr, cmd)
-        case BlockCommand(cmds)			=> writeBlock(cmds)
-        case CondCommand(expr, c1, c2)	=> writeCond(expr, c1, c2)
+        case SkipCommand 					=> scope.method.visitInsn(NOP)
+        case AssiCommand(s, e)				=> writeAssiCmd(s, e) 				
+        case OutputCommand(expr)			=> writeOutputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
+        case InputCommand(expr)				=> writeInputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
+        case WhileCommand(expr, cmd) 		=> writeWhile(expr, cmd)
+        case BlockCommand(cmds)				=> writeBlock(cmds)
+        case CondCommand(expr, c1, c2)		=> writeCond(expr, c1, c2)
         case ProcCallCommand(f, exprs,_)	=> writeProcCall(f, exprs) 
     }
     
@@ -167,17 +195,20 @@ object JVMWriter {
     def saveTo(e: Expr)(implicit scope: Scope) = e match {// TODO combine only to store expr
         case StoreExpr(i, _) 	=> scope.symbols.stores.get(i) match {
             case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-            case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos+1)
+            case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos)
+            case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _))				=> scope.method.visitVarInsn(ISTORE, pos+1)
         }
         case VarAccess(i)		=> scope.symbols.stores.get(i) match {
             case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-            case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos+1)
+            case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos)
+            case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _))				=> scope.method.visitVarInsn(ISTORE, pos+1)
         }
     }
     
     def writeAssiCmd(s: Expr, e: Expr)(implicit scope: Scope) {
-        scope.method.visitVarInsn(ALOAD, 0); 
+        if(isGlobal(s)) scope.method.visitVarInsn(ALOAD, 0); 
         writeExpr(e)
+        saveTo(s)
     }
     
     def writeInputCmd(expr: Expr, t: Type)(implicit scope: Scope) {
@@ -192,7 +223,6 @@ object JVMWriter {
         /* Read int32 onto stack */
         scope.method.visitMethodInsn(INVOKEVIRTUAL, "java/util/Scanner", "nextInt", "()I")
         
-        // TODO combine only to store expr
         saveTo(expr)
     }
     
@@ -350,6 +380,7 @@ object JVMWriter {
     def writeAccessVar(i: Ident)(implicit scope: Scope) = scope.symbols.stores.get(i) match { // TODO access arguments and local variables
         case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitVarInsn(ALOAD, 0); scope.method.visitFieldInsn(GETFIELD, scope.className, i.chars, getVMType(t))
         case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ILOAD, apos+1)
+        case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _))				=> scope.method.visitVarInsn(ILOAD, pos+1)
     }
     
     def getVMType(t: Type): String = t match {
@@ -358,7 +389,31 @@ object JVMWriter {
         case Void			=> "V"
     }
     
-    def getVMType(f: FunDecl): String = {
-    		"("+f.head.params.params.map(p => getVMType(p.store.t)).mkString+")"+getVMType(f.head.retVal.t)
+    
+    def isGlobal(s: Expr)(implicit scope: Scope) = s match {
+        // TODO only StoreExpr
+        case StoreExpr(id,_) => scope.symbols.stores.get(id) match {
+        	case Some(StorageSymbol(_, _, _, _, g, _, _, _, _)) => g
+        }
+        case VarAccess(id) => scope.symbols.stores.get(id) match {
+        	case Some(StorageSymbol(_, _, _, _, g, _, _, _, _)) => g
+        }
     }
+    
+    def getReturnIndex(f: FunDecl)(implicit scope: Scope) = scope.symbols.stores.get(f.head.retVal.i) match {
+        case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _)) => pos + 1 
+    }
+    
+    def getVMType(f: FunDecl): String = {
+    		"("+f.head.params.params.map(p => getVMType(p)).mkString+")"+getVMType(f.head.retVal.t)
+    }
+    
+    def getVMType(p: Parameter): String = p match {
+        case Parameter(_,_,store) => getVMType(store.t)
+    }
+    
+    def getVMType(p: ProcDecl): String = {
+    		"("+p.head.params.params.map(p => getVMType(p)).mkString+")V"
+    }
+    
 }

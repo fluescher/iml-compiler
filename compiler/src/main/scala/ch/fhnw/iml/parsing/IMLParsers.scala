@@ -33,7 +33,7 @@ class IMLParsers extends TokenParsers {
 		    		 	 | procDecl
 		    		 	 )
     				 
-    def storeDecl : Parser[StoreDecl] = positioned((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(null), i, t)})
+    def storeDecl : Parser[StoreDecl] = positioned((opt(changeMode) ~ ident ~ Colon ~ imlType) ^^ {case c ~ i ~ _ ~ t => StoreDecl(c.getOrElse(ConstNode), i, t)})
 
     def funDecl : Parser[FunDecl] = positioned(   
     				  (funHead ~ Global ~ globImpList ~ Local ~ cpsDecl ~ require ~ ensure ~ blockCmd)	^^ {case p ~ _ ~ g ~ _ ~ c ~ r ~ e ~ b => new FunDecl(p,Some(g),Some(c),Some(r),Some(e),b,EmptyTable)}
@@ -102,7 +102,7 @@ class IMLParsers extends TokenParsers {
             		| (LParen ~> param ~ rep(Comma ~> param) <~ RParen)	^^ {case first ~ rest => ParameterList(first::rest)}
             		)
     
-    def param = positioned(opt(flowMode) ~ opt(mechMode) ~ storeDecl ^^ {case f ~ c ~ s => Parameter(f.getOrElse(null), c.getOrElse(null), s)})
+    def param = positioned(opt(flowMode) ~ opt(mechMode) ~ storeDecl ^^ {case f ~ c ~ s => Parameter(f.getOrElse(InFlow), c.getOrElse(ch.fhnw.iml.ast.Copy), s)})
     
     def globImpList = positioned(globImp ~ rep(Comma ~> globImp) ^^ {case first ~ rest => GlobalImportList(first::rest)})
     
@@ -177,7 +177,7 @@ class IMLParsers extends TokenParsers {
     			   | In		^^^ InFlow)
     			   
     def changeMode = positioned( Var 		^^^ VarNode
-    				 | Const 	^^^ ConstNode )
+    				 | Const 				^^^ ConstNode )
 
     def mechMode = positioned( Ref		^^^ ch.fhnw.iml.ast.Ref
     			   | Copy				^^^ ch.fhnw.iml.ast.Copy)
