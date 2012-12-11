@@ -69,22 +69,55 @@ object JVMWriter {
     }
     
     def writeFunction(f: FunDecl)(implicit scope: Scope) {
-        val funStart = new Label()
-        val funEnd = new Label()
-        
         val cur = scope.writer.visitMethod(	ACC_PUBLIC,
 								                f.head.i.chars,
 								                getVMType(f),
 												null,
 												null)
-        cur.visitLabel(funStart)
-		val s = Scope(scope.className, scope.writer, cur, f.symbols)  
+		val s = Scope(scope.className, scope.writer, cur, f.symbols)
+		writeSafePreExecutionState(f)(s)
+		writePre(f)(s)
         writeCmd(f.cmd)(s)
-        cur.visitLabel(funEnd)
-        cur.visitVarInsn(ILOAD, getReturnIndex(f)(s))
+        writePost(f)(s)
+        cur.visitVarInsn(ILOAD, getReturnIndex(f)(s)) /* load local return variable onto stack */ 
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
         cur.visitEnd()
+    }
+    
+    def writeSafePreExecutionState(f: FunDecl)(implicit scope: Scope) {
+        //TODO
+    }
+    
+    def writePre(f: FunDecl)(implicit scope: Scope) = f.pre match {
+        case Some(c) => c.conditions.map(writeCondition)
+        case _ => 
+    }
+    
+    def writeCondition(c: Condition)(implicit scope: Scope) {
+        val end = new Label()
+        val err = new Label()
+        
+        writeExpr(c.expr)
+        scope.method.visitJumpInsn(IFEQ, err)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(err)
+        scope.method.visitTypeInsn(NEW, "java/lang/AssertionError")
+        scope.method.visitInsn(DUP)
+        c.name match {
+            case Some(n) => {
+                scope.method.visitLdcInsn(n.chars)
+                scope.method.visitMethodInsn(INVOKESPECIAL, "java/lang/AssertionError", "<init>", "(Ljava/lang/Object;)V")
+            }
+            case None => scope.method.visitMethodInsn(INVOKESPECIAL, "java/lang/AssertionError", "<init>", "()V")
+        }
+        scope.method.visitInsn(ATHROW)
+        scope.method.visitLabel(end)
+    }
+    
+    def writePost(f: FunDecl)(implicit scope: Scope) = f.post match {
+        case Some(c) => c.conditions.map(writeCondition)
+        case _ => 
     }
 
     def writeFields(symbols: SymbolTable, scope: Scope) {
@@ -389,7 +422,6 @@ object JVMWriter {
         case Void			=> "V"
     }
     
-    
     def isGlobal(s: Expr)(implicit scope: Scope) = s match {
         // TODO only StoreExpr
         case StoreExpr(id,_) => scope.symbols.stores.get(id) match {
@@ -409,7 +441,8 @@ object JVMWriter {
     }
     
     def getVMType(p: Parameter): String = p match {
-        case Parameter(_,_,store) => getVMType(store.t)
+        case Parameter(_,Ref,store) 	=> "["+getVMType(store.t)
+        case Parameter(_,Copy,store) 	=> getVMType(store.t)
     }
     
     def getVMType(p: ProcDecl): String = {
