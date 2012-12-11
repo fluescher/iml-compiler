@@ -124,6 +124,11 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
         case None => false
         case Some(StorageSymbol(_, _, _, _, _, _, _, _, isInit)) => isInit
     }
+    
+    def getFunctionDeclaration(id: Ident):FunDecl = functions.get(id) match {
+        case Some(FunctionSymbol(_,_,d)) => d
+        case None => null
+    }
 }
 object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 

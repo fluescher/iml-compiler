@@ -31,12 +31,32 @@ object JVMWriter {
     }
 
     def writeProgram(p: ProgramNode, filename: String)(implicit scope: Scope) {
-        scope.writer.visit(JVM_V7, ACC_PUBLIC + ACC_SUPER, p.i.chars, null, "java/lang/Object", null)
+        scope.writer.visit(JVM_V7, ACC_PUBLIC + ACC_SUPER + ACC_FINAL, p.i.chars, null, "java/lang/Object", null)
         scope.writer.visitSource(filename, null)
+        writeFunctions(p)
         writeFields(p.symbols, scope)
         writeConstructor()
         writeEntryPoint(p)
         writeMain(p)
+    }
+    
+    def writeFunctions(p: ProgramNode)(implicit scope: Scope) {
+        val funs = p.cps.decls.filter(_.isInstanceOf[FunDecl]).map(_.asInstanceOf[FunDecl])
+        		
+        funs.map(writeFunction)
+    }
+    
+    def writeFunction(f: FunDecl)(implicit scope: Scope) {
+        val cur = scope.writer.visitMethod(	ACC_PUBLIC,
+								                f.head.i.chars,
+								                getVMType(f),
+												null,
+												null)
+		val s = Scope(scope.className, scope.writer, cur, f.symbols)        
+        writeCmd(f.cmd)(s)
+        cur.visitInsn(IRETURN)
+        cur.visitMaxs(IGNORED,IGNORED)
+        cur.visitEnd()
     }
     
     def writeFields(symbols: SymbolTable, scope: Scope) {
@@ -144,14 +164,20 @@ object JVMWriter {
         scope.method.visitJumpInsn(IFNE, loop)
     }
     
+    def saveTo(e: Expr)(implicit scope: Scope) = e match {// TODO combine only to store expr
+        case StoreExpr(i, _) 	=> scope.symbols.stores.get(i) match {
+            case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
+            case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos+1)
+        }
+        case VarAccess(i)		=> scope.symbols.stores.get(i) match {
+            case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
+            case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos+1)
+        }
+    }
+    
     def writeAssiCmd(s: Expr, e: Expr)(implicit scope: Scope) {
         scope.method.visitVarInsn(ALOAD, 0); 
         writeExpr(e)
-        // TODO combine only to store expr
-        s match {
-            case StoreExpr(i, _) 	=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-            case VarAccess(i)		=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-        }
     }
     
     def writeInputCmd(expr: Expr, t: Type)(implicit scope: Scope) {
@@ -167,11 +193,7 @@ object JVMWriter {
         scope.method.visitMethodInsn(INVOKEVIRTUAL, "java/util/Scanner", "nextInt", "()I")
         
         // TODO combine only to store expr
-        expr match {
-            case StoreExpr(i, _) 	=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-            case VarAccess(i)		=> scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-        }
-        
+        saveTo(expr)
     }
     
     def writeOutputCmd(expr: Expr, t: Type)(implicit scope: Scope) {
@@ -186,9 +208,15 @@ object JVMWriter {
         case BoolLiteralExpression(false)	=> scope.method.visitIntInsn(BIPUSH, VM_FALSE)
         case VarAccess(i)					=> writeAccessVar(i)
         case StoreExpr(i,_)					=> writeAccessVar(i)
-        case FunCallExpr(_, _)				=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
+        case FunCallExpr(f, exprs)			=> writeFunCall(f, exprs)
         case MonadicExpr(o,e)				=> writeMonadicExpr(o, e)
         case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
+    }
+    
+    def writeFunCall(f: Ident, exprs: List[Expr])(implicit scope: Scope) {
+        scope.method.visitVarInsn(ALOAD, 0);
+        exprs.map(writeExpr)
+        scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, f.chars, getVMType(scope.symbols.getFunctionDeclaration(f)))
     }
     
     def writeDyadicExpr(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
@@ -321,11 +349,16 @@ object JVMWriter {
     
     def writeAccessVar(i: Ident)(implicit scope: Scope) = scope.symbols.stores.get(i) match { // TODO access arguments and local variables
         case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitVarInsn(ALOAD, 0); scope.method.visitFieldInsn(GETFIELD, scope.className, i.chars, getVMType(t))
+        case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ILOAD, apos+1)
     }
     
-    def getVMType(t: Type) = t match {
+    def getVMType(t: Type): String = t match {
         case Int32			=> "I"
         case Bool			=> "Z"
         case Void			=> "V"
+    }
+    
+    def getVMType(f: FunDecl): String = {
+    		"("+f.head.params.params.map(p => getVMType(p.store.t)).mkString+")"+getVMType(f.head.retVal.t)
     }
 }
