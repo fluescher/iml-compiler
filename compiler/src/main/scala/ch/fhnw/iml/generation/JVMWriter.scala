@@ -74,18 +74,18 @@ object JVMWriter {
 												null)
         
         val s: Scope = Scope(scope.className, scope.writer, entry, scope.symbols)
-        writeBlock(p.cmd)(s)
+        writeCmd(p.cmd)(s)
         entry.visitInsn(RETURN)
         entry.visitMaxs(IGNORED,IGNORED)
         entry.visitEnd()
     }
     
     def writeMain(p: ProgramNode)(implicit scope: Scope) {
-        val main = scope.writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-            "main",
-            "([Ljava/lang/String;)V",
-            null,
-            null);
+        val main = scope.writer.visitMethod(	ACC_PUBLIC + ACC_STATIC,
+									            "main",
+									            "([Ljava/lang/String;)V",
+									            null,
+									            null);
         
         /* call program constructor */
         main.visitTypeInsn(NEW, p.i.chars)
@@ -100,16 +100,48 @@ object JVMWriter {
         main.visitEnd()
     }
     
-    def writeBlock(block: BlockCommand)(implicit scope: Scope) {
-        block.cmds.map(writeCmd)
+    def writeBlock(cmds: List[Command])(implicit scope: Scope) {
+        cmds.map(writeCmd)
     }
     
-    def writeCmd(cmd: Command)(implicit scope: Scope) = cmd match {
-        case SkipCommand 			=> scope.method.visitInsn(NOP);
-        case AssiCommand(s, e)		=> writeAssiCmd(s, e) 				
-        case OutputCommand(expr)	=> writeOutputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
-        case InputCommand(expr)		=> writeInputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
-        case _ 				=> 
+    def writeCmd(cmd: Command)(implicit scope: Scope): Unit = cmd match {
+        case SkipCommand 				=> scope.method.visitInsn(NOP)
+        case AssiCommand(s, e)			=> writeAssiCmd(s, e) 				
+        case OutputCommand(expr)		=> writeOutputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
+        case InputCommand(expr)			=> writeInputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
+        case WhileCommand(expr, cmd) 	=> writeWhile(expr, cmd)
+        case BlockCommand(cmds)			=> writeBlock(cmds)
+        case CondCommand(expr, c1, c2)	=> writeCond(expr, c1, c2)
+        case ProcCallCommand(f, exprs,_)	=> writeProcCall(f, exprs) 
+    }
+    
+    def writeProcCall(f: Ident, exprs: List[Expr]) {
+        // TODO
+    }
+    
+    def writeCond(expr: Expr, c1: Command, c2: Command)(implicit scope: Scope) {
+        val other = new Label()
+        val end = new Label()
+        
+        writeExpr(expr)
+        scope.method.visitJumpInsn(IFNE, other)
+        writeCmd(c2)
+        scope.method.visitJumpInsn(GOTO, end)
+        scope.method.visitLabel(other)
+        writeCmd(c1)
+        scope.method.visitLabel(end)
+    }
+    
+    def writeWhile(e: Expr, cmd: Command)(implicit scope: Scope) {
+        val middle = new Label()
+        val loop = new Label()
+        
+        scope.method.visitJumpInsn(GOTO, middle)
+        scope.method.visitLabel(loop)
+        writeCmd(cmd)
+        scope.method.visitLabel(middle)
+        writeExpr(e)
+        scope.method.visitJumpInsn(IFNE, loop)
     }
     
     def writeAssiCmd(s: Expr, e: Expr)(implicit scope: Scope) {
@@ -157,7 +189,6 @@ object JVMWriter {
         case FunCallExpr(_, _)				=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
         case MonadicExpr(o,e)				=> writeMonadicExpr(o, e)
         case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
-        case _								=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
     }
     
     def writeDyadicExpr(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
@@ -167,11 +198,11 @@ object JVMWriter {
         case GreaterEqualsThanOpr 	=> writeExpr(e1); writeExpr(e2); writeCheckGreaterEqualsThan()
         case LessThanOpr			=> writeExpr(e1); writeExpr(e2); writeCheckLessThan()
         case LessEqualsThanOpr		=> writeExpr(e1); writeExpr(e2); writeCheckLessEqualsThan()
-        case PlusOpr			    => writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IADD);
-        case MinusOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(ISUB);
-        case TimesOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IMUL);
-        case DivOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IDIV);
-        case ModOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IREM);
+        case PlusOpr			    => writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IADD)
+        case MinusOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(ISUB)
+        case TimesOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IMUL)
+        case DivOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IDIV)
+        case ModOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IREM)
         case AndOpr					=> writeAnd(e1, e2)
         case OrOpr					=> writeOr(e1, e2)
         case NotOpr					=> /* not used */

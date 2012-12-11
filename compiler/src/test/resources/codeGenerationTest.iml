@@ -1,6 +1,10 @@
 program generationTest
 global
-	var c: bool
+	fun inc(copy i: int32)
+	returns r: int32
+	{
+		r := i + 1
+	}
 {
-	! false or false or true
+	! inc(1)
 }

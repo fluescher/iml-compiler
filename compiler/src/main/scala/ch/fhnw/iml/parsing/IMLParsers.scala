@@ -154,12 +154,13 @@ class IMLParsers extends TokenParsers {
     
     def boolOpr = positioned(	  Or  ^^^ OrOpr
             	   				| And ^^^ AndOpr) 
+            	   				
     def relOpr = positioned(	 Equals 			^^^ EqualsOpr
-    			   | NotEquals 			^^^ NotEqualsOpr
-    			   | GreaterThan 		^^^ GreaterThanOpr
-    			   | GreaterEqualsThan 	^^^ GreaterEqualsThanOpr
-    			   | LessThan 			^^^ LessThanOpr
-    			   | LessEqualsThan 	^^^ LessEqualsThanOpr)
+			    			   | NotEquals 			^^^ NotEqualsOpr
+			    			   | GreaterThan 		^^^ GreaterThanOpr
+			    			   | GreaterEqualsThan 	^^^ GreaterEqualsThanOpr
+			    			   | LessThan 			^^^ LessThanOpr
+			    			   | LessEqualsThan 	^^^ LessEqualsThanOpr)
     			   
     def addOpr:Parser[Opr] = positioned(	  Plus 		^^^ PlusOpr
     			   		      				| Minus 	^^^ MinusOpr)
