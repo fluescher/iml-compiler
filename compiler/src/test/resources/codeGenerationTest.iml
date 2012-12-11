@@ -1,7 +1,6 @@
 program generationTest
 global
-	var c: int32
+	var c: bool
 {
-	c := 12;
-	! c
+	! 7 mod 3 + 1
 }

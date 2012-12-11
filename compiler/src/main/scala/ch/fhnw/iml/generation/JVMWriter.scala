@@ -147,15 +147,40 @@ object JVMWriter {
         scope.method.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "("+getVMType(t)+")V");
     }
     
-    def writeExpr(expr: Expr)(implicit scope: Scope) = expr match {
+    def writeExpr(expr: Expr)(implicit scope: Scope): Unit = expr match {
         case IntLiteralExpression(v)		=> scope.method.visitIntInsn(BIPUSH, v)
         case BoolLiteralExpression(true)	=> scope.method.visitIntInsn(BIPUSH, VM_TRUE)
         case BoolLiteralExpression(false)	=> scope.method.visitIntInsn(BIPUSH, VM_FALSE)
-        case VarAccess(i)					=> accessVar(i)
-        case _								=> scope.method.visitIntInsn(BIPUSH, 0)
+        case VarAccess(i)					=> writeAccessVar(i)
+        case StoreExpr(i,_)					=> writeAccessVar(i)
+        case FunCallExpr(_, _)				=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
+        case MonadicExpr(o,e)				=> writeMonadicExpr(o,e)
+        case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
+        case _								=> scope.method.visitIntInsn(BIPUSH, 0) // TODO
     }
     
-    def accessVar(i: Ident)(implicit scope: Scope) = scope.symbols.stores.get(i) match { // TODO access arguments and local variables
+    def writeDyadicExpr(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
+        case EqualsOpr 				=> 
+        case NotEqualsOpr 			=>
+        case GreaterThanOpr			=>
+        case GreaterEqualsThanOpr 	=>
+        case LessThanOpr			=>
+        case LessEqualsThanOpr		=> 
+        case PlusOpr			    => writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IADD);
+        case MinusOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(ISUB);
+        case TimesOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IMUL);
+        case DivOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IDIV);
+        case ModOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IREM);
+        case AndOpr					=>
+        case OrOpr					=> 
+        case NotOpr					=> /* not used */
+    }
+    
+    def writeMonadicExpr(o: Opr, e: Expr)(implicit scope: Scope) = o match {
+        case _		=> // TODO
+    }
+    
+    def writeAccessVar(i: Ident)(implicit scope: Scope) = scope.symbols.stores.get(i) match { // TODO access arguments and local variables
         case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitVarInsn(ALOAD, 0); scope.method.visitFieldInsn(GETFIELD, scope.className, i.chars, getVMType(t))
     }
     
