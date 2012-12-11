@@ -29,7 +29,7 @@ object SymbolChecker extends Checker {
 	
 	private def visitProgramNode(ast: AST): CheckResult[AST] = {
 	    val prg = ast.root
-	    val storeDecls: List[StoreDecl] = prg.cps.decls	.filter(onlyVars).map(_.asInstanceOf[StoreDecl])
+	    val storeDecls: List[StoreDecl] = prg.cps.decls	.filter(onlyVars).map(_.asInstanceOf[StoreDecl]) /* TODO fix bug if no cpsdecl is there */
 	    storeDecls.foldLeft((EmptyTable,None): CombinationResult[SymbolTable,AST])(reduceGlobals) match {
 	        case (_, Some(e)) => e
 	        case (l, None) => CheckSuccess(AST(ProgramNode(prg.i, prg.cps, prg.cmd, l)))

@@ -1,0 +1,7 @@
+program generationTest
+global
+	var c: int32
+{
+	c := 12;
+	! c
+}
