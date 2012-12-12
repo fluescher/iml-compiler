@@ -26,14 +26,11 @@ global
 			r := r + m
 		}
 	};
+	var m:int32;
 	var n:int32;
 	var q:int32;
 	var r:int32
 {
 	? m init;
-	? n init;
-	call divide(m, n, q init, r init);
-	m := multiply(2, 2);
-	! q;
-	! r
+	? n init
 }
