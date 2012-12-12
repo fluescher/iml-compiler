@@ -25,15 +25,20 @@ object SymbolChecker extends Checker {
     
 	override def apply(ast: AST) = {
         combine(combine(visitProgramNode, visitFunDecls), visitProcDecls)(ast)
-	}
-	
+    }
+    
 	private def visitProgramNode(ast: AST): CheckResult[AST] = {
 	    val prg = ast.root
 	    val storeDecls: List[StoreDecl] = prg.cps.decls	.filter(onlyVars).map(_.asInstanceOf[StoreDecl]) /* TODO fix bug if no cpsdecl is there */
+	    
 	    storeDecls.foldLeft((EmptyTable,None): CombinationResult[SymbolTable,AST])(reduceGlobals) match {
 	        case (_, Some(e)) => e
 	        case (l, None) => CheckSuccess(AST(ProgramNode(prg.i, prg.cps, prg.cmd, l)))
 	    }
+	}
+	
+	private def generateOldDecl(): (Ident, FunctionSymbol) = {
+	    (Ident("old"), FunctionSymbol(Ident("old"), Void, null))
 	}
 	
 	private def reduceGlobals(left: CombinationResult[SymbolTable,AST], right: StoreDecl) : CombinationResult[SymbolTable,AST] = left match {

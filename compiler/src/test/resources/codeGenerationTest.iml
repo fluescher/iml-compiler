@@ -4,8 +4,8 @@ global
 	returns r: int32
 	local 
 		var b: int32
-	requires [ blubb: a < 0 ]
-	ensures [ blah: r > i ]
+	requires [ blubb: a > 0 ]
+	ensures [ blah: r > old(i) ]
 	{
 		b init := a;
 		r init := i + b;
@@ -14,8 +14,5 @@ global
 	var c: int32;
 	var o: int32
 {
-	c init := 2;
-	o init := 3;
-	! c /= o ;
-	! inc(2, -3)
+	! inc(3, 4)
 }

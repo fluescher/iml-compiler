@@ -39,7 +39,7 @@ object TypeChecker extends Checker {
 	    			.foldLeft(CheckSuccess[Type](Void):CheckResult[Type])(combineToResult)
 	
 	private def checkFunDecl(f: FunDecl): CheckResult[Type] = 
-	    checkBlock(false)(f.cmd)(f.symbols) and checkConditions(f.pre)(f.symbols) and checkConditions(f.post)(f.symbols)
+	    checkBlock(false)(f.cmd)(f.symbols) and checkConditions(f.pre)(false)(f.symbols) and checkConditions(f.post)(true)(f.symbols)
 	
 	private def checkProcDecls(n: ProgramNode): CheckResult[Type] =  
 	    n.cps.decls	.filter(_.isInstanceOf[ProcDecl])
@@ -47,17 +47,17 @@ object TypeChecker extends Checker {
 	    			.map(checkProcDecl)
 	    			.foldLeft(CheckSuccess[Type](Void):CheckResult[Type])(combineToResult)
 	
-	private def checkProcDecl(p: ProcDecl): CheckResult[Type] = checkBlock(false)(p.cmd)(p.symbols) and checkConditions(p.pre)(p.symbols) and checkConditions(p.post)(p.symbols)
+	private def checkProcDecl(p: ProcDecl): CheckResult[Type] = checkBlock(false)(p.cmd)(p.symbols) and checkConditions(p.pre)(false)(p.symbols) and checkConditions(p.post)(true)(p.symbols)
 	
 	private def checkBlock(inMain: Boolean)(block: BlockCommand)(implicit symbols: SymbolTable): CheckResult[Type] = {
 	    block.cmds.map(checkCommand(inMain)).foldLeft(CheckSuccess[Type](Bool):CheckResult[Type])(combineToResult)
 	}
 	
 	
-	private def checkConditions(conditions: Option[ConditionList])(implicit symbols: SymbolTable): CheckResult[Type] = conditions match {
+	private def checkConditions(conditions: Option[ConditionList])(inPost: Boolean)(implicit symbols: SymbolTable): CheckResult[Type] = conditions match {
 	    case None 		=> CheckSuccess(Void)
 	    case Some(l)	=> l.conditions.map({case Condition(_, expr) => expr})
-	    							   .map(a => checkType(Bool)(a)(checkValueExpr(a)))
+	    							   .map(a => checkType(Bool)(a)(checkValueExpr(a)(inPost)))
 	    							   .foldLeft(CheckSuccess[Type](Bool):CheckResult[Type])(combineToResult)
 	}
 	
@@ -65,20 +65,20 @@ object TypeChecker extends Checker {
 	private def checkCommand(inMain: Boolean = false)(cmd: Command)(implicit symbols: SymbolTable):CheckResult[Type] = cmd match {
 	    case block: BlockCommand 			=> checkBlock(inMain)(block)
 	    case SkipCommand 					=> CheckSuccess(Void)
-	    case AssiCommand(left, right) 		=> checkEqualTypes(left)(checkLeftExpr(left), checkValueExpr(right))
-	    case CondCommand(expr, cmd1, cmd2)	=> checkType(Bool)(expr)(checkValueExpr(expr)) and checkCommand(inMain)(cmd1) and checkCommand(inMain)(cmd2)
-	    case WhileCommand(expr, cmd)		=> checkType(Bool)(expr)(checkValueExpr(expr)) and checkCommand(inMain)(cmd)
+	    case AssiCommand(left, right) 		=> checkEqualTypes(left)(checkLeftExpr(left), checkValueExpr(right)(false))
+	    case CondCommand(expr, cmd1, cmd2)	=> checkType(Bool)(expr)(checkValueExpr(expr)(false)) and checkCommand(inMain)(cmd1) and checkCommand(inMain)(cmd2)
+	    case WhileCommand(expr, cmd)		=> checkType(Bool)(expr)(checkValueExpr(expr)(false)) and checkCommand(inMain)(cmd)
 	    case p: ProcCallCommand				=> checkProcCall(p)
 	    case i: InputCommand	if !inMain  => CheckError("IO only allowed in main block", i)
 	    case i: OutputCommand	if !inMain  => CheckError("IO only allowed in main block", i)
 	    case InputCommand(expr)				=> checkLeftExpr(expr)
-	    case OutputCommand(expr)			=> checkValueExpr(expr)
+	    case OutputCommand(expr)			=> checkValueExpr(expr)(false)
 	}
 	
 	private def checkProcCall(p: ProcCallCommand)(implicit symbols: SymbolTable): CheckResult[Type] = {
 	    if(!symbols.containsProcedure(p.f)) CheckError("Call to undefined procedure: " + p.f.chars, p)
 	    else {
-            checkFunctionAttributes(p)(symbols.procs.get(p.f).get.decl.head.params.params, p.exprs) match {
+            checkFunctionAttributes(p)(symbols.procs.get(p.f).get.decl.head.params.params, p.exprs)(false) match {
                 case CheckSuccess(_) => CheckSuccess(Void) 
                 case e => e
             }
@@ -93,58 +93,61 @@ object TypeChecker extends Checker {
 	    case other 											 => CheckError("Invalid store reference", other)
 	}
 	
-	private def checkValueExpr(expr: Expr)(implicit symbols: SymbolTable) :CheckResult[Type] = expr match {
+	private def checkValueExpr(expr: Expr)(inPost: Boolean)(implicit symbols: SymbolTable) :CheckResult[Type] = expr match {
 	    case BoolLiteralExpression(_) 						=> CheckSuccess(Bool)
 	    case IntLiteralExpression(_) 						=> CheckSuccess(Int32)
 	    case e: StoreExpr	 								=> CheckError("No init on right side allowed", e)
 	    case VarAccess(id) 		if symbols.containsStore(id)=> CheckSuccess(symbols.getStoreType(id))
 	    case va: VarAccess									=> CheckError("Use of undeclared store", va)
-	    case m: MonadicExpr	 								=> checkMonadicExpr(m) 
-	    case d: DyadicExpr									=> checkDyadicExpr(d)
-	    case f: FunCallExpr									=> checkFunCall(f)
+	    case m: MonadicExpr	 								=> checkMonadicExpr(m)(inPost) 
+	    case d: DyadicExpr									=> checkDyadicExpr(d)(inPost)
+	    case f: FunCallExpr									=> checkFunCall(inPost)(f)
 	}
 	
-	private def checkDyadicExpr(d: DyadicExpr)(implicit symbols: SymbolTable): CheckResult[Type] = d match {
+	private def checkDyadicExpr(d: DyadicExpr)(inPost: Boolean)(implicit symbols: SymbolTable): CheckResult[Type] = d match {
 	    case DyadicExpr(opr, expr1, expr2) => opr match {
-	        case o: ArithOpr	=> checkType(Int32)(d)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
-	        case o: BoolOpr		=> checkType(Bool)(d)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
-	        case EqualsOpr		=> toOtherTypeResult(Bool)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
-	        case NotEqualsOpr	=> toOtherTypeResult(Bool)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2)))
-	        case o: RelOpr		=> toOtherTypeResult(Bool)(checkType(Int32)(d)(checkEqualTypes(d)(checkValueExpr(expr1), checkValueExpr(expr2))))
+	        case o: ArithOpr	=> checkType(Int32)(d)(checkEqualTypes(d)(checkValueExpr(expr1)(inPost), checkValueExpr(expr2)(inPost)))
+	        case o: BoolOpr		=> checkType(Bool)(d)(checkEqualTypes(d)(checkValueExpr(expr1)(inPost), checkValueExpr(expr2)(inPost)))
+	        case EqualsOpr		=> toOtherTypeResult(Bool)(checkEqualTypes(d)(checkValueExpr(expr1)(inPost), checkValueExpr(expr2)(inPost)))
+	        case NotEqualsOpr	=> toOtherTypeResult(Bool)(checkEqualTypes(d)(checkValueExpr(expr1)(inPost), checkValueExpr(expr2)(inPost)))
+	        case o: RelOpr		=> toOtherTypeResult(Bool)(checkType(Int32)(d)(checkEqualTypes(d)(checkValueExpr(expr1)(inPost), checkValueExpr(expr2)(inPost))))
 	    }
 	}
 	
-	private def checkMonadicExpr(m: MonadicExpr)(implicit symbols: SymbolTable): CheckResult[Type] = m match {
+	private def checkMonadicExpr(m: MonadicExpr)(inPost: Boolean)(implicit symbols: SymbolTable): CheckResult[Type] = m match {
 	    case MonadicExpr(opr, expr) => opr match {
-		    case PlusOpr	=> checkType(Int32)(m)(checkValueExpr(expr))
-		    case MinusOpr	=> checkType(Int32)(m)(checkValueExpr(expr))
-		    case NotOpr		=> checkType(Bool)(m)(checkValueExpr(expr))
+		    case PlusOpr	=> checkType(Int32)(m)(checkValueExpr(expr)(inPost))
+		    case MinusOpr	=> checkType(Int32)(m)(checkValueExpr(expr)(inPost))
+		    case NotOpr		=> checkType(Bool)(m)(checkValueExpr(expr)(inPost))
 		    case other		=> CheckError("Monadic operator expected.", m)
 		}
 	}
 	
-	private def checkFunCall(f: FunCallExpr)(implicit symbols: SymbolTable): CheckResult[Type] = {
-	    if(!symbols.containsFunction(f.i)) CheckError("Call to undefined function: " + f.i.chars, f)
+	private def checkFunCall(inPost: Boolean)(f: FunCallExpr)(implicit symbols: SymbolTable): CheckResult[Type] = {
+	    if(inPost && f.i.chars.equals("old") && f.exprs.size == 1) { /* check for old state fun */
+	        checkLeftExpr(f.exprs.head)
+	    }
+	    else if(!symbols.containsFunction(f.i)) CheckError("Call to undefined function: " + f.i.chars, f)
 	    else {
-	        checkFunctionAttributes(f)(symbols.functions.get(f.i).get.decl.head.params.params, f.exprs) match {
+	        checkFunctionAttributes(f)(symbols.functions.get(f.i).get.decl.head.params.params, f.exprs)(inPost) match {
 	                case CheckSuccess(_) => CheckSuccess(symbols.getFunctionType(f.i)) 
 	                case e => e
 	        }
 	    }
 	}
 	
-	private def checkFunctionAttributes(n: Node)(decl: List[Parameter], callExprs: List[Expr])(implicit symbols: SymbolTable): CheckResult[Type] = (decl, callExprs) match {
+	private def checkFunctionAttributes(n: Node)(decl: List[Parameter], callExprs: List[Expr])(inPost: Boolean)(implicit symbols: SymbolTable): CheckResult[Type] = (decl, callExprs) match {
 	    case (Nil, Nil)						=> CheckSuccess(Void)
 	    case (x::xs, Nil)					=> CheckError("Not enough arguments for call", n)
 	    case (Nil, y::xs)					=> CheckError("To many arguments for call", n)
-	    case (x::xs, y::ys)					=> checkParameter(n)(x,y) match {
-	        case CheckSuccess(_) => checkFunctionAttributes(n)(xs, ys)
+	    case (x::xs, y::ys)					=> checkParameter(n)(x,y)(inPost) match {
+	        case CheckSuccess(_) 			=> checkFunctionAttributes(n)(xs, ys)(inPost)
 	        case e => e
 	    }
 	}
 	
-	private def checkParameter(n: Node)(p: Parameter, expr: Expr)(implicit symbols: SymbolTable): CheckResult[Type] = p match {
-	    case Parameter(f, Copy, StoreDecl(c, i, t)) => checkType(t)(n)(checkValueExpr(expr))
+	private def checkParameter(n: Node)(p: Parameter, expr: Expr)(inPost: Boolean)(implicit symbols: SymbolTable): CheckResult[Type] = p match {
+	    case Parameter(f, Copy, StoreDecl(c, i, t)) => checkType(t)(n)(checkValueExpr(expr)(inPost))
 	    case Parameter(f, Ref, StoreDecl(c, i, t)) => checkType(t)(n)(checkLeftExpr(expr))
 	}
 	
