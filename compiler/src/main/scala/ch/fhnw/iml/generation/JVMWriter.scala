@@ -293,7 +293,7 @@ object JVMWriter {
                  scope.method.visitVarInsn(ALOAD, local)
                  local = local + 1
             } else {
-                 exprs.map(writeExpr)
+                 writeExpr(e)
             }
         }
 
@@ -551,17 +551,6 @@ object JVMWriter {
         case Int32			=> "I"
         case Bool			=> "Z"
         case Void			=> "V"
-    }
-    
-    def isGlobal(s: Expr)(implicit scope: Scope) = s match {
-        // TODO only StoreExpr
-        case StoreExpr(id,_) => scope.symbols.stores.get(id) match {
-        	case Some(StorageSymbol(_, _, _, _, g, _, _, _, _, _)) => g
-        }
-        case VarAccess(id) => scope.symbols.stores.get(id) match {
-        	case Some(StorageSymbol(_, _, _, _, g, _, _, _, _, _)) => g
-        }
-        case _ => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
     def getReturnIndex(f: FunDecl)(implicit scope: Scope) = scope.symbols.stores.get(f.head.retVal.i) match {

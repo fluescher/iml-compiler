@@ -6,16 +6,24 @@ global
 		c
 	local 
 		var b: int32
-	ensures [ a: c = 3, b: old(c) = 2 ]
 	{
 		b init := a;
 		r init := i + b;
 		b := -7;
 		c := 3
 	};
+	
+	proc pinc(i: int32, a: int32, out r: int32)
+	{
+		r init := i + a
+	};
+	
 	var c: int32;
-	var o: int32
+	var o: int32;
+	var r: int32
 {
-	c init := 2;
-	! inc(3, 4)
+	? c init;
+	? o init;
+	call pinc(c, o, r);
+	! r
 }

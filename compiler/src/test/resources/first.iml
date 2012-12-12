@@ -16,7 +16,7 @@ global
 {
 	? m init;
 	? n init;
-	call divide(m, n, q init, r init);
+	call divide(m, n, q init,  r init);
 	! q;
 	! r
 }
