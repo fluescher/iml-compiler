@@ -102,7 +102,8 @@ case object Local extends Scope
 case object Global extends Scope
 
 /* Symbol tables */
-case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,ProcedureSymbol], stores: Map[Ident,StorageSymbol]) {
+case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,ProcedureSymbol], stores: Map[Ident,StorageSymbol], global: SymbolTable) {
+    
     def containsStore(id: Ident) = stores.contains(id)
     def getStoreType(id: Ident) = stores.get(id) match {
         case Some(s) => s.t
@@ -117,7 +118,7 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
     
     def markStorageAsInitialized(id: Ident): SymbolTable = stores.get(id) match {
         case None => this
-        case Some(StorageSymbol(a, b, c, d, e, f, g, h, j, isInit)) => SymbolTable(functions, procs, stores.updated(id, StorageSymbol(a,b,c,d,e,f,g,h,j,true)))
+        case Some(StorageSymbol(a, b, c, d, e, f, g, h, j, isInit)) => SymbolTable(functions, procs, stores.updated(id, StorageSymbol(a,b,c,d,e,f,g,h,j,true)), global)
     }
     
     def isInitialized(id: Ident): Boolean = stores.get(id) match {
@@ -125,17 +126,23 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
         case Some(StorageSymbol(_, _, _, _, _, _, _, _, _, isInit)) => isInit
     }
     
-    def getFunctionDeclaration(id: Ident):FunDecl = functions.get(id) match {
-        case Some(FunctionSymbol(_,_,d)) => d
-        case None => null
+    def getFunctionDeclaration(id: Ident):FunDecl = {
+		val tab = if(global == null) functions else global.functions
+	    tab.get(id) match {
+	        case Some(FunctionSymbol(_,_,d)) => d
+	        case None => null
+		}
     }
     
-    def getProcedureDeclaration(id: Ident):ProcDecl = procs.get(id) match {
-        case Some(ProcedureSymbol(_,d)) => d
-        case None => null
+    def getProcedureDeclaration(id: Ident):ProcDecl = {
+		val tab = if(global == null) procs else global.procs
+	    tab.get(id) match {
+	        case Some(ProcedureSymbol(_,d)) => d
+	        case None => null
+		}
     }
 }
-object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
+object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty, null)
 
 case class ProcedureSymbol(id: Ident, decl: ProcDecl)
 case class FunctionSymbol(id: Ident, t: Type, decl: FunDecl)

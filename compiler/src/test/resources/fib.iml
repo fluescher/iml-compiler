@@ -1,0 +1,31 @@
+program fibonacci
+global
+	proc sum(i: int32)
+	requires [i >= 0] {
+		if(i = 0) {
+			skip
+		} else {
+			call sum(i-1)
+		}
+	};
+
+	fun fib(i: int32)
+	returns r: int32
+	requires [ i >= 0 ]
+	{
+		if(i = 0) {
+			r init := 0
+		} else {
+			if(i = 1){
+				r init := 1
+			} else {
+				r init := fib(i - 1) + fib(i - 2)
+			}
+		}
+	};
+	var max: int32
+{
+	? max init;
+	! fib(max);
+	call sum(2)
+}

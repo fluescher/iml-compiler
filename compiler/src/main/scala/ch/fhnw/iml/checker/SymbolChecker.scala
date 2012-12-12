@@ -43,7 +43,7 @@ object SymbolChecker extends Checker {
 	
 	private def reduceGlobals(left: CombinationResult[SymbolTable,AST], right: StoreDecl) : CombinationResult[SymbolTable,AST] = left match {
 	    case (l, None) if l.stores.contains(right.i) => (l, Some(CheckError("Variable " + right.i + " already declared.", right))) 
-	    case (l, None) => (SymbolTable(l.functions, l.procs, (l.stores + (right.i -> StorageSymbol(right.i, right.t, right, false, true, false, false, 1, -1, false)))), None)
+	    case (l, None) => (SymbolTable(l.functions, l.procs, (l.stores + (right.i -> StorageSymbol(right.i, right.t, right, false, true, false, false, 1, -1, false))), l.global), None)
 		case (l, Some(e)) => (l, Some(e))
 	}
 	
@@ -66,13 +66,13 @@ object SymbolChecker extends Checker {
 	private def addFunDecls(global: SymbolTable, l: List[FunDecl]) : CheckResult[SymbolTable] = l match {
 	    case Nil 	 => CheckSuccess(global)
 	    case x::xs  if(global.functions.contains(x.head.i)) => CheckError("Already defined this function", x)
-	    case x::xs	 => addFunDecls(SymbolTable(global.functions +(x.head.i -> FunctionSymbol(x.head.i, x.head.retVal.t, x)), global.procs, global.stores), xs)
+	    case x::xs	 => addFunDecls(SymbolTable(global.functions +(x.head.i -> FunctionSymbol(x.head.i, x.head.retVal.t, x)), global.procs, global.stores, global.global), xs)
 	}
 
 	private def addProcDecls(global: SymbolTable, l: List[ProcDecl]) : CheckResult[SymbolTable] = l match {
 	    case Nil 	 => CheckSuccess(global)
 	    case x::xs  if(global.procs.contains(x.head.i)) => CheckError("Already defined this function", x)
-	    case x::xs	 => addProcDecls(SymbolTable(global.functions, global.procs +(x.head.i -> ProcedureSymbol(x.head.i, x)), global.stores), xs)
+	    case x::xs	 => addProcDecls(SymbolTable(global.functions, global.procs +(x.head.i -> ProcedureSymbol(x.head.i, x)), global.stores, global.global), xs)
 	}
 	
 	private def reduceFunDecls(global: SymbolTable)(left: CombinationResult[List[FunDecl],FunDecl], right: FunDecl) : CombinationResult[List[FunDecl],FunDecl] = left match {
@@ -229,7 +229,7 @@ object SymbolChecker extends Checker {
 	private def updateReturnValueIndex(f: FunDecl) = {
 	    val ret = getReturnValue(f.symbols)
 	    val nret = StorageSymbol(ret.id, ret.t, ret.decl, true, false, false, false, -1, localCount(f.symbols), false)
-	    FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, SymbolTable(f.symbols.functions, f.symbols.procs, f.symbols.stores.updated(ret.id, nret)))
+	    FunDecl(f.head, f.global, f.cps, f.pre, f.post, f.cmd, SymbolTable(f.symbols.functions, f.symbols.procs, f.symbols.stores.updated(ret.id, nret), f.symbols.global))
 	}
 	
 	private def getReturnValue(syms: SymbolTable) = {
@@ -241,7 +241,7 @@ object SymbolChecker extends Checker {
 	}
 	
 	private def addStorageSymbol(table: SymbolTable, sym: StorageSymbol) = {
-	    SymbolTable(table.functions, table.procs, table.stores + (sym.id -> sym))
+	    SymbolTable(table.functions, table.procs, table.stores + (sym.id -> sym), table.global)
 	}
 	
 	private def localCount(symbols: SymbolTable) = {
