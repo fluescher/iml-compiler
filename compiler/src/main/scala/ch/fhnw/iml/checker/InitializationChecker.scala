@@ -11,9 +11,6 @@ object InitializationChecker extends Checker {
     }
 
     private def initCheck(n: ProgramNode): CheckResult[SymbolTable] = {
-        println(n.symbols)
-        println(n.cmd)
-        println(n.cps)
         checkFunDecls(n) and checkProcDecls(n) and checkBlock(true)(n.cmd)(n.symbols)
     }
 
@@ -101,16 +98,32 @@ object InitializationChecker extends Checker {
     }
 
     private def checkCommand(initAllowed: Boolean)(cmd: Command)(symbols: SymbolTable): CheckResult[SymbolTable] = cmd match {
-        case block: BlockCommand => checkBlock(initAllowed)(block)(symbols)
-        case SkipCommand => CheckSuccess(symbols)
-        case AssiCommand(left, right) => ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
-        case CondCommand(expr, cmd1, cmd2) => ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
-        case WhileCommand(expr, cmd) => ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
-        // case p: ProcCallCommand 			=> checkProcCall(p)
-        case InputCommand(expr) => checkLeftExpr(initAllowed)(expr)(symbols)
-        case OutputCommand(expr) => checkValueExpr(expr)(symbols)
+        case block: BlockCommand 			=> checkBlock(initAllowed)(block)(symbols)
+        case SkipCommand 					=> CheckSuccess(symbols)
+        case AssiCommand(left, right) 		=> ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
+        case CondCommand(expr, cmd1, cmd2) 	=> ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
+        case WhileCommand(expr, cmd) 		=> ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
+        case p: ProcCallCommand 			=> checkProcCall(initAllowed)(p.exprs)(symbols)
+        case InputCommand(expr) 			=> checkLeftExpr(initAllowed)(expr)(symbols)
+        case OutputCommand(expr) 			=> checkValueExpr(expr)(symbols)
     }
-
+    
+    private def checkProcCall(initAllowed: Boolean)(exprs: List[Expr])(symbols: SymbolTable) : CheckResult[SymbolTable] = {
+        exprs match {
+            case Nil => CheckSuccess(symbols)
+            case x :: xs => x match {
+                case StoreExpr(_, _) => checkLeftExpr(initAllowed)(x)(symbols)  match {
+                     case CheckSuccess(sym) => checkProcCall(initAllowed)(xs)(sym)
+                     case e => e
+                }
+                case other => checkValueExpr(x)(symbols) match {
+                     case CheckSuccess(sym) => checkProcCall(initAllowed)(xs)(sym)
+                     case e => e
+                }
+            }
+        }
+    }
+    
     private def mergeResults(symbols: SymbolTable, r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
         case e: CheckError[SymbolTable] => e
         case CheckSuccess(symbolsR1) => r2 match {
@@ -136,27 +149,16 @@ object InitializationChecker extends Checker {
         case m: MonadicExpr 							=> checkValueExpr(m.expr)(symbols)
         case d: DyadicExpr 								=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
         case StoreExpr(_, _) 							=> CheckError("No initalization allowed", expr)
-        // case f: FunCallExpr										=> checkFunCall(f)
     }
 
     private def checkLeftExpr(initAllowed: Boolean)(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
-        case StoreExpr(id, true) if !initAllowed 				=> CheckError("Its not allowed to initalized a store in this command.", expr)
-        case StoreExpr(id, true) if !symbols.isInitialized(id) 	=>	println("left init")
-            														CheckSuccess(symbols.markStorageAsInitialized(id))
-        case StoreExpr(id, true) if symbols.isInitialized(id) 	=> CheckError("You can only once initialized a store.", expr)
-        case StoreExpr(id, _) if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
-        case VarAccess(id) if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
-        case other => CheckError("Use of not initalized store", expr)
+        case StoreExpr(id, true) 	if !initAllowed 					=> CheckError("Its not allowed to initalized a store in this command.", expr)
+        case StoreExpr(id, true) 	if !symbols.isInitialized(id) 		=> CheckSuccess(symbols.markStorageAsInitialized(id))													   
+        case StoreExpr(id, true) 	if symbols.isInitialized(id) 		=> CheckError("You can only once initialized a store.", expr)
+        case StoreExpr(id, _) 		if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
+        case VarAccess(id) 			if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
+        case other 														=> CheckError("Use of not initalized store", expr)
     }
-
-    /*
-	private def checkFunCall(f: FunCallExpr)(implicit symbols: SymbolTable): CheckResult[Type] = {
-	        checkFunctionAttributes(f)(symbols.functions.get(f.i).get.decl.head.params.params, f.exprs) match {
-	                case CheckSuccess(_) => CheckSuccess(symbols.getFunctionType(f.i)) 
-	                case e => e
-	        }
-	    }
-	}*/
     
     private def combineToResult(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
 	    case e: CheckError[SymbolTable]		=> e

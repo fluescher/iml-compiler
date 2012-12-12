@@ -1,10 +1,6 @@
 program intDiv
 global
 	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
-	local 
-		var b : int32
-	requires [n > 0]
-	ensures [somePost: (((((((r < n))))))) ]
 	{
 		q init := 0;
 		r init := m;
@@ -13,24 +9,14 @@ global
 			r := r - n
 		}
 	};
-	fun multiply(in copy m:int32, in copy n:int32)
-	returns r:int32
-	local 
-		var i : int32
-	requires [positive: n > 0]
-	{
-		i init := 0;
-		r init := m;
-		while (i < n) {
-			i := i + 1;
-			r := r + m
-		}
-	};
 	var m:int32;
 	var n:int32;
 	var q:int32;
 	var r:int32
 {
 	? m init;
-	? n init
+	? n init;
+	call divide(m, n, q init, r init);
+	! q;
+	! r
 }

@@ -18,8 +18,7 @@ global
 	var test:int32
 {	
 	while(true){
-		skip;
-		glob init := 1
+		skip
 	};
 	
 	
