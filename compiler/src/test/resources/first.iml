@@ -1,6 +1,5 @@
 program intDiv
 global
-	var m:int32;
 	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 	local 
 		var b : int32

@@ -13,5 +13,11 @@ global
 	    }
 	}
 {
+	if (true) {
+		test init := 2;
+		! test
+	}else{
+		! 2
+	};
 	skip
 }

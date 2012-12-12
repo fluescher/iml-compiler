@@ -9,6 +9,7 @@ import ch.fhnw.iml.ast.AST
 import ch.fhnw.iml.checker.SymbolChecker
 import ch.fhnw.iml.checker.CheckSuccess
 import ch.fhnw.iml.checker.TypeChecker
+import ch.fhnw.iml.checker.InitializationChecker
 
 object imlc extends App {
     
@@ -22,7 +23,10 @@ object imlc extends App {
 		parser.parse(code) match {
 	        case parser.Success(prog, _) => SymbolChecker(AST(prog)) match {
 	            case CheckSuccess(a) => TypeChecker(a) match {
-	                case CheckSuccess(_) => JVMWriter(a,new File(args(0)).getName())
+	                case CheckSuccess(a) => InitializationChecker(a) match {
+		                case CheckSuccess(_) => JVMWriter(a,new File(args(0)).getName())
+		                case e => println(e)
+	                }
 	                case e => println(e)
 	            }
 	            case e => println(e)
