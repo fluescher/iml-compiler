@@ -336,7 +336,9 @@ object JVMWriter {
     
     def writeFunCall(f: Ident, exprs: List[Expr])(implicit scope: Scope) = f match {
         case Ident("old") 	 =>  exprs.head match {
-        	case VarAccess(i) => println("LOAD OLD: " + calculateLocalOldPos(i)); scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
+            case StoreExpr(i, _) 	=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
+        	case VarAccess(i) 		=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
+        	case _ =>
         }
         case _ => {
         	scope.method.visitVarInsn(ALOAD, 0);
@@ -496,7 +498,8 @@ object JVMWriter {
     }
     
     def getReturnIndex(f: FunDecl)(implicit scope: Scope) = scope.symbols.stores.get(f.head.retVal.i) match {
-        case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _)) => pos + 1 
+        case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _)) => pos + 1
+        case None => -1
     }
     
     def getVMType(f: FunDecl): String = {
