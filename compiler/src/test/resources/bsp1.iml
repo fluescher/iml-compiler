@@ -17,9 +17,13 @@ global
 	var blub:int32;
 	var test:int32
 {	
-
-	
-	blub init := 1;
-	glob init := blub;
-	skip
+	if(true){
+		blub init := 1;
+		glob init := blub;
+		skip
+	}else{
+		blub init := 2;
+		skip
+	};
+	! glob
 }

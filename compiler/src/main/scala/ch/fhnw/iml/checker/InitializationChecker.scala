@@ -30,26 +30,37 @@ object InitializationChecker extends Checker {
         }
     }
     
-    private def checkCommand(initAllowed: Boolean = false)(cmd: Command)(symbols: SymbolTable): CheckResult[SymbolTable] = cmd match {
-        case block: BlockCommand => checkBlock(initAllowed)(block)(symbols)
-        case SkipCommand => CheckSuccess(symbols)
-        case AssiCommand(left, right) => combineToResult(checkLeftExpr(left)(symbols), checkValueExpr(right)(symbols))
-        /* case CondCommand(expr, cmd1, cmd2) => checkType(Bool)(expr)(checkValueExpr(expr)) and checkCommand(inMain)(cmd1) and checkCommand(inMain)(cmd2)
-        case WhileCommand(expr, cmd) => checkType(Bool)(expr)(checkValueExpr(expr)) and checkCommand(inMain)(cmd)
-        case p: ProcCallCommand => checkProcCall(p)
-        case i: InputCommand if !inMain => CheckError("IO only allowed in main block", i)
-        case i: OutputCommand if !inMain => CheckError("IO only allowed in main block", i)
-        case InputCommand(expr) => checkLeftExpr(expr)
-        case OutputCommand(expr) => checkValueExpr(expr) */
+    private def checkCommand(initAllowed: Boolean)(cmd: Command)(symbols: SymbolTable): CheckResult[SymbolTable] = cmd match {
+        case block: BlockCommand 			=> checkBlock(initAllowed)(block)(symbols)
+        case SkipCommand 					=> CheckSuccess(symbols)
+        case AssiCommand(left, right)		=> ignoreSecond(checkLeftExpr(left)(symbols), checkValueExpr(right)(symbols))
+        case CondCommand(expr, cmd1, cmd2) 	=> ignoreSecond(mergeResults(checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))  
+        case WhileCommand(expr, cmd) 		=> ignoreSecond(checkCommand(true)(cmd)(symbols), checkValueExpr(expr)(symbols))
+        // case p: ProcCallCommand 			=> checkProcCall(p)
+        case InputCommand(expr) 			=> checkLeftExpr(expr)(symbols)
+        case OutputCommand(expr) 			=> checkValueExpr(expr)(symbols)
     }
 
+    private def mergeResults(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match{
+        case e: CheckError[SymbolTable] => e
+        case CheckSuccess(symbolsR1) => r2 match {
+        	case e: CheckError[SymbolTable] => e
+        	case CheckSuccess(symbolsR2) => CheckSuccess(mergeSymbols(symbolsR1, symbolsR2))
+        }
+    }
+
+    private def mergeSymbols(one: SymbolTable, other: SymbolTable) : SymbolTable = {
+    	one
+    }
+    
     private def checkValueExpr(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
         case BoolLiteralExpression(_) 								=> CheckSuccess(symbols)
         case IntLiteralExpression(_) 								=> CheckSuccess(symbols)
         case VarAccess(id) 			if symbols.isInitialized(id) 	=> CheckSuccess(symbols)
         case va: VarAccess 											=> CheckError("Use of not initialized var", va)
         case m: MonadicExpr				 							=> checkValueExpr(m.expr)(symbols)
-        case d: DyadicExpr 											=> combineToResult(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
+        case d: DyadicExpr 											=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
+        case StoreExpr(_,_) 										=> CheckError("No initalization allowed", expr)
         // case f: FunCallExpr										=> checkFunCall(f)
     }
 
@@ -83,7 +94,7 @@ object InitializationChecker extends Checker {
 	    }
 	}*/
 
-    private def combineToResult(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
+    private def ignoreSecond(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
         case e: CheckError[SymbolTable] => e
         case r => r1
     }
