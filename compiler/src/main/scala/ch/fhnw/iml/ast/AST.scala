@@ -117,16 +117,21 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
     
     def markStorageAsInitialized(id: Ident): SymbolTable = stores.get(id) match {
         case None => this
-        case Some(StorageSymbol(a, b, c, d, e, f, g, h, isInit)) => SymbolTable(functions, procs, stores.updated(id, StorageSymbol(a,b,c,d,e,f,g,h,true)))
+        case Some(StorageSymbol(a, b, c, d, e, f, g, h, j, isInit)) => SymbolTable(functions, procs, stores.updated(id, StorageSymbol(a,b,c,d,e,f,g,h,j,true)))
     }
     
     def isInitialized(id: Ident): Boolean = stores.get(id) match {
         case None => false
-        case Some(StorageSymbol(_, _, _, _, _, _, _, _, isInit)) => isInit
+        case Some(StorageSymbol(_, _, _, _, _, _, _, _, _, isInit)) => isInit
     }
     
     def getFunctionDeclaration(id: Ident):FunDecl = functions.get(id) match {
         case Some(FunctionSymbol(_,_,d)) => d
+        case None => null
+    }
+    
+    def getProcedureDeclaration(id: Ident):ProcDecl = procs.get(id) match {
+        case Some(ProcedureSymbol(_,d)) => d
         case None => null
     }
 }
@@ -134,5 +139,5 @@ object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty)
 
 case class ProcedureSymbol(id: Ident, decl: ProcDecl)
 case class FunctionSymbol(id: Ident, t: Type, decl: FunDecl)
-case class StorageSymbol(id: Ident, t: Type, decl: StoreDecl, isRet: Boolean, isGlobal: Boolean, isArgument: Boolean, argpos: Int, localpos: Int, isInitialized: Boolean)
+case class StorageSymbol(id: Ident, t: Type, decl: StoreDecl, isRet: Boolean, isGlobal: Boolean, isArgument: Boolean, isOut: Boolean, argpos: Int, localpos: Int, isInitialized: Boolean)
 

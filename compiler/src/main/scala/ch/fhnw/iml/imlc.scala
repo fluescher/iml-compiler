@@ -23,11 +23,11 @@ object imlc extends App {
 		parser.parse(code) match {
 	        case parser.Success(prog, _) => SymbolChecker(AST(prog)) match {
 	            case CheckSuccess(a) => TypeChecker(a) match {
-	                case CheckSuccess(a) => InitializationChecker(a) match {
+//	                case CheckSuccess(a) => InitializationChecker(a) match {
 		                case CheckSuccess(_) => JVMWriter(a,new File(args(0)).getName())
 		                case e => println(e)
-	                }
-	                case e => println(e)
+//	                }
+//	                case e => println(e)
 	            }
 	            case e => println(e)
 	        } 
