@@ -6,6 +6,19 @@ import ch.fhnw.iml.ast.ChangeMode
 import ch.fhnw.iml.ast.Type
 import ch.fhnw.iml.ast.Scope
 
+
+/**
+ * Checkings TODO
+ * 
+ *  TODO import check. Called routines may only import globals of the calling routinge
+ *  TODO initialisation check
+ *  TODO reserved function old check
+ *  TODO allow recursive functions by changing symbolchecker
+ *  TODO implement reference parameters
+ *  TODO prettify error messages in imlc.scala
+ *  TODO check pureness of functions (only in vars)
+ *  TODO check const to be only initialized and passed to const ref params
+ */
 trait Checker {
 	def apply(ast: AST) : CheckResult[AST]
 	
