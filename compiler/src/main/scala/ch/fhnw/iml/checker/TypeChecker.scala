@@ -53,14 +53,12 @@ object TypeChecker extends Checker {
 	    block.cmds.map(checkCommand(inMain)).foldLeft(CheckSuccess[Type](Bool):CheckResult[Type])(combineToResult)
 	}
 	
-	
 	private def checkConditions(conditions: Option[ConditionList])(inPost: Boolean)(implicit symbols: SymbolTable): CheckResult[Type] = conditions match {
 	    case None 		=> CheckSuccess(Void)
 	    case Some(l)	=> l.conditions.map({case Condition(_, expr) => expr})
 	    							   .map(a => checkType(Bool)(a)(checkValueExpr(a)(inPost)))
 	    							   .foldLeft(CheckSuccess[Type](Bool):CheckResult[Type])(combineToResult)
 	}
-	
 	
 	private def checkCommand(inMain: Boolean = false)(cmd: Command)(implicit symbols: SymbolTable):CheckResult[Type] = cmd match {
 	    case block: BlockCommand 			=> checkBlock(inMain)(block)

@@ -2,10 +2,11 @@ program generationTest
 global
 	fun inc(i: int32, a: int32)
 	returns r: int32
+	global
+		c
 	local 
 		var b: int32
-	requires [ blubb: a > 0 ]
-	ensures [ blah: r > old(i) ]
+	ensures [ blah: r > i ]
 	{
 		b init := a;
 		r init := i + b;

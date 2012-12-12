@@ -75,7 +75,7 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.className, scope.writer, cur, f.symbols)
-		writeSafePreExecutionState(f)(s)
+		writeSavePreExecutionState(f)(s)
 		writePre(f)(s)
         writeCmd(f.cmd)(s)
         writePost(f)(s)
@@ -85,8 +85,62 @@ object JVMWriter {
         cur.visitEnd()
     }
     
-    def writeSafePreExecutionState(f: FunDecl)(implicit scope: Scope) {
-        //TODO
+    def writeSavePreExecutionState(f: FunDecl)(implicit scope: Scope) = f.post match {
+        case Some(_) => {
+            /* write arguments */
+            for(p <- f.head.params.params) p match { 
+                case Parameter(InFlow, _, StoreDecl(_, id, _)) => {
+                	writeAccessVar(id); 
+                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(id)(f))
+                }
+            }
+            
+            /* write globals */
+            f.global match {
+                case Some(l) => l.globals.foreach(a => {
+                    writeAccessVar(a.i); 
+                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(a.i)(f))
+                })
+                case None =>
+            }
+        }
+        case None =>
+    }
+    
+    def calculateLocalOldPos(id: Ident)(f: FunDecl)(implicit scope: Scope): Int = {
+        maxlocal(f) + oldPos(id, f)
+    }
+    
+    def maxlocal(f: FunDecl)(implicit scope: Scope): Int = {
+        localCount + 1 /* +1 -> return value */
+    }
+    
+    def localCount(implicit scope: Scope): Int = {
+        var i = 0
+        for((_, sym) <- scope.symbols.stores) sym match {
+            case StorageSymbol(_, _, _, false, false, false, _, _, _) => i = i + 1 /* local */
+            case StorageSymbol(_, _, _, false, false, true, _, _, _)	 => i = i + 1 /* argument */
+            case _ => 
+        }
+        i
+    }
+    
+    def oldPos(id: Ident, f: FunDecl)(implicit scope: Scope): Int = {
+        var i = 0
+        /* parameters */
+        for(p <- f.head.params.params) p match { 
+                case Parameter(InFlow, _, StoreDecl(_, i2, _)) if id == i2 	 => return i + 1
+                case Parameter(InFlow, _, StoreDecl(_, i2, _))				 => i = i + 1
+                case _ =>
+        }
+        /* globals */
+        f.global match {
+            case Some(l) => for(glob <- l.globals) {
+                if(glob.i == id) return i + 1
+            }
+            case None => i = i + 1
+        }
+        return i
     }
     
     def writePre(f: FunDecl)(implicit scope: Scope) = f.pre match {
