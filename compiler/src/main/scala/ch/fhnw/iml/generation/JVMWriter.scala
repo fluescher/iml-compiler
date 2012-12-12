@@ -294,6 +294,7 @@ object JVMWriter {
             case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ISTORE, apos)
             case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _))				=> scope.method.visitVarInsn(ISTORE, pos+1)
         }
+        case _ => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
     def writeAssiCmd(s: Expr, e: Expr)(implicit scope: Scope) {
@@ -479,6 +480,7 @@ object JVMWriter {
         case Some(StorageSymbol(_, t, _, _, true, argument, apos, _, _)) 	=> scope.method.visitVarInsn(ALOAD, 0); scope.method.visitFieldInsn(GETFIELD, scope.className, i.chars, getVMType(t))
         case Some(StorageSymbol(_, t, _, _, _, true, apos, _, _))			=> scope.method.visitVarInsn(ILOAD, apos+1)
         case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _))				=> scope.method.visitVarInsn(ILOAD, pos+1)
+        case _ => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
     def getVMType(t: Type): String = t match {
@@ -495,11 +497,12 @@ object JVMWriter {
         case VarAccess(id) => scope.symbols.stores.get(id) match {
         	case Some(StorageSymbol(_, _, _, _, g, _, _, _, _)) => g
         }
+        case _ => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
     def getReturnIndex(f: FunDecl)(implicit scope: Scope) = scope.symbols.stores.get(f.head.retVal.i) match {
         case Some(StorageSymbol(_, t, _, _, _, _, _, pos, _)) => pos + 1
-        case None => -1
+        case None => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
     def getVMType(f: FunDecl): String = {
