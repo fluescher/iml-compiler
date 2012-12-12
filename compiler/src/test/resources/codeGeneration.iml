@@ -6,14 +6,16 @@ global
 		c
 	local 
 		var b: int32
-	ensures [ blah: r > i ]
+	ensures [ a: c = 3, b: old(c) = 2 ]
 	{
 		b init := a;
 		r init := i + b;
-		b := -7
+		b := -7;
+		c := 3
 	};
 	var c: int32;
 	var o: int32
 {
+	c init := 2;
 	! inc(3, 4)
 }

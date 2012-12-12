@@ -18,7 +18,7 @@ object JVMWriter {
     val VM_TRUE = 1
     val VM_FALSE = 0
     
-    case class Scope(className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable)
+    case class Scope(className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable, inFun: Boolean, params: ParameterList, global: Option[GlobalImportList])
     
     def apply(ast: AST, filename : String = "dynamic") {
         val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
@@ -28,7 +28,7 @@ object JVMWriter {
 
     def generateClass(ast: AST, filename: String) = {
         val writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        writeProgram(ast.root, filename)(Scope(ast.root.i.chars, writer, null, ast.root.symbols))
+        writeProgram(ast.root, filename)(Scope(ast.root.i.chars, writer, null, ast.root.symbols, false, null, null))
         writer.toByteArray
     }
     
@@ -55,7 +55,7 @@ object JVMWriter {
 								                getVMType(p),
 												null,
 												null)
-		val s = Scope(scope.className, scope.writer, cur, p.symbols)        
+		val s = Scope(scope.className, scope.writer, cur, p.symbols, false, p.head.params, p.global)        
         writeCmd(p.cmd)(s)
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
@@ -74,7 +74,7 @@ object JVMWriter {
 								                getVMType(f),
 												null,
 												null)
-		val s = Scope(scope.className, scope.writer, cur, f.symbols)
+		val s = Scope(scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
 		writeSavePreExecutionState(f)(s)
 		writePre(f)(s)
         writeCmd(f.cmd)(s)
@@ -91,7 +91,7 @@ object JVMWriter {
             for(p <- f.head.params.params) p match { 
                 case Parameter(InFlow, _, StoreDecl(_, id, _)) => {
                 	writeAccessVar(id); 
-                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(id)(f))
+                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(id))
                 }
             }
             
@@ -99,7 +99,7 @@ object JVMWriter {
             f.global match {
                 case Some(l) => l.globals.foreach(a => {
                     writeAccessVar(a.i); 
-                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(a.i)(f))
+                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(a.i))
                 })
                 case None =>
             }
@@ -107,12 +107,16 @@ object JVMWriter {
         case None =>
     }
     
-    def calculateLocalOldPos(id: Ident)(f: FunDecl)(implicit scope: Scope): Int = {
-        maxlocal(f) + oldPos(id, f)
+    def calculateLocalOldPos(id: Ident)(implicit scope: Scope): Int = {
+        if(scope.inFun)
+        	maxlocal() + 1 + oldPos(id, scope.params, scope.global)/* +1 -> return value */
+        else 
+            maxlocal() + oldPos(id, scope.params, scope.global) 
     }
     
-    def maxlocal(f: FunDecl)(implicit scope: Scope): Int = {
-        localCount + 1 /* +1 -> return value */
+    
+    def maxlocal()(implicit scope: Scope): Int = {
+        localCount  
     }
     
     def localCount(implicit scope: Scope): Int = {
@@ -125,16 +129,16 @@ object JVMWriter {
         i
     }
     
-    def oldPos(id: Ident, f: FunDecl)(implicit scope: Scope): Int = {
+    def oldPos(id: Ident, params: ParameterList, global: Option[GlobalImportList])(implicit scope: Scope): Int = {
         var i = 0
         /* parameters */
-        for(p <- f.head.params.params) p match { 
+        for(p <- params.params) p match { 
                 case Parameter(InFlow, _, StoreDecl(_, i2, _)) if id == i2 	 => return i + 1
                 case Parameter(InFlow, _, StoreDecl(_, i2, _))				 => i = i + 1
                 case _ =>
         }
         /* globals */
-        f.global match {
+        global match {
             case Some(l) => for(glob <- l.globals) {
                 if(glob.i == id) return i + 1
             }
@@ -208,7 +212,7 @@ object JVMWriter {
 												null,
 												null)
         
-        val s: Scope = Scope(scope.className, scope.writer, entry, scope.symbols)
+        val s: Scope = Scope(scope.className, scope.writer, entry, scope.symbols, false, null, null)
         writeCmd(p.cmd)(s)
         entry.visitInsn(RETURN)
         entry.visitMaxs(IGNORED,IGNORED)
@@ -330,10 +334,15 @@ object JVMWriter {
         case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
     }
     
-    def writeFunCall(f: Ident, exprs: List[Expr])(implicit scope: Scope) {
-        scope.method.visitVarInsn(ALOAD, 0);
-        exprs.map(writeExpr)
-        scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, f.chars, getVMType(scope.symbols.getFunctionDeclaration(f)))
+    def writeFunCall(f: Ident, exprs: List[Expr])(implicit scope: Scope) = f match {
+        case Ident("old") 	 =>  exprs.head match {
+        	case VarAccess(i) => println("LOAD OLD: " + calculateLocalOldPos(i)); scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
+        }
+        case _ => {
+        	scope.method.visitVarInsn(ALOAD, 0);
+        	exprs.map(writeExpr)
+        	scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, f.chars, getVMType(scope.symbols.getFunctionDeclaration(f)))
+        }
     }
     
     def writeDyadicExpr(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
