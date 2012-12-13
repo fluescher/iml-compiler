@@ -148,6 +148,8 @@ object InitializationChecker extends Checker {
         case va: VarAccess 								=> CheckError("Use of not initialized var", va)
         case m: MonadicExpr 							=> checkValueExpr(m.expr)(symbols)
         case d: DyadicExpr 								=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
+        case FunCallExpr(_, exprs)						=> exprs.map(a => (checkValueExpr(a)(symbols)))
+	    							   							.foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
         case StoreExpr(_, _) 							=> CheckError("No initalization allowed", expr)
     }
 
