@@ -11,6 +11,7 @@ object InitializationChecker extends Checker {
     }
 
     private def initCheck(n: ProgramNode): CheckResult[SymbolTable] = {
+        println(n.cmd)
         checkFunDecls(n) and checkProcDecls(n) and checkBlock(true)(n.cmd)(n.symbols)
     }
 
@@ -142,15 +143,15 @@ object InitializationChecker extends Checker {
     }
 
     private def checkValueExpr(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
-        case BoolLiteralExpression(_) 					=> CheckSuccess(symbols)
-        case IntLiteralExpression(_) 					=> CheckSuccess(symbols)
-        case VarAccess(id) if symbols.isInitialized(id) => CheckSuccess(symbols)
-        case va: VarAccess 								=> CheckError("Use of not initialized var", va)
-        case m: MonadicExpr 							=> checkValueExpr(m.expr)(symbols)
-        case d: DyadicExpr 								=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
-        case FunCallExpr(_, exprs)						=> exprs.map(a => (checkValueExpr(a)(symbols)))
-	    							   							.foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
-        case StoreExpr(_, _) 							=> CheckError("No initalization allowed", expr)
+        case BoolLiteralExpression(_) 						  	=> CheckSuccess(symbols)
+        case IntLiteralExpression(_) 						  	=> CheckSuccess(symbols)
+        case StoreExpr(id,false) if symbols.isInitialized(id) 	=> CheckSuccess(symbols)
+        case va: StoreExpr 									  	=> CheckError("Use of not initialized var", va)
+        case m: MonadicExpr 									=> checkValueExpr(m.expr)(symbols)
+        case d: DyadicExpr 										=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
+        case FunCallExpr(_, exprs)								=> exprs.map(a => (checkValueExpr(a)(symbols)))
+	    							   									.foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
+        case StoreExpr(_, _) 									=> CheckError("No initalization allowed", expr)
     }
 
     private def checkLeftExpr(initAllowed: Boolean)(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
@@ -158,7 +159,6 @@ object InitializationChecker extends Checker {
         case StoreExpr(id, true) 	if !symbols.isInitialized(id) 		=> CheckSuccess(symbols.markStorageAsInitialized(id))													   
         case StoreExpr(id, true) 	if symbols.isInitialized(id) 		=> CheckError("You can only once initialized a store.", expr)
         case StoreExpr(id, _) 		if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
-        case VarAccess(id) 			if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
         case other 														=> CheckError("Use of not initalized store", expr)
     }
     

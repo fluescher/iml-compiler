@@ -348,13 +348,6 @@ object JVMWriter {
             case Some(StorageSymbol(_, t, _, _, _, true, _, apos, _, _))			=> valueGen(scope); scope.method.visitVarInsn(ISTORE, apos)
             case Some(StorageSymbol(_, t, _, _, _, _, _, _, pos, _))				=> valueGen(scope); scope.method.visitVarInsn(ISTORE, pos+1)
         }
-        case VarAccess(i)		=> scope.symbols.stores.get(i) match {
-            case Some(StorageSymbol(_, t, _, _, false, true, true, apos, _, _)) 	if t == Bool => scope.method.visitVarInsn(ALOAD, apos+1); scope.method.visitInsn(ICONST_0); valueGen(scope); scope.method.visitInsn(BASTORE)
-            case Some(StorageSymbol(_, t, _, _, false, true, true, apos, _, _))	=> scope.method.visitVarInsn(ALOAD, apos+1); scope.method.visitInsn(ICONST_0); valueGen(scope); scope.method.visitInsn(IASTORE)
-            case Some(StorageSymbol(_, t, _, _, true, _, argument, apos, _, _)) 	=> scope.method.visitVarInsn(ALOAD, 0); valueGen(scope); scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-            case Some(StorageSymbol(_, t, _, _, _, true, _, apos, _, _))			=> valueGen(scope); scope.method.visitVarInsn(ISTORE, apos)
-            case Some(StorageSymbol(_, t, _, _, _, _, _, _, pos, _))				=> valueGen(scope); scope.method.visitVarInsn(ISTORE, pos+1)
-        }
         case _ => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
@@ -390,7 +383,6 @@ object JVMWriter {
         case IntLiteralExpression(v)		=> scope.method.visitIntInsn(BIPUSH, v)
         case BoolLiteralExpression(true)	=> scope.method.visitIntInsn(BIPUSH, VM_TRUE)
         case BoolLiteralExpression(false)	=> scope.method.visitIntInsn(BIPUSH, VM_FALSE)
-        case VarAccess(i)					=> writeAccessVar(i)
         case StoreExpr(i,_)					=> writeAccessVar(i)
         case FunCallExpr(f, exprs)			=> writeFunCall(p)(f, exprs)
         case MonadicExpr(o,e)				=> writeMonadicExpr(p)(o, e)
@@ -400,7 +392,6 @@ object JVMWriter {
     def writeFunCall(p: ProgramNode)(f: Ident, exprs: List[Expr])(implicit scope: Scope) = f match {
         case Ident("old") 	 =>  exprs.head match {
             case StoreExpr(i, _) 	=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
-        	case VarAccess(i) 		=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
         	case _ =>
         }
         case _ => {

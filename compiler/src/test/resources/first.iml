@@ -1,22 +1,25 @@
 program intDiv
 global
 	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
+	global in blub
 	{
-		q init := 0;
+		
+		q init := blub;
 		r init := m;
 		while (r >= n) {
 			q := q + 1;
 			r := r - n
 		}
 	};
+	var blub:int32;
 	var m:int32;
 	var n:int32;
-	var q:int32;
-	var r:int32
+	var x:int32;
+	var y:int32
 {
 	? m init;
 	? n init;
-	call divide(m, n, q init,  r init);
-	! q;
-	! r
+	call divide(m, n, x init,  y init) ;
+	! x;
+	! y
 }

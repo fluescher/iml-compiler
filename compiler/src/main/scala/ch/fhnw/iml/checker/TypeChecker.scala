@@ -20,7 +20,6 @@ object TypeChecker extends Checker {
 	    case BoolLiteralExpression(_) 		=> Bool
 	    case IntLiteralExpression(_) 		=> Int32
 	    case StoreExpr(i,_)					=> symbols.getStoreType(i)
-	    case VarAccess(i)					=> symbols.getStoreType(i)
 	    case FunCallExpr(i, _)				=> symbols.getFunctionType(i)
 	    case MonadicExpr(o: ArithOpr, _)	=> Int32
 	    case MonadicExpr(o: BoolOpr, _)		=> Bool
@@ -84,22 +83,19 @@ object TypeChecker extends Checker {
 	}
 	
 	private def checkLeftExpr(expr: Expr)(implicit symbols: SymbolTable) :CheckResult[Type] = expr match {
-	    case VarAccess(id) 		if symbols.containsStore(id) => CheckSuccess(symbols.getStoreType(id))
-	    case va: VarAccess									 => CheckError("Use of undeclared store", va) 
 	    case StoreExpr(id,_) 	if symbols.containsStore(id) => CheckSuccess(symbols.getStoreType(id))
 	    case se: StoreExpr									 => CheckError("Use of undeclared store", se)
 	    case other 											 => CheckError("Invalid store reference", other)
 	}
 	
 	private def checkValueExpr(expr: Expr)(inPost: Boolean)(p: ProgramNode)(implicit symbols: SymbolTable) :CheckResult[Type] = expr match {
-	    case BoolLiteralExpression(_) 						=> CheckSuccess(Bool)
-	    case IntLiteralExpression(_) 						=> CheckSuccess(Int32)
-	    case e: StoreExpr	 								=> CheckError("No init on right side allowed", e)
-	    case VarAccess(id) 		if symbols.containsStore(id)=> CheckSuccess(symbols.getStoreType(id))
-	    case va: VarAccess									=> CheckError("Use of undeclared store", va)
-	    case m: MonadicExpr	 								=> checkMonadicExpr(m)(inPost)(p)
-	    case d: DyadicExpr									=> checkDyadicExpr(d)(inPost)(p)
-	    case f: FunCallExpr									=> checkFunCall(inPost)(p)(f)
+	    case BoolLiteralExpression(_) 							=> CheckSuccess(Bool)
+	    case IntLiteralExpression(_) 							=> CheckSuccess(Int32)
+	    case StoreExpr(id, true)	 							=> CheckError("No init on right side allowed", expr)
+	    case StoreExpr(id, false) if symbols.containsStore(id)	=> CheckSuccess(symbols.getStoreType(id))
+	    case m: MonadicExpr	 									=> checkMonadicExpr(m)(inPost)(p)
+	    case d: DyadicExpr										=> checkDyadicExpr(d)(inPost)(p)
+	    case f: FunCallExpr										=> checkFunCall(inPost)(p)(f)
 	}
 	
 	private def checkDyadicExpr(d: DyadicExpr)(inPost: Boolean)(p: ProgramNode)(implicit symbols: SymbolTable): CheckResult[Type] = d match {

@@ -25,7 +25,6 @@ sealed abstract class Expr extends Node
 case class BoolLiteralExpression(value: Boolean) extends Expr
 case class IntLiteralExpression(value: Int) extends Expr
 case class StoreExpr(i: Ident, isInitialization: Boolean) extends Expr
-case class VarAccess(i: Ident) extends Expr
 case class FunCallExpr(i: Ident, exprs: List[Expr]) extends Expr
 case class MonadicExpr(opr: Opr, expr: Expr) extends Expr
 case class DyadicExpr(opr: Opr, expr1: Expr, expr2: Expr) extends Expr
