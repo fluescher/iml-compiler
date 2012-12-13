@@ -125,6 +125,11 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
         case Some(StorageSymbol(_, _, _, _, _, _, _, _, _, isInit)) => isInit
     }
     
+    def isConst(id: Ident): Boolean = stores.get(id) match {
+        case None => false
+        case Some(StorageSymbol(_, _, decl, _, _, _, _, _, _, _)) => decl.change == ConstNode
+    }
+    
     def getFunctionDeclaration(id: Ident):FunDecl = {
 		val tab = if(global == null) functions else global.functions
 	    tab.get(id) match {

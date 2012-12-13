@@ -1,9 +1,8 @@
 program intDiv
 global
-	proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
+	proc divide(in copy m:int32, in copy n:int32, out ref var q:int32, out ref var r:int32)
 	global in blub
 	{
-		
 		q init := blub;
 		r init := m;
 		while (r >= n) {
@@ -15,8 +14,10 @@ global
 	var m:int32;
 	var n:int32;
 	var x:int32;
+	const test:int32;
 	var y:int32
 {
+	test init := 2;
 	? m init;
 	? n init;
 	call divide(m, n, x init,  y init) ;

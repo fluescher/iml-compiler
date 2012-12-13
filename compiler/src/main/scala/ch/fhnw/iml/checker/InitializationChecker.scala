@@ -23,10 +23,12 @@ object InitializationChecker extends Checker {
     }
 
     private def checkFunDecl(f: FunDecl): CheckResult[SymbolTable] = {
-        checkConditions(f.pre)(markInParameters(f.head.params.params)(f.symbols))  match {
+        var funSymbols = markInParameters(f.head.params.params)(f.symbols);
+        funSymbols = markGlobalImportIn(f.global)(funSymbols)
+        checkConditions(f.pre)(funSymbols)  match {
             case CheckSuccess(symbls) 		=> checkBlock(true)(f.cmd)(symbls) match {
                 case CheckSuccess(sym) 		=> checkConditions(f.post)(sym) match {
-                    case CheckSuccess(s)	=> checkReturnValue(f.head.retVal)(s)
+                    case CheckSuccess(s)	=> checkIsInitalized(f.head.retVal.i)(s)
                     case e => e
                 }
                 case e => e
@@ -45,7 +47,7 @@ object InitializationChecker extends Checker {
     private def checkOutRef(params: List[Parameter])(symbols: SymbolTable): CheckResult[SymbolTable] = {
         params match {
             case Nil => CheckSuccess(symbols)
-            case Parameter(OutFlow,_,storeDecl) :: xs => checkReturnValue(storeDecl)(symbols) match {
+            case Parameter(OutFlow,_,storeDecl) :: xs => checkIsInitalized(storeDecl.i)(symbols) match {
                 case CheckSuccess(_) => checkOutRef(xs)(symbols)
                 case e => e
             }
@@ -53,10 +55,24 @@ object InitializationChecker extends Checker {
             case other	 => CheckSuccess(symbols)
         }
     }
-
-    private def checkReturnValue(retVal: StoreDecl)(symbols: SymbolTable): CheckResult[SymbolTable] = retVal match {
-        case StoreDecl(_, id, _) if symbols.isInitialized(id) => CheckSuccess(symbols)
-        case other => CheckError("Return value must be initialized at the end of a function.", retVal)
+    
+   private def markGlobalImportIn(global: Option[GlobalImportList])(symbols: SymbolTable): SymbolTable = global match {
+	    case None 			=> symbols
+	    case Some(glob)		=> markInGlobals(glob.globals)(symbols)
+    }
+    
+    private def checkGlobalImportOut(global: Option[GlobalImportList])(symbols: SymbolTable): CheckResult[SymbolTable] = global match {
+	    case None 			=> CheckSuccess(symbols)
+	    case Some(glob)		=> glob.globals.filter(_.flow == OutFlow)
+	    								   .map(a => (checkIsInitalized(a.i)(symbols)))
+	    							   	   .foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
+    }
+    
+    private def checkIsInitalized(id: Ident)(symbols: SymbolTable): CheckResult[SymbolTable] = {
+        if (symbols.isInitialized(id))
+        	CheckSuccess(symbols)
+        else
+        	CheckError("Store must be initialized at the end of a function.", StoreExpr(id, false))
     }
 
     private def checkProcDecls(n: ProgramNode): CheckResult[SymbolTable] = {
@@ -67,10 +83,16 @@ object InitializationChecker extends Checker {
     }
 
     private def checkProcDecl(p: ProcDecl): CheckResult[SymbolTable] = {
-        checkConditions(p.pre)(markInParameters(p.head.params.params)(p.symbols))  match {
+        var procSymbols = markInParameters(p.head.params.params)(p.symbols);
+        procSymbols = markGlobalImportIn(p.global)(procSymbols)
+        
+        checkConditions(p.pre)(procSymbols)  match {
             case CheckSuccess(symbls) 		=> checkBlock(true)(p.cmd)(symbls) match {
                 case CheckSuccess(sym) 		=> checkConditions(p.post)(sym) match {
-                    case CheckSuccess(s)	=> checkOutRef(p.head.params.params)(s)
+                    case CheckSuccess(s)	=> checkOutRef(p.head.params.params)(s) match {
+                        case CheckSuccess(s) => checkGlobalImportOut(p.global)(s)
+                        case e => e
+                    }
                     case e => e
                 }
                 case e => e
@@ -84,6 +106,13 @@ object InitializationChecker extends Checker {
         case Parameter(InFlow,_,storeDecl) :: xs 	=> markInParameters(xs)(symbols.markStorageAsInitialized(storeDecl.i))
         case Parameter(InOutFlow,_,storeDecl) :: xs => markInParameters(xs)(symbols.markStorageAsInitialized(storeDecl.i))
         case Parameter(_,_,storeDecl) :: xs			=> markInParameters(xs)(symbols)
+    }
+    
+    private def markInGlobals(globals: List[GlobalImport])(symbols: SymbolTable) : SymbolTable = globals match {
+        case Nil => symbols
+        case GlobalImport(InFlow,_,i) :: xs 			=> markInGlobals(xs)(symbols.markStorageAsInitialized(i))
+        case GlobalImport(InOutFlow,_,i) :: xs			=> markInGlobals(xs)(symbols.markStorageAsInitialized(i))
+        case GlobalImport(_,_,_) :: xs					=> markInGlobals(xs)(symbols)
     }
     
     private def checkBlock(initAllowed: Boolean)(block: BlockCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
@@ -158,7 +187,8 @@ object InitializationChecker extends Checker {
         case StoreExpr(id, true) 	if !initAllowed 					=> CheckError("Its not allowed to initalized a store in this command.", expr)
         case StoreExpr(id, true) 	if !symbols.isInitialized(id) 		=> CheckSuccess(symbols.markStorageAsInitialized(id))													   
         case StoreExpr(id, true) 	if symbols.isInitialized(id) 		=> CheckError("You can only once initialized a store.", expr)
-        case StoreExpr(id, _) 		if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
+        case StoreExpr(id, false)	if symbols.isConst(id)				=> CheckError("Its only allowed to write once to a const.", expr)
+        case StoreExpr(id, false) 	if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
         case other 														=> CheckError("Use of not initalized store", expr)
     }
     
