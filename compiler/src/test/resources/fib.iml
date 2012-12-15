@@ -1,17 +1,19 @@
 program fibonacci
 global
-	proc sum(i: int32)
+	proc sum(i: int32, out res: int32)
 	requires [i >= 0] {
 		if(i = 0) {
 			skip
 		} else {
-			call sum(i-1)
+			res := 12;
+			call sum(i-1, res)
 		}
 	};
 
 	fun fib(i: int32)
 	returns r: int32
 	requires [ isPos(i) ]
+	ensures [ r >= old(i), old(isPos(i)) ]
 	{
 		if(i = 0) {
 			r init := 0
@@ -33,6 +35,5 @@ global
 	var max: int32
 {
 	? max init;
-	! fib(max);
-	call sum(2)
+	! fib(max)
 }

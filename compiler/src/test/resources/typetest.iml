@@ -1,20 +1,14 @@
 program intDiv
 global
+	fun f(i: int32) 
+	returns b: bool 
+	{
+		b init := i >= 0
+	};
 	var m:int32;
 	var n:int32;
 	var q:int32;
 	var r:int32
 {
-	? m init;
-	? n init;
-	q init := 0;
-	r init := m;
-	
-	while (12) {
-		q := q + 1;
-		r := r - n
-	};
-	
-	! q;
-	! r
+	! f(true)
 }

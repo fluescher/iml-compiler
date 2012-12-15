@@ -56,10 +56,10 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.className, scope.writer, cur, p.symbols, false, p.head.params, p.global)
-		writeSavePreExecutionState(p.post, p.head.params, p.global)(s)
-		writePre(prog)(p.pre)(s)
+//		writeSavePreExecutionState(p.post, p.head.params, p.global)(s)
+//		writePre(prog)(p.pre)(s)
         writeCmd(prog)(p.cmd)(s)
-        writePost(prog)(p.post)(s)
+//        writePost(prog)(p.post)(s)
         cur.visitInsn(RETURN)
         cur.visitMaxs(IGNORED,IGNORED)
         cur.visitEnd()
@@ -78,10 +78,10 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
-		writeSavePreExecutionState(f.post, f.head.params, f.global)(s)
-		writePre(p)(f.pre)(s)
+//		writeSavePreExecutionState(f.post, f.head.params, f.global)(s)
+//		writePre(p)(f.pre)(s)
         writeCmd(p)(f.cmd)(s)
-        writePost(p)(f.post)(s)
+//        writePost(p)(f.post)(s)
         cur.visitVarInsn(ILOAD, getReturnIndex(f)(s)) /* load local return variable onto stack */ 
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
@@ -185,7 +185,7 @@ object JVMWriter {
 
     def writeFields(symbols: SymbolTable, scope: Scope) {
     	for((ident, store) <- symbols.stores if store.isGlobal) {
-    	    scope.writer.visitField( ACC_PUBLIC, ident.chars, getVMType(store.t).toString, null, null)
+    	    scope.writer.visitField( ACC_PRIVATE, ident.chars, getVMType(store.t).toString, null, null)
     	}
     }
 
