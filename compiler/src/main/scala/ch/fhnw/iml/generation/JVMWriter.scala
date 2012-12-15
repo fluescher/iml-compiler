@@ -12,13 +12,13 @@ import ch.fhnw.iml.checker.TypeChecker
 
 object JVMWriter {
     
-    val JVM_V7 = 51
-    val IGNORED = 0
+    val JVM_V7 		= 51
+    val IGNORED		= 0
 
-    val VM_TRUE = 1
-    val VM_FALSE = 0
+    val VM_TRUE 	= 1
+    val VM_FALSE 	= 0
     
-    case class Scope(className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable, inFun: Boolean, params: ParameterList, global: Option[GlobalImportList])
+    case class Scope(p: ProgramNode, className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable, inFun: Boolean, params: ParameterList, global: Option[GlobalImportList])
     
     def apply(ast: AST, filename : String = "dynamic") {
         val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
@@ -28,7 +28,7 @@ object JVMWriter {
 
     def generateClass(ast: AST, filename: String) = {
         val writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        writeProgram(ast.root, filename)(Scope(ast.root.i.chars, writer, null, ast.root.symbols, false, ParameterList(Nil), None))
+        writeProgram(ast.root, filename)(Scope(ast.root, ast.root.i.chars, writer, null, ast.root.symbols, false, ParameterList(Nil), None))
         writer.toByteArray
     }
     
@@ -36,29 +36,29 @@ object JVMWriter {
         scope.writer.visit(JVM_V7, ACC_PUBLIC + ACC_SUPER + ACC_FINAL, p.i.chars, null, "java/lang/Object", null)
         scope.writer.visitSource(filename, null)
         writeFunctions(p)
-        writeProcedures(p)
+        writeProcedures()
         writeFields(p.symbols, scope)
         writeConstructor()
-        writeEntryPoint(p)
-        writeMain(p)
+        writeEntryPoint()
+        writeMain()
     }
     
-    def writeProcedures(p: ProgramNode)(implicit scope: Scope) {
-        val procs = p.cps.decls.filter(_.isInstanceOf[ProcDecl]).map(_.asInstanceOf[ProcDecl])
+    def writeProcedures()(implicit scope: Scope) {
+        val procs = scope.p.cps.decls.filter(_.isInstanceOf[ProcDecl]).map(_.asInstanceOf[ProcDecl])
         		
-        procs.map(writeProcedure(p))
+        procs.map(writeProcedure)
     }
     
-    def writeProcedure(prog: ProgramNode)(p: ProcDecl)(implicit scope: Scope) {
+    def writeProcedure(p: ProcDecl)(implicit scope: Scope) {
        val cur = scope.writer.visitMethod(	ACC_PUBLIC,
 								                p.head.i.chars,
 								                getVMType(p),
 												null,
 												null)
-		val s = Scope(scope.className, scope.writer, cur, p.symbols, false, p.head.params, p.global)
+		val s = Scope(scope.p, scope.className, scope.writer, cur, p.symbols, false, p.head.params, p.global)
 //		writeSavePreExecutionState(p.post, p.head.params, p.global)(s)
 //		writePre(prog)(p.pre)(s)
-        writeCmd(prog)(p.cmd)(s)
+        writeCmd(p.cmd)(s)
 //        writePost(prog)(p.post)(s)
         cur.visitInsn(RETURN)
         cur.visitMaxs(IGNORED,IGNORED)
@@ -68,19 +68,19 @@ object JVMWriter {
     def writeFunctions(p: ProgramNode)(implicit scope: Scope) {
         val funs = p.cps.decls.filter(_.isInstanceOf[FunDecl]).map(_.asInstanceOf[FunDecl])
         		
-        funs.map(writeFunction(p))
+        funs.map(writeFunction)
     }
     
-    def writeFunction(p: ProgramNode)(f: FunDecl)(implicit scope: Scope) {
+    def writeFunction(f: FunDecl)(implicit scope: Scope) {
         val cur = scope.writer.visitMethod(	ACC_PUBLIC,
 								                f.head.i.chars,
 								                getVMType(f),
 												null,
 												null)
-		val s = Scope(scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
+		val s = Scope(scope.p, scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
 //		writeSavePreExecutionState(f.post, f.head.params, f.global)(s)
-//		writePre(p)(f.pre)(s)
-        writeCmd(p)(f.cmd)(s)
+		writePre(scope.p)(f.pre)(s)
+        writeCmd(f.cmd)(s)
 //        writePost(p)(f.post)(s)
         cur.visitVarInsn(ILOAD, getReturnIndex(f)(s)) /* load local return variable onto stack */ 
         cur.visitInsn(IRETURN)
@@ -88,41 +88,29 @@ object JVMWriter {
         cur.visitEnd()
     }
     
-    def writeSavePreExecutionState(post: Option[ConditionList], params: ParameterList, global: Option[GlobalImportList])(implicit scope: Scope) = post match {
-        case Some(_) => {
-            /* write arguments */
-            for(p <- params.params) p match { 
-                case Parameter(InFlow, _, StoreDecl(_, id, _)) => {
-                	writeAccessVar(id); 
-                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(id))
-                }
-            }
-            
-            /* write globals */
-            global match {
-                case Some(l) => l.globals.foreach(a => {
-                    writeAccessVar(a.i); 
-                	scope.method.visitVarInsn(ISTORE, calculateLocalOldPos(a.i))
-                })
-                case None =>
-            }
-        }
-        case None =>
+    def writeSavePreExecutionState(post: Option[ConditionList])(implicit scope: Scope): Int = post match {
+        case Some(cs) 	=> writeSavePreExecutionExpressions(calculateLocalCount, cs.conditions.map(_.expr)) 
+        case None 		=> calculateLocalCount
     }
     
-    def calculateLocalCount()(implicit scope: Scope): Int =  calculateLocalOldPos(null) + 1 /* this */
-    
-    def calculateLocalOldPos(id: Ident)(implicit scope: Scope): Int = {
-        if(scope.inFun)
-        	maxlocal() + 1 + oldPos(id, scope.params, scope.global)/* +1 -> return value */
-        else 
-            maxlocal() + oldPos(id, scope.params, scope.global) 
+    def writeSavePreExecutionExpressions(curLocals: Int, exprs: List[Expr])(implicit scope: Scope): Int = {
+        exprs.foldLeft(curLocals)(writeSavePreExecutionExpression)
     }
     
-    
-    def maxlocal()(implicit scope: Scope): Int = {
-        localCount  
+    def writeSavePreExecutionExpression(curLocals: Int, expr: Expr)(implicit scope: Scope): Int = expr match {
+        case FunCallExpr(f, es)			if 	f == Ident("old")	=> saveExprInPreExecutionState(curLocals, es.head)
+        case FunCallExpr(_, es)									=> writeSavePreExecutionExpressions(curLocals, es)
+        case MonadicExpr(_,e)									=> writeSavePreExecutionExpression(curLocals, e)
+        case DyadicExpr(o, e1, e2)								=> writeSavePreExecutionExpression(writeSavePreExecutionExpression(curLocals, e1), e2)
+        case _													=> curLocals
     }
+    
+    def saveExprInPreExecutionState(pos: Int, e: Expr)(implicit scope: Scope): Int = {
+        
+        pos + 1
+    }
+    
+    def calculateLocalCount()(implicit scope: Scope): Int =  localCount + 1 /* this */
     
     def localCount(implicit scope: Scope): Int = {
         var i = 0
@@ -161,7 +149,7 @@ object JVMWriter {
         val end = new Label()
         val err = new Label()
         
-        writeExpr(prog)(c.expr)
+        writeExpr(c.expr)
         scope.method.visitJumpInsn(IFEQ, err)
         scope.method.visitJumpInsn(GOTO, end)
         scope.method.visitLabel(err)
@@ -210,21 +198,21 @@ object JVMWriter {
         constructor.visitEnd()
     }
 
-    def writeEntryPoint(p: ProgramNode)(implicit scope: Scope) {
+    def writeEntryPoint()(implicit scope: Scope) {
         val entry = scope.writer.visitMethod(	ACC_PUBLIC + ACC_FINAL,
-								                p.i.chars,
+								                scope.p.i.chars,
 								                "()V",
 												null,
 												null)
         
-        val s: Scope = Scope(scope.className, scope.writer, entry, scope.symbols, false, ParameterList(Nil), None)
-        writeCmd(p)(p.cmd)(s)
+        val s: Scope = Scope(scope.p,scope.className, scope.writer, entry, scope.symbols, false, ParameterList(Nil), None)
+        writeCmd(scope.p.cmd)(s)
         entry.visitInsn(RETURN)
         entry.visitMaxs(IGNORED,IGNORED)
         entry.visitEnd()
     }
     
-    def writeMain(p: ProgramNode)(implicit scope: Scope) {
+    def writeMain()(implicit scope: Scope) {
         val main = scope.writer.visitMethod(	ACC_PUBLIC + ACC_STATIC,
 									            "main",
 									            "([Ljava/lang/String;)V",
@@ -232,35 +220,35 @@ object JVMWriter {
 									            null);
         
         /* call program constructor */
-        main.visitTypeInsn(NEW, p.i.chars)
+        main.visitTypeInsn(NEW, scope.p.i.chars)
         main.visitInsn(DUP)
-        main.visitMethodInsn(INVOKESPECIAL, p.i.chars, "<init>", "()V")
+        main.visitMethodInsn(INVOKESPECIAL, scope.p.i.chars, "<init>", "()V")
         
         /* call entry point */
-        main.visitMethodInsn(INVOKEVIRTUAL, p.i.chars, p.i.chars, "()V")
+        main.visitMethodInsn(INVOKEVIRTUAL, scope.p.i.chars, scope.p.i.chars, "()V")
         
         main.visitMaxs(IGNORED,IGNORED);
         main.visitInsn(RETURN)
         main.visitEnd()
     }
     
-    def writeBlock(cmds: List[Command], prog: ProgramNode)(implicit scope: Scope) {
-        cmds.map(writeCmd(prog))
+    def writeBlock(cmds: List[Command])(implicit scope: Scope) {
+        cmds.map(writeCmd)
     }
     
-    def writeCmd(prog: ProgramNode)(cmd: Command)(implicit scope: Scope): Unit = cmd match {
+    def writeCmd(cmd: Command)(implicit scope: Scope): Unit = cmd match {
         case SkipCommand 					=> scope.method.visitInsn(NOP)
-        case AssiCommand(s, e)				=> writeAssiCmd(prog)(s, e) 				
-        case OutputCommand(expr)			=> writeOutputCmd(prog)(expr, TypeChecker.getType(expr)(scope.symbols))
+        case AssiCommand(s, e)				=> writeAssiCmd(s, e) 				
+        case OutputCommand(expr)			=> writeOutputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
         case InputCommand(expr)				=> writeInputCmd(expr, TypeChecker.getType(expr)(scope.symbols))
-        case WhileCommand(expr, cmd) 		=> writeWhile(expr, cmd, prog)
-        case BlockCommand(cmds)				=> writeBlock(cmds, prog)
-        case CondCommand(expr, c1, c2)		=> writeCond(expr, c1, c2, prog)
-        case ProcCallCommand(f, exprs,_)	=> writeProcCall(f, exprs, prog) 
+        case WhileCommand(expr, cmd) 		=> writeWhile(expr, cmd)
+        case BlockCommand(cmds)				=> writeBlock(cmds)
+        case CondCommand(expr, c1, c2)		=> writeCond(expr, c1, c2)
+        case ProcCallCommand(f, exprs,_)	=> writeProcCall(f, exprs) 
     }
     
-    def writeProcCall(p: Ident, exprs: List[Expr], prog: ProgramNode)(implicit scope: Scope) {
-        val decl = prog.symbols.getProcedureDeclaration(p)
+    def writeProcCall(p: Ident, exprs: List[Expr])(implicit scope: Scope) {
+        val decl = scope.p.symbols.getProcedureDeclaration(p)
         val pairs = decl.head.params.params.zip(exprs)
         val localEnd = calculateLocalCount -1
         var local = localEnd
@@ -276,7 +264,7 @@ object JVMWriter {
             scope.method.visitVarInsn(ASTORE, local)
             scope.method.visitVarInsn(ALOAD, local)
             scope.method.visitInsn(ICONST_0)
-            writeExpr(prog)(e)
+            writeExpr(e)
             if(p.store.t == Bool) {
             	 scope.method.visitInsn(BASTORE)
         	} else {
@@ -293,7 +281,7 @@ object JVMWriter {
                  scope.method.visitVarInsn(ALOAD, local)
                  local = local + 1
             } else {
-                 writeExpr(prog)(e)
+                 writeExpr(e)
             }
         }
 
@@ -315,28 +303,28 @@ object JVMWriter {
         }
     }
     
-    def writeCond(expr: Expr, c1: Command, c2: Command, p: ProgramNode)(implicit scope: Scope) {
+    def writeCond(expr: Expr, c1: Command, c2: Command)(implicit scope: Scope) {
         val other = new Label()
         val end = new Label()
         
-        writeExpr(p)(expr)
+        writeExpr(expr)
         scope.method.visitJumpInsn(IFNE, other)
-        writeCmd(p)(c2)
+        writeCmd(c2)
         scope.method.visitJumpInsn(GOTO, end)
         scope.method.visitLabel(other)
-        writeCmd(p)(c1)
+        writeCmd(c1)
         scope.method.visitLabel(end)
     }
     
-    def writeWhile(e: Expr, cmd: Command, p: ProgramNode)(implicit scope: Scope) {
+    def writeWhile(e: Expr, cmd: Command)(implicit scope: Scope) {
         val middle = new Label()
         val loop = new Label()
         
         scope.method.visitJumpInsn(GOTO, middle)
         scope.method.visitLabel(loop)
-        writeCmd(p)(cmd)
+        writeCmd(cmd)
         scope.method.visitLabel(middle)
-        writeExpr(p)(e)
+        writeExpr(e)
         scope.method.visitJumpInsn(IFNE, loop)
     }
     
@@ -351,8 +339,8 @@ object JVMWriter {
         case _ => throw new RuntimeException("ERROR. Checking should have failed")
     }
     
-    def writeAssiCmd(p: ProgramNode)(s: Expr, e: Expr)(implicit scope: Scope) {
-        saveTo(s, s => writeExpr(p)(e))
+    def writeAssiCmd(s: Expr, e: Expr)(implicit scope: Scope) {
+        saveTo(s, s => writeExpr(e))
     }
     
     def writeInputCmd(expr: Expr, t: Type)(implicit scope: Scope) {
@@ -368,62 +356,62 @@ object JVMWriter {
         })
     }
     
-    def writeOutputCmd(p: ProgramNode)(expr: Expr, t: Type)(implicit scope: Scope) {
+    def writeOutputCmd(expr: Expr, t: Type)(implicit scope: Scope) {
         scope.method.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-        writeExpr(p)(expr)
+        writeExpr(expr)
         scope.method.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "("+getVMType(t)+")V");
     }
     
-    def writeExpr(p: ProgramNode, expr: Option[Expr])(implicit scope: Scope): Unit = expr match {
-        case Some(e) => writeExpr(p)(e)
+    def writeExpr(expr: Option[Expr])(implicit scope: Scope): Unit = expr match {
+        case Some(e) => writeExpr(e)
         case _ =>
     }
     
-    def writeExpr(p: ProgramNode)(expr: Expr)(implicit scope: Scope): Unit = expr match {
+    def writeExpr(expr: Expr)(implicit scope: Scope): Unit = expr match {
         case IntLiteralExpression(v)		=> scope.method.visitIntInsn(BIPUSH, v)
         case BoolLiteralExpression(true)	=> scope.method.visitIntInsn(BIPUSH, VM_TRUE)
         case BoolLiteralExpression(false)	=> scope.method.visitIntInsn(BIPUSH, VM_FALSE)
         case StoreExpr(i,_)					=> writeAccessVar(i)
-        case FunCallExpr(f, exprs)			=> writeFunCall(p)(f, exprs)
-        case MonadicExpr(o,e)				=> writeMonadicExpr(p)(o, e)
-        case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(p)(o, e1, e2)
+        case FunCallExpr(f, exprs)			=> writeFunCall(f, exprs)
+        case MonadicExpr(o,e)				=> writeMonadicExpr(o, e)
+        case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
     }
     
-    def writeFunCall(p: ProgramNode)(f: Ident, exprs: List[Expr])(implicit scope: Scope) = f match {
+    def writeFunCall(f: Ident, exprs: List[Expr])(implicit scope: Scope) = f match {
         case Ident("old") 	 =>  exprs.head match {
-            case StoreExpr(i, _) 	=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
+//            case StoreExpr(i, _) 	=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
         	case _ =>
         }
         case _ => {
         	scope.method.visitVarInsn(ALOAD, 0);
-        	exprs.map(writeExpr(p))
-        	scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, f.chars, getVMType(p.symbols.getFunctionDeclaration(f)))
+        	exprs.map(writeExpr)
+        	scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, f.chars, getVMType(scope.p.symbols.getFunctionDeclaration(f)))
         }
     }
     
-    def writeDyadicExpr(p: ProgramNode)(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
-        case EqualsOpr 				=> writeExpr(p)(e1); writeExpr(p)(e2); writeCheckEquals()
-        case NotEqualsOpr 			=> writeExpr(p)(e1); writeExpr(p)(e2); writeCheckNotEquals()
-        case GreaterThanOpr			=> writeExpr(p)(e1); writeExpr(p)(e2); writeCheckGreaterThan()
-        case GreaterEqualsThanOpr 	=> writeExpr(p)(e1); writeExpr(p)(e2); writeCheckGreaterEqualsThan()
-        case LessThanOpr			=> writeExpr(p)(e1); writeExpr(p)(e2); writeCheckLessThan()
-        case LessEqualsThanOpr		=> writeExpr(p)(e1); writeExpr(p)(e2); writeCheckLessEqualsThan()
-        case PlusOpr			    => writeExpr(p)(e1); writeExpr(p)(e2); scope.method.visitInsn(IADD)
-        case MinusOpr				=> writeExpr(p)(e1); writeExpr(p)(e2); scope.method.visitInsn(ISUB)
-        case TimesOpr				=> writeExpr(p)(e1); writeExpr(p)(e2); scope.method.visitInsn(IMUL)
-        case DivOpr					=> writeExpr(p)(e1); writeExpr(p)(e2); scope.method.visitInsn(IDIV)
-        case ModOpr					=> writeExpr(p)(e1); writeExpr(p)(e2); scope.method.visitInsn(IREM)
-        case AndOpr					=> writeAnd(p)(e1, e2)
-        case OrOpr					=> writeOr(p)(e1, e2)
+    def writeDyadicExpr(o: Opr, e1: Expr, e2: Expr)(implicit scope: Scope) = o match {
+        case EqualsOpr 				=> writeExpr(e1); writeExpr(e2); writeCheckEquals()
+        case NotEqualsOpr 			=> writeExpr(e1); writeExpr(e2); writeCheckNotEquals()
+        case GreaterThanOpr			=> writeExpr(e1); writeExpr(e2); writeCheckGreaterThan()
+        case GreaterEqualsThanOpr 	=> writeExpr(e1); writeExpr(e2); writeCheckGreaterEqualsThan()
+        case LessThanOpr			=> writeExpr(e1); writeExpr(e2); writeCheckLessThan()
+        case LessEqualsThanOpr		=> writeExpr(e1); writeExpr(e2); writeCheckLessEqualsThan()
+        case PlusOpr			    => writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IADD)
+        case MinusOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(ISUB)
+        case TimesOpr				=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IMUL)
+        case DivOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IDIV)
+        case ModOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IREM)
+        case AndOpr					=> writeAnd(e1, e2)
+        case OrOpr					=> writeOr(e1, e2)
         case NotOpr					=> /* not used */
     }
     
-    def writeAnd(p: ProgramNode)(e1: Expr, e2: Expr)(implicit scope: Scope) {
+    def writeAnd(e1: Expr, e2: Expr)(implicit scope: Scope) {
         val returnFalse = new Label();
         val end = new Label();
-        writeExpr(p)(e1);
+        writeExpr(e1);
         scope.method.visitJumpInsn(IFEQ, returnFalse)
-        writeExpr(p)(e2);
+        writeExpr(e2);
         scope.method.visitJumpInsn(IFEQ, returnFalse)
         scope.method.visitInsn(ICONST_1) /* return true */
         scope.method.visitJumpInsn(GOTO, end)
@@ -432,12 +420,12 @@ object JVMWriter {
         scope.method.visitLabel(end)
     }
     
-    def writeOr(p: ProgramNode)(e1: Expr, e2: Expr)(implicit scope: Scope) {
+    def writeOr(e1: Expr, e2: Expr)(implicit scope: Scope) {
         val returnTrue = new Label();
         val end = new Label();
-        writeExpr(p)(e1);
+        writeExpr(e1);
         scope.method.visitJumpInsn(IFNE, returnTrue)
-        writeExpr(p)(e2);
+        writeExpr(e2);
         scope.method.visitJumpInsn(IFNE, returnTrue)
         scope.method.visitInsn(ICONST_0) /* return false */
         scope.method.visitJumpInsn(GOTO, end)
@@ -512,11 +500,11 @@ object JVMWriter {
         scope.method.visitLabel(end)
     }
     
-    def writeMonadicExpr(p: ProgramNode)(o: Opr, e: Expr)(implicit scope: Scope) = o match {
+    def writeMonadicExpr(o: Opr, e: Expr)(implicit scope: Scope) = o match {
         case NotOpr		=> {
             val returnFalse = new Label()
             val end = new Label
-            writeExpr(p)(e);
+            writeExpr(e);
             scope.method.visitJumpInsn(IFNE, returnFalse)
             scope.method.visitInsn(ICONST_1)
             scope.method.visitJumpInsn(GOTO, end)
@@ -524,8 +512,8 @@ object JVMWriter {
             scope.method.visitInsn(ICONST_0)
             scope.method.visitLabel(end)
         }
-        case MinusOpr	=> writeExpr(p)(e); scope.method.visitInsn(INEG)
-        case PlusOpr	=> writeExpr(p)(e);
+        case MinusOpr	=> writeExpr(e); scope.method.visitInsn(INEG)
+        case PlusOpr	=> writeExpr(e);
         case _ => 
     }
     
