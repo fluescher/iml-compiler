@@ -259,7 +259,7 @@ object JVMWriter {
         case ProcCallCommand(f, exprs,_)	=> writeProcCall(f, exprs, prog) 
     }
     
-    def writeProcCall(p: Ident, exprs: List[Expr], prog: ProgramNode)(implicit scope: Scope) {// TODO
+    def writeProcCall(p: Ident, exprs: List[Expr], prog: ProgramNode)(implicit scope: Scope) {// TODO improve runtime space requirements by saving only used old vals
         val decl = prog.symbols.getProcedureDeclaration(p)
         val pairs = decl.head.params.params.zip(exprs)
         val localEnd = calculateLocalCount -1
