@@ -24,11 +24,11 @@ object InitializationChecker extends Checker {
 
     private def checkFunDecl(f: FunDecl): CheckResult[SymbolTable] = {
         var funSymbols = markInParameters(f.head.params.params)(f.symbols);
-        funSymbols = markGlobalImportIn(f.global)(funSymbols)
-        checkConditions(f.pre)(funSymbols)  match {
-            case CheckSuccess(symbls) 		=> checkBlock(true)(f.cmd)(symbls) match {
-                case CheckSuccess(sym) 		=> checkConditions(f.post)(sym) match {
-                    case CheckSuccess(s)	=> checkIsInitalized(f.head.retVal.i)(s)
+        funSymbols = markGlobalImport(f.global)(funSymbols)
+        checkConditions(f.pre)(funSymbols) match {
+            case CheckSuccess(symbls) => checkBlock(true)(f.cmd)(symbls) match {
+                case CheckSuccess(sym) => checkConditions(f.post)(sym) match {
+                    case CheckSuccess(s) => checkIsInitalized(f.head.retVal.i)(s)
                     case e => e
                 }
                 case e => e
@@ -36,43 +36,43 @@ object InitializationChecker extends Checker {
             case e => e
         }
     }
-    
-   private def checkConditions(conditions: Option[ConditionList])(symbols: SymbolTable): CheckResult[SymbolTable] = conditions match {
-	    case None 		=> CheckSuccess(symbols)
-	    case Some(l)	=> l.conditions.map({case Condition(_, expr) => expr})
-	    							   .map(a => (checkValueExpr(a)(symbols)))
-	    							   .foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
-	}
+
+    private def checkConditions(conditions: Option[ConditionList])(symbols: SymbolTable): CheckResult[SymbolTable] = conditions match {
+        case None => CheckSuccess(symbols)
+        case Some(l) => l.conditions.map({ case Condition(_, expr) => expr })
+            .map(a => (checkValueExpr(a)(symbols)))
+            .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
+    }
 
     private def checkOutRef(params: List[Parameter])(symbols: SymbolTable): CheckResult[SymbolTable] = {
         params match {
             case Nil => CheckSuccess(symbols)
-            case Parameter(OutFlow,_,storeDecl) :: xs => checkIsInitalized(storeDecl.i)(symbols) match {
+            case Parameter(OutFlow, _, storeDecl) :: xs => checkIsInitalized(storeDecl.i)(symbols) match {
                 case CheckSuccess(_) => checkOutRef(xs)(symbols)
                 case e => e
             }
-            case Parameter(_,_,_) :: xs => checkOutRef(xs)(symbols)
-            case other	 => CheckSuccess(symbols)
+            case Parameter(_, _, _) :: xs => checkOutRef(xs)(symbols)
+            case other => CheckSuccess(symbols)
         }
     }
-    
-   private def markGlobalImportIn(global: Option[GlobalImportList])(symbols: SymbolTable): SymbolTable = global match {
-	    case None 			=> symbols
-	    case Some(glob)		=> markInGlobals(glob.globals)(symbols)
+
+    private def markGlobalImport(global: Option[GlobalImportList])(symbols: SymbolTable): SymbolTable = global match {
+        case None => symbols
+        case Some(glob) => markInGlobals(glob.globals)(symbols)
     }
-    
+
     private def checkGlobalImportOut(global: Option[GlobalImportList])(symbols: SymbolTable): CheckResult[SymbolTable] = global match {
-	    case None 			=> CheckSuccess(symbols)
-	    case Some(glob)		=> glob.globals.filter(_.flow == OutFlow)
-	    								   .map(a => (checkIsInitalized(a.i)(symbols)))
-	    							   	   .foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
+        case None => CheckSuccess(symbols)
+        case Some(glob) => glob.globals.filter(_.flow == OutFlow)
+            .map(a => (checkIsInitalized(a.i)(symbols)))
+            .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
     }
-    
+
     private def checkIsInitalized(id: Ident)(symbols: SymbolTable): CheckResult[SymbolTable] = {
         if (symbols.isInitialized(id))
-        	CheckSuccess(symbols)
+            CheckSuccess(symbols)
         else
-        	CheckError("Store must be initialized at the end of a function.", StoreExpr(id, false))
+            CheckError("Store must be initialized at the end of a function.", StoreExpr(id, false))
     }
 
     private def checkProcDecls(n: ProgramNode): CheckResult[SymbolTable] = {
@@ -84,12 +84,12 @@ object InitializationChecker extends Checker {
 
     private def checkProcDecl(p: ProcDecl): CheckResult[SymbolTable] = {
         var procSymbols = markInParameters(p.head.params.params)(p.symbols);
-        procSymbols = markGlobalImportIn(p.global)(procSymbols)
-        
-        checkConditions(p.pre)(procSymbols)  match {
-            case CheckSuccess(symbls) 		=> checkBlock(true)(p.cmd)(symbls) match {
-                case CheckSuccess(sym) 		=> checkConditions(p.post)(sym) match {
-                    case CheckSuccess(s)	=> checkOutRef(p.head.params.params)(s) match {
+        procSymbols = markGlobalImport(p.global)(procSymbols)
+
+        checkConditions(p.pre)(procSymbols) match {
+            case CheckSuccess(symbls) => checkBlock(true)(p.cmd)(symbls) match {
+                case CheckSuccess(sym) => checkConditions(p.post)(sym) match {
+                    case CheckSuccess(s) => checkOutRef(p.head.params.params)(s) match {
                         case CheckSuccess(s) => checkGlobalImportOut(p.global)(s)
                         case e => e
                     }
@@ -100,21 +100,21 @@ object InitializationChecker extends Checker {
             case e => e
         }
     }
-    
-    private def markInParameters(params: List[Parameter])(symbols: SymbolTable) : SymbolTable = params match {
+
+    private def markInParameters(params: List[Parameter])(symbols: SymbolTable): SymbolTable = params match {
         case Nil => symbols
-        case Parameter(InFlow,_,storeDecl) :: xs 	=> markInParameters(xs)(symbols.markStorageAsInitialized(storeDecl.i))
-        case Parameter(InOutFlow,_,storeDecl) :: xs => markInParameters(xs)(symbols.markStorageAsInitialized(storeDecl.i))
-        case Parameter(_,_,storeDecl) :: xs			=> markInParameters(xs)(symbols)
+        case Parameter(InFlow, _, storeDecl) :: xs => markInParameters(xs)(symbols.markStorageAsInitialized(storeDecl.i))
+        case Parameter(InOutFlow, _, storeDecl) :: xs => markInParameters(xs)(symbols.markStorageAsInitialized(storeDecl.i))
+        case Parameter(_, _, storeDecl) :: xs => markInParameters(xs)(symbols)
     }
-    
-    private def markInGlobals(globals: List[GlobalImport])(symbols: SymbolTable) : SymbolTable = globals match {
+
+    private def markInGlobals(globals: List[GlobalImport])(symbols: SymbolTable): SymbolTable = globals match {
         case Nil => symbols
-        case GlobalImport(InFlow,_,i) :: xs 			=> markInGlobals(xs)(symbols.markStorageAsInitialized(i))
-        case GlobalImport(InOutFlow,_,i) :: xs			=> markInGlobals(xs)(symbols.markStorageAsInitialized(i))
-        case GlobalImport(_,_,_) :: xs					=> markInGlobals(xs)(symbols)
+        case GlobalImport(InFlow, _, i) :: xs => markInGlobals(xs)(symbols.markStorageAsInitialized(i))
+        case GlobalImport(InOutFlow, _, i) :: xs => markInGlobals(xs)(symbols.markStorageAsInitialized(i))
+        case GlobalImport(_, _, _) :: xs => markInGlobals(xs)(symbols)
     }
-    
+
     private def checkBlock(initAllowed: Boolean)(block: BlockCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
         checkCommandList(initAllowed)(block.cmds)(symbols)
     }
@@ -128,32 +128,50 @@ object InitializationChecker extends Checker {
     }
 
     private def checkCommand(initAllowed: Boolean)(cmd: Command)(symbols: SymbolTable): CheckResult[SymbolTable] = cmd match {
-        case block: BlockCommand 			=> checkBlock(initAllowed)(block)(symbols)
-        case SkipCommand 					=> CheckSuccess(symbols)
-        case AssiCommand(left, right) 		=> ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
-        case CondCommand(expr, cmd1, cmd2) 	=> ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
-        case WhileCommand(expr, cmd) 		=> ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
-        case p: ProcCallCommand 			=> checkProcCall(initAllowed)(p.exprs)(symbols)
-        case InputCommand(expr) 			=> checkLeftExpr(initAllowed)(expr)(symbols)
-        case OutputCommand(expr) 			=> checkValueExpr(expr)(symbols)
+        case block: BlockCommand => checkBlock(initAllowed)(block)(symbols)
+        case SkipCommand => CheckSuccess(symbols)
+        case AssiCommand(left, right) => ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
+        case CondCommand(expr, cmd1, cmd2) => ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
+        case WhileCommand(expr, cmd) => ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
+        case p: ProcCallCommand => checkProcCall(initAllowed)(p)(symbols)
+        case InputCommand(expr) => checkLeftExpr(initAllowed)(expr)(symbols)
+        case OutputCommand(expr) => checkValueExpr(expr)(symbols)
     }
-    
-    private def checkProcCall(initAllowed: Boolean)(exprs: List[Expr])(symbols: SymbolTable) : CheckResult[SymbolTable] = {
+
+    private def checkProcCall(initAllowed: Boolean)(p: ProcCallCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
+    	checkProcCallParameters(initAllowed)(p.exprs)(symbols) match {
+    	    case CheckSuccess(sym) => checkProcCallParameters(initAllowed)(p.exprs)(sym) match {
+    	        case CheckSuccess(s) => checkProcCallGlobals(initAllowed)(p.idents)(s)
+    	    	case e => e
+    	    }
+    	    case e => e
+    	}
+        
+    }
+
+    private def checkProcCallParameters(initAllowed: Boolean)(exprs: List[Expr])(symbols: SymbolTable): CheckResult[SymbolTable] = {
         exprs match {
             case Nil => CheckSuccess(symbols)
             case x :: xs => x match {
-                case StoreExpr(_, _) => checkLeftExpr(initAllowed)(x)(symbols)  match {
-                     case CheckSuccess(sym) => checkProcCall(initAllowed)(xs)(sym)
-                     case e => e
+                case StoreExpr(_, _) 		=> checkLeftExpr(initAllowed)(x)(symbols) match {
+                    case CheckSuccess(sym) 	=> checkProcCallParameters(initAllowed)(xs)(sym)
+                    case e => e
                 }
                 case other => checkValueExpr(x)(symbols) match {
-                     case CheckSuccess(sym) => checkProcCall(initAllowed)(xs)(sym)
-                     case e => e
+                    case CheckSuccess(sym) 	=> checkProcCallParameters(initAllowed)(xs)(sym)
+                    case e 					=> e
                 }
             }
         }
     }
     
+    private def checkProcCallGlobals(initAllowed: Boolean)(idents: List[Ident])(symbols: SymbolTable): CheckResult[SymbolTable] = {
+        idents match {
+            case Nil 		=> CheckSuccess(symbols)
+            case x :: xs 	=> checkProcCallGlobals(initAllowed)(xs)(symbols.markStorageAsInitialized(x))
+        }
+    }
+
     private def mergeResults(symbols: SymbolTable, r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
         case e: CheckError[SymbolTable] => e
         case CheckSuccess(symbolsR1) => r2 match {
@@ -172,31 +190,31 @@ object InitializationChecker extends Checker {
     }
 
     private def checkValueExpr(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
-        case BoolLiteralExpression(_) 						  	=> CheckSuccess(symbols)
-        case IntLiteralExpression(_) 						  	=> CheckSuccess(symbols)
-        case StoreExpr(id,false) if symbols.isInitialized(id) 	=> CheckSuccess(symbols)
-        case va: StoreExpr 									  	=> CheckError("Use of not initialized var", va)
-        case m: MonadicExpr 									=> checkValueExpr(m.expr)(symbols)
-        case d: DyadicExpr 										=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
-        case FunCallExpr(_, exprs)								=> exprs.map(a => (checkValueExpr(a)(symbols)))
-	    							   									.foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
-        case StoreExpr(_, _) 									=> CheckError("No initalization allowed", expr)
+        case BoolLiteralExpression(_) => CheckSuccess(symbols)
+        case IntLiteralExpression(_) => CheckSuccess(symbols)
+        case StoreExpr(id, false) if symbols.isInitialized(id) => CheckSuccess(symbols)
+        case va: StoreExpr => CheckError("Use of not initialized var", va)
+        case m: MonadicExpr => checkValueExpr(m.expr)(symbols)
+        case d: DyadicExpr => ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
+        case FunCallExpr(_, exprs) => exprs.map(a => (checkValueExpr(a)(symbols)))
+            .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
+        case StoreExpr(_, _) => CheckError("No initalization allowed", expr)
     }
 
     private def checkLeftExpr(initAllowed: Boolean)(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
-        case StoreExpr(id, true) 	if !initAllowed 					=> CheckError("Its not allowed to initalized a store in this command.", expr)
-        case StoreExpr(id, true) 	if !symbols.isInitialized(id) 		=> CheckSuccess(symbols.markStorageAsInitialized(id))													   
-        case StoreExpr(id, true) 	if symbols.isInitialized(id) 		=> CheckError("You can only once initialized a store.", expr)
-        case StoreExpr(id, false)	if symbols.isConst(id)				=> CheckError("Its only allowed to write once to a const.", expr)
-        case StoreExpr(id, false) 	if symbols.isInitialized(id) 		=> CheckSuccess(symbols)
-        case other 														=> CheckError("Use of not initalized store", expr)
+        case StoreExpr(id, true) if !initAllowed => CheckError("Its not allowed to initalized a store in this command.", expr)
+        case StoreExpr(id, true) if !symbols.isInitialized(id) => CheckSuccess(symbols.markStorageAsInitialized(id))
+        case StoreExpr(id, true) if symbols.isInitialized(id) => CheckError("You can only once initialized a store.", expr)
+        case StoreExpr(id, false) if symbols.isConst(id) => CheckError("Its only allowed to write once to a const.", expr)
+        case StoreExpr(id, false) if symbols.isInitialized(id) => CheckSuccess(symbols)
+        case other => CheckError("Use of not initalized store", expr)
     }
-    
+
     private def combineToResult(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
-	    case e: CheckError[SymbolTable]		=> e
-	    case r							=> r2
-	}
-    
+        case e: CheckError[SymbolTable] => e
+        case r => r2
+    }
+
     private def ignoreFirst(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r2 match {
         case e: CheckError[SymbolTable] => e
         case r => r2
