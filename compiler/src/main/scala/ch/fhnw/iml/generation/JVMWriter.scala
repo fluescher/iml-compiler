@@ -56,8 +56,8 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.p, scope.className, scope.writer, cur, p.symbols, false, p.head.params, p.global)
-//		writeSavePreExecutionState(p.post, p.head.params, p.global)(s)
-//		writePre(prog)(p.pre)(s)
+		writeSavePreExecutionState(p.post)(s)
+		writePre(p.pre)(s)
         writeCmd(p.cmd)(s)
 //        writePost(prog)(p.post)(s)
         cur.visitInsn(RETURN)
@@ -78,10 +78,10 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.p, scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
-//		writeSavePreExecutionState(f.post, f.head.params, f.global)(s)
-		writePre(scope.p)(f.pre)(s)
+		writeSavePreExecutionState(f.post)(s)
+		writePre(f.pre)(s)
         writeCmd(f.cmd)(s)
-//        writePost(p)(f.post)(s)
+//      writePost(p)(f.post)(s)
         cur.visitVarInsn(ILOAD, getReturnIndex(f)(s)) /* load local return variable onto stack */ 
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
@@ -106,7 +106,8 @@ object JVMWriter {
     }
     
     def saveExprInPreExecutionState(pos: Int, e: Expr)(implicit scope: Scope): Int = {
-        
+        writeExpr(e)
+        scope.method.visitVarInsn(ISTORE, pos)
         pos + 1
     }
     
@@ -140,12 +141,12 @@ object JVMWriter {
         return i
     }
     
-    def writePre(prog: ProgramNode)(pre: Option[ConditionList])(implicit scope: Scope) = pre match {
-        case Some(c) => c.conditions.map(writeCondition(prog))
+    def writePre(pre: Option[ConditionList])(implicit scope: Scope) = pre match {
+        case Some(c) => c.conditions.map(writeCondition)
         case _ => 
     }
     
-    def writeCondition(prog: ProgramNode)(c: Condition)(implicit scope: Scope) {
+    def writeCondition(c: Condition)(implicit scope: Scope) {
         val end = new Label()
         val err = new Label()
         
@@ -167,7 +168,7 @@ object JVMWriter {
     }
     
     def writePost(prog: ProgramNode)(post: Option[ConditionList])(implicit scope: Scope) = post match {
-        case Some(c) => c.conditions.map(writeCondition(prog))
+        case Some(c) => c.conditions.map(writeCondition)
         case _ => 
     }
 

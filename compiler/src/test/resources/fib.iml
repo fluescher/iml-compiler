@@ -1,19 +1,9 @@
 program fibonacci
 global
-	proc sum(in var i: int32, out res: int32)
-	requires [i >= 0] {
-		if(i = 0) {
-			res init := 12
-		} else {
-			call sum(i-1, i);
-			res init := 12
-		}
-	};
-
 	fun fib(i: int32)
 	returns r: int32
 	requires [ isPos(i) ]
-	ensures [ r >= old(i), old(isPos(i)) ]
+	ensures [ r >= old(i+5) ]
 	{
 		if(i = 0) {
 			r init := 0
