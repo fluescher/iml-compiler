@@ -1,0 +1,7 @@
+program intDiv
+global
+	const test:int32
+{
+	test init := 2;
+	test := 2
+}

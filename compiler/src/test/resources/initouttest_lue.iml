@@ -1,0 +1,14 @@
+program intDiv
+global
+	proc test(in copy m:int32, in copy n:int32, out ref var q:int32, out ref var r:int32)
+	{
+		q init := 1;
+		r init := 2
+	};
+	var x:int32;
+	var y:int32
+{
+	m init := 2;
+	n init := 3;
+	call test(m, n, x init,  y init)
+}

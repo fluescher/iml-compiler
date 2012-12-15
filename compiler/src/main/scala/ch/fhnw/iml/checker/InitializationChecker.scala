@@ -140,10 +140,7 @@ object InitializationChecker extends Checker {
 
     private def checkProcCall(initAllowed: Boolean)(p: ProcCallCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
     	checkProcCallParameters(initAllowed)(p.exprs)(symbols) match {
-    	    case CheckSuccess(sym) => checkProcCallParameters(initAllowed)(p.exprs)(sym) match {
-    	        case CheckSuccess(s) => checkProcCallGlobals(initAllowed)(p.idents)(s)
-    	    	case e => e
-    	    }
+    	    case CheckSuccess(sym) => checkProcCallGlobals(initAllowed)(p.idents)(sym)
     	    case e => e
     	}
         
