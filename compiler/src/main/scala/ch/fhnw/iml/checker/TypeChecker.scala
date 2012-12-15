@@ -61,7 +61,7 @@ object TypeChecker extends Checker {
 	    case BoolLiteralExpression(_) 		=> Bool
 	    case IntLiteralExpression(_) 		=> Int32
 	    case StoreExpr(i,_)					=> symbols.getStoreType(i)
-	    case FunCallExpr(i, _)				=> symbols.getFunctionType(i)
+	    case FunCallExpr(i, _, _)			=> symbols.getFunctionType(i)
 	    case MonadicExpr(o: ArithOpr, _)	=> Int32
 	    case MonadicExpr(o: BoolOpr, _)		=> Bool
 	    case MonadicExpr(o: RelOpr,_)		=> throw new UnsupportedOperationException("This function can only be called if typecheck was successful") /* This should never happen. Statement only inserted because of scala compiler warning */

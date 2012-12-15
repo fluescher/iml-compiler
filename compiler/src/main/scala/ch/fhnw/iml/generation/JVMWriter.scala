@@ -18,7 +18,7 @@ object JVMWriter {
     val VM_TRUE 	= 1
     val VM_FALSE 	= 0
     
-    case class Scope(p: ProgramNode, className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable, inFun: Boolean, params: ParameterList, global: Option[GlobalImportList])
+    case class Scope(p: ProgramNode, className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable, inFun: Boolean, params: ParameterList, global: Option[GlobalImportList], locals: Int = 0)
     
     def apply(ast: AST, filename : String = "dynamic") {
         val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
@@ -78,31 +78,42 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.p, scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
-		writeSavePreExecutionState(f.post)(s)
+		val (locals, post) = writeSavePreExecutionState(f.post)(s)
+		val ssaved = Scope(scope.p, scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global, locals)
 		writePre(f.pre)(s)
         writeCmd(f.cmd)(s)
-//      writePost(p)(f.post)(s)
+        writePost(post)(s)
         cur.visitVarInsn(ILOAD, getReturnIndex(f)(s)) /* load local return variable onto stack */ 
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
         cur.visitEnd()
     }
     
-    def writeSavePreExecutionState(post: Option[ConditionList])(implicit scope: Scope): Int = post match {
-        case Some(cs) 	=> writeSavePreExecutionExpressions(calculateLocalCount, cs.conditions.map(_.expr)) 
-        case None 		=> calculateLocalCount
+    def writeSavePreExecutionState(post: Option[ConditionList])(implicit scope: Scope): (Int, Option[ConditionList]) = post match {
+        case Some(cs) 	=> writeSavePreExecutionExpressions(calculateLocalCount, cs.conditions.map(_.expr)) match {
+            case (i, expr) => (i, Some(ConditionList(cs.conditions.zip(expr).map({ case(c, e) => Condition(c.name, e) }))))
+        }
+        case None 		=> (calculateLocalCount, None)
     }
     
-    def writeSavePreExecutionExpressions(curLocals: Int, exprs: List[Expr])(implicit scope: Scope): Int = {
-        exprs.foldLeft(curLocals)(writeSavePreExecutionExpression)
+    def writeSavePreExecutionExpressions(curLocals: Int, exprs: List[Expr])(implicit scope: Scope): (Int, List[Expr]) = exprs match {
+        case Nil 	=> (curLocals, exprs)
+        case e::es 	=> writeSavePreExecutionExpression(curLocals, e) match {
+            case (locals, e) => writeSavePreExecutionExpressions(locals, es) match {
+                case (locals, ses) => (locals, e :: ses)
+            }
+        }
     }
     
-    def writeSavePreExecutionExpression(curLocals: Int, expr: Expr)(implicit scope: Scope): Int = expr match {
-        case FunCallExpr(f, es)			if 	f == Ident("old")	=> saveExprInPreExecutionState(curLocals, es.head)
-        case FunCallExpr(_, es)									=> writeSavePreExecutionExpressions(curLocals, es)
-        case MonadicExpr(_,e)									=> writeSavePreExecutionExpression(curLocals, e)
-        case DyadicExpr(o, e1, e2)								=> writeSavePreExecutionExpression(writeSavePreExecutionExpression(curLocals, e1), e2)
-        case _													=> curLocals
+    def writeSavePreExecutionExpression(curLocals: Int, expr: Expr)(implicit scope: Scope): (Int, Expr) = expr match {
+        case FunCallExpr(f, es, _)			if 	f == Ident("old")	=> saveExprInPreExecutionState(curLocals, es.head) 	match {case i => (i, FunCallExpr(f, es, i-1))}
+        case FunCallExpr(f, es, c)									=> writeSavePreExecutionExpressions(curLocals, es) 	match {case (i, es) => (i, FunCallExpr(f, es, c))}
+        case MonadicExpr(o,e)										=> writeSavePreExecutionExpression(curLocals, e)	match {case (i, e) => (i,MonadicExpr(o, e))}
+        case DyadicExpr(o, e1, e2)									=> {
+            val r = writeSavePreExecutionExpression(curLocals, e1)
+            writeSavePreExecutionExpression(r._1, e2) match {case (i, e) => (i, DyadicExpr(o, r._2, e))}
+        }
+        case e														=> (curLocals, e)
     }
     
     def saveExprInPreExecutionState(pos: Int, e: Expr)(implicit scope: Scope): Int = {
@@ -111,7 +122,12 @@ object JVMWriter {
         pos + 1
     }
     
-    def calculateLocalCount()(implicit scope: Scope): Int =  localCount + 1 /* this */
+    def calculateLocalCount()(implicit scope: Scope): Int =  {
+        if (scope.inFun)
+            localCount + 2 /* this + ret */
+        else 
+            localCount + 1 /* this */
+    }
     
     def localCount(implicit scope: Scope): Int = {
         var i = 0
@@ -167,7 +183,7 @@ object JVMWriter {
         scope.method.visitLabel(end)
     }
     
-    def writePost(prog: ProgramNode)(post: Option[ConditionList])(implicit scope: Scope) = post match {
+    def writePost(post: Option[ConditionList])(implicit scope: Scope) = post match {
         case Some(c) => c.conditions.map(writeCondition)
         case _ => 
     }
@@ -334,7 +350,7 @@ object JVMWriter {
             case Some(StorageSymbol(_, t, _, _, false, true, true, apos, _, _)) 	if t == Bool => scope.method.visitVarInsn(ALOAD, apos+1); scope.method.visitInsn(ICONST_0); valueGen(scope); scope.method.visitInsn(BASTORE)
             case Some(StorageSymbol(_, t, _, _, false, true, true, apos, _, _))	=> scope.method.visitVarInsn(ALOAD, apos+1); scope.method.visitInsn(ICONST_0); valueGen(scope); scope.method.visitInsn(IASTORE)
             case Some(StorageSymbol(_, t, _, _, true, _, argument, apos, _, _)) 	=> scope.method.visitVarInsn(ALOAD, 0); valueGen(scope); scope.method.visitFieldInsn(PUTFIELD, scope.className, i.chars, getVMType(scope.symbols.getStoreType(i)))
-            case Some(StorageSymbol(_, t, _, _, _, true, _, apos, _, _))			=> valueGen(scope); scope.method.visitVarInsn(ISTORE, apos)
+            case Some(StorageSymbol(_, t, _, _, _, true, _, apos, _, _))			=> valueGen(scope); scope.method.visitVarInsn(ISTORE, apos+1)
             case Some(StorageSymbol(_, t, _, _, _, _, _, _, pos, _))				=> valueGen(scope); scope.method.visitVarInsn(ISTORE, pos+1)
         }
         case _ => throw new RuntimeException("ERROR. Checking should have failed")
@@ -373,16 +389,13 @@ object JVMWriter {
         case BoolLiteralExpression(true)	=> scope.method.visitIntInsn(BIPUSH, VM_TRUE)
         case BoolLiteralExpression(false)	=> scope.method.visitIntInsn(BIPUSH, VM_FALSE)
         case StoreExpr(i,_)					=> writeAccessVar(i)
-        case FunCallExpr(f, exprs)			=> writeFunCall(f, exprs)
+        case FunCallExpr(f, exprs, c)		=> writeFunCall(f, exprs, c)
         case MonadicExpr(o,e)				=> writeMonadicExpr(o, e)
         case DyadicExpr(o, e1, e2)			=> writeDyadicExpr(o, e1, e2)
     }
     
-    def writeFunCall(f: Ident, exprs: List[Expr])(implicit scope: Scope) = f match {
-        case Ident("old") 	 =>  exprs.head match {
-//            case StoreExpr(i, _) 	=> scope.method.visitVarInsn(ILOAD, calculateLocalOldPos(i))
-        	case _ =>
-        }
+    def writeFunCall(f: Ident, exprs: List[Expr], c: Int)(implicit scope: Scope) = f match {
+        case Ident("old") 	 =>  scope.method.visitVarInsn(ILOAD, c)
         case _ => {
         	scope.method.visitVarInsn(ALOAD, 0);
         	exprs.map(writeExpr)
