@@ -1,12 +1,12 @@
 program fibonacci
 global
-	proc sum(i: int32, out res: int32)
+	proc sum(in var i: int32, out res: int32)
 	requires [i >= 0] {
 		if(i = 0) {
-			skip
+			res init := 12
 		} else {
-			res := 12;
-			call sum(i-1, res)
+			call sum(i-1, i);
+			res init := 12
 		}
 	};
 

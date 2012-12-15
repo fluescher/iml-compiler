@@ -127,8 +127,8 @@ object JVMWriter {
     def localCount(implicit scope: Scope): Int = {
         var i = 0
         for((_, sym) <- scope.symbols.stores) sym match {
-            case StorageSymbol(_, _, _, false, false, false, _, _, _, _) => i = i + 1 /* local */
-            case StorageSymbol(_, _, _, false, false, true, _, _, _, _)	 => i = i + 1 /* argument */
+            case StorageSymbol(_, _, _, false, false, false, _, _, _, _) => i = i + 1 	/* local */
+            case StorageSymbol(_, _, _, false, false, true, _, _, _, _)	 => i = i + 1 	/* argument */
             case _ => 
         }
         i
@@ -259,7 +259,7 @@ object JVMWriter {
         case ProcCallCommand(f, exprs,_)	=> writeProcCall(f, exprs, prog) 
     }
     
-    def writeProcCall(p: Ident, exprs: List[Expr], prog: ProgramNode)(implicit scope: Scope) {// TODO improve runtime space requirements by saving only used old vals
+    def writeProcCall(p: Ident, exprs: List[Expr], prog: ProgramNode)(implicit scope: Scope) {
         val decl = prog.symbols.getProcedureDeclaration(p)
         val pairs = decl.head.params.params.zip(exprs)
         val localEnd = calculateLocalCount -1
@@ -340,7 +340,7 @@ object JVMWriter {
         scope.method.visitJumpInsn(IFNE, loop)
     }
     
-    def saveTo(e: Expr, valueGen: (Scope => Unit))(implicit scope: Scope) = e match {// TODO combine only to store expr
+    def saveTo(e: Expr, valueGen: (Scope => Unit))(implicit scope: Scope) = e match {
         case StoreExpr(i, _) 	=> scope.symbols.stores.get(i) match {
             case Some(StorageSymbol(_, t, _, _, false, true, true, apos, _, _)) 	if t == Bool => scope.method.visitVarInsn(ALOAD, apos+1); scope.method.visitInsn(ICONST_0); valueGen(scope); scope.method.visitInsn(BASTORE)
             case Some(StorageSymbol(_, t, _, _, false, true, true, apos, _, _))	=> scope.method.visitVarInsn(ALOAD, apos+1); scope.method.visitInsn(ICONST_0); valueGen(scope); scope.method.visitInsn(IASTORE)
