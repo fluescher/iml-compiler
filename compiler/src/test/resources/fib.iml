@@ -3,7 +3,7 @@ global
 	fun fib(i: int32)
 	returns r: int32
 	requires [ isPos(i) ]
-	ensures [ r >= old(i+5) ]
+	ensures [ r >= old(i-1) ]
 	{
 		if(i = 0) {
 			r init := 0
@@ -22,8 +22,23 @@ global
 		b init := i >= 0 
 	};
 	
-	var max: int32
+	proc sum(a: int32, b: int32, out var r: int32)
+	{
+		r init := a + b
+	};
+	
+	proc add(a: int32, b: int32, out r: int32)
+	ensures [ r >= old(a) ]
+	{
+		call sum(a,b,r)
+	};
+	
+	var a: int32;
+	var b: int32;
+	var r: int32
 {
-	? max init;
-	! fib(max)
+	? a init;
+	? b init;
+	call add(a,b,r);
+	! r	
 }

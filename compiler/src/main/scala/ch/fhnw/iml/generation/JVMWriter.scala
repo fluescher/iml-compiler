@@ -56,10 +56,11 @@ object JVMWriter {
 												null,
 												null)
 		val s = Scope(scope.p, scope.className, scope.writer, cur, p.symbols, false, p.head.params, p.global)
-		writeSavePreExecutionState(p.post)(s)
-		writePre(p.pre)(s)
-        writeCmd(p.cmd)(s)
-//        writePost(prog)(p.post)(s)
+		val (locals, post) = writeSavePreExecutionState(p.post)(s)
+		val ssaved = Scope(scope.p, scope.className, scope.writer, cur, p.symbols, true, p.head.params, p.global, locals)
+		writePre(p.pre)(ssaved)
+        writeCmd(p.cmd)(ssaved)
+        writePost(post)(ssaved)
         cur.visitInsn(RETURN)
         cur.visitMaxs(IGNORED,IGNORED)
         cur.visitEnd()
@@ -80,9 +81,9 @@ object JVMWriter {
 		val s = Scope(scope.p, scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global)
 		val (locals, post) = writeSavePreExecutionState(f.post)(s)
 		val ssaved = Scope(scope.p, scope.className, scope.writer, cur, f.symbols, true, f.head.params, f.global, locals)
-		writePre(f.pre)(s)
-        writeCmd(f.cmd)(s)
-        writePost(post)(s)
+		writePre(f.pre)(ssaved)
+        writeCmd(f.cmd)(ssaved)
+        writePost(post)(ssaved)
         cur.visitVarInsn(ILOAD, getReturnIndex(f)(s)) /* load local return variable onto stack */ 
         cur.visitInsn(IRETURN)
         cur.visitMaxs(IGNORED,IGNORED)
@@ -137,24 +138,6 @@ object JVMWriter {
             case _ => 
         }
         i
-    }
-    
-    def oldPos(id: Ident, params: ParameterList, global: Option[GlobalImportList])(implicit scope: Scope): Int = {
-        var i = 0
-        /* parameters */
-        for(p <- params.params) p match { 
-                case Parameter(InFlow, _, StoreDecl(_, i2, _)) if id == i2 	 => return i + 1
-                case Parameter(InFlow, _, StoreDecl(_, i2, _))				 => i = i + 1
-                case _ =>
-        }
-        /* globals */
-        global match {
-            case Some(l) => for(glob <- l.globals) {
-                if(glob.i == id) return i + 1
-            }
-            case None => i = i + 1
-        }
-        return i
     }
     
     def writePre(pre: Option[ConditionList])(implicit scope: Scope) = pre match {
@@ -222,7 +205,7 @@ object JVMWriter {
 												null,
 												null)
         
-        val s: Scope = Scope(scope.p,scope.className, scope.writer, entry, scope.symbols, false, ParameterList(Nil), None)
+        val s: Scope = Scope(scope.p,scope.className, scope.writer, entry, scope.symbols, false, ParameterList(Nil), None, 1)
         writeCmd(scope.p.cmd)(s)
         entry.visitInsn(RETURN)
         entry.visitMaxs(IGNORED,IGNORED)
@@ -267,9 +250,8 @@ object JVMWriter {
     def writeProcCall(p: Ident, exprs: List[Expr])(implicit scope: Scope) {
         val decl = scope.p.symbols.getProcedureDeclaration(p)
         val pairs = decl.head.params.params.zip(exprs)
-        val localEnd = calculateLocalCount -1
+        val localEnd = scope.locals
         var local = localEnd
-        
         /* setup (in)out params */
         for((p, e) <- pairs if p.flow == OutFlow || p.flow == InOutFlow) { 
             scope.method.visitInsn(ICONST_1)
