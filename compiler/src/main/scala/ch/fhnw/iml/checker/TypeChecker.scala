@@ -42,6 +42,9 @@ import ch.fhnw.iml.ast.SymbolTable
 import ch.fhnw.iml.ast.Type
 import ch.fhnw.iml.ast.Void
 import ch.fhnw.iml.ast.WhileCommand
+import ch.fhnw.iml.ast.InFlow
+import ch.fhnw.iml.ast.OutFlow
+import ch.fhnw.iml.ast.InOutFlow
 
 object TypeChecker extends Checker {
 	override def apply(ast: AST) = {
@@ -135,6 +138,7 @@ object TypeChecker extends Checker {
 	    case IntLiteralExpression(_) 									=> CheckSuccess(Int32)
 	    case StoreExpr(id, true)	 									=> CheckError("No init on right side allowed", expr)
 	    case StoreExpr(id, false) 	if scope.symbols.containsStore(id)	=> CheckSuccess(scope.symbols.getStoreType(id))
+	    case StoreExpr(id, _)											=> CheckError("Use of undeclared store.", expr)
 	    case m: MonadicExpr	 											=> checkMonadicExpr(m)
 	    case d: DyadicExpr												=> checkDyadicExpr(d)
 	    case f: FunCallExpr												=> checkFunCall(f)
@@ -183,8 +187,12 @@ object TypeChecker extends Checker {
 	}
 	
 	private def checkParameter(n: Node)(p: Parameter, expr: Expr)(implicit scope: TypeCheckScope): CheckResult[Type] = p match {
-	    case Parameter(f, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
-	    case Parameter(f, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
+	    case Parameter(InFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
+	    case Parameter(InFlow, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
+	    case Parameter(OutFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
+	    case Parameter(OutFlow, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
+	    case Parameter(InOutFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
+	    case Parameter(InOutFlow, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
 	}
 	
 	private def checkType(expected: Type)(n: Node)(res: CheckResult[Type]): CheckResult[Type] = res match {
