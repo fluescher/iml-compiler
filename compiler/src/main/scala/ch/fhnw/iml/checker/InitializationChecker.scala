@@ -187,33 +187,23 @@ object InitializationChecker extends Checker {
     }
 
     private def checkValueExpr(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
-        case BoolLiteralExpression(_) => CheckSuccess(symbols)
-        case IntLiteralExpression(_) => CheckSuccess(symbols)
-        case StoreExpr(id, false) if symbols.isInitialized(id) => CheckSuccess(symbols)
-        case va: StoreExpr => CheckError("Use of not initialized var", va)
-        case m: MonadicExpr => checkValueExpr(m.expr)(symbols)
-        case d: DyadicExpr => ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
-        case FunCallExpr(_, exprs, _) => exprs.map(a => (checkValueExpr(a)(symbols)))
-            .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
-        case StoreExpr(_, _) => CheckError("No initalization allowed", expr)
-        case BoolLiteralExpression(_) 						  	=> CheckSuccess(symbols)
-        case IntLiteralExpression(_) 						  	=> CheckSuccess(symbols)
-        case StoreExpr(id,false) if symbols.isInitialized(id) 	=> CheckSuccess(symbols)
-        case va: StoreExpr 									  	=> CheckError("Use of not initialized var", va)
+        case BoolLiteralExpression(_) 							=> CheckSuccess(symbols)
+        case IntLiteralExpression(_) 							=> CheckSuccess(symbols)
+        case StoreExpr(id, false) if symbols.isInitialized(id)	=> CheckSuccess(symbols)
+        case va: StoreExpr 										=> CheckError("Use of not initialized var", va)
         case m: MonadicExpr 									=> checkValueExpr(m.expr)(symbols)
         case d: DyadicExpr 										=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
-        case FunCallExpr(_, exprs, _)							=> exprs.map(a => (checkValueExpr(a)(symbols)))
-	    							   									.foldLeft(CheckSuccess[SymbolTable](symbols):CheckResult[SymbolTable])(combineToResult)
-        case StoreExpr(_, _) 									=> CheckError("No initalization allowed", expr)
+        case FunCallExpr(_, exprs, _) 							=> exprs.map(a => (checkValueExpr(a)(symbols)))
+            															.foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
     }
 
     private def checkLeftExpr(initAllowed: Boolean)(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
-        case StoreExpr(id, true) if !initAllowed => CheckError("Its not allowed to initalized a store in this command.", expr)
-        case StoreExpr(id, true) if !symbols.isInitialized(id) => CheckSuccess(symbols.markStorageAsInitialized(id))
-        case StoreExpr(id, true) if symbols.isInitialized(id) => CheckError("You can only once initialized a store.", expr)
-        case StoreExpr(id, false) if symbols.isConst(id) => CheckError("Its only allowed to write once to a const.", expr)
-        case StoreExpr(id, false) if symbols.isInitialized(id) => CheckSuccess(symbols)
-        case other => CheckError("Use of not initalized store", expr)
+        case StoreExpr(id, true) if !initAllowed 				=> CheckError("Its not allowed to initalized a store in this command.", expr)
+        case StoreExpr(id, true) if !symbols.isInitialized(id) 	=> CheckSuccess(symbols.markStorageAsInitialized(id))
+        case StoreExpr(id, true) if symbols.isInitialized(id) 	=> CheckError("You can only once initialized a store.", expr)
+        case StoreExpr(id, false) if symbols.isConst(id) 		=> CheckError("Its only allowed to write once to a const.", expr)
+        case StoreExpr(id, false) if symbols.isInitialized(id) 	=> CheckSuccess(symbols)
+        case other 												=> CheckError("Use of not initalized store", expr)
     }
 
     private def combineToResult(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
