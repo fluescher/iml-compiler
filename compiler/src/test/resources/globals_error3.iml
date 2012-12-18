@@ -1,0 +1,15 @@
+program intDiv
+global
+	proc test(in copy var x:int32)
+	global out glob, in m
+	{
+		glob init := 2;
+		x := 2
+	};
+	var glob:int32;
+	var m:int32
+{
+	call test(2) init glob, m;
+	! glob;
+	! m
+}

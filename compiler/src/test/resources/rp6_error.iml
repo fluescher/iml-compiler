@@ -1,0 +1,11 @@
+program intDiv
+global
+	proc test(inout ref var x:int32)
+	{
+		x init := 2
+	};
+	var m:int32
+{
+	m init := 2;
+	call test(m)
+}

@@ -30,7 +30,7 @@ global
 	proc add(a: int32, b: int32, out r: int32)
 	ensures [ r >= old(a) ]
 	{
-		call sum(a,b,r)
+		call sum(a,b,r init)
 	};
 	
 	var a: int32;
@@ -39,6 +39,6 @@ global
 {
 	? a init;
 	? b init;
-	call add(a,b,r);
+	call add(a,b,r init);
 	! r	
 }

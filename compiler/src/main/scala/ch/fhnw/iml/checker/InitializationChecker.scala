@@ -128,22 +128,28 @@ object InitializationChecker extends Checker {
     }
 
     private def checkCommand(initAllowed: Boolean)(cmd: Command)(symbols: SymbolTable): CheckResult[SymbolTable] = cmd match {
-        case block: BlockCommand => checkBlock(initAllowed)(block)(symbols)
-        case SkipCommand => CheckSuccess(symbols)
-        case AssiCommand(left, right) => ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
-        case CondCommand(expr, cmd1, cmd2) => ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
-        case WhileCommand(expr, cmd) => ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
-        case p: ProcCallCommand => checkProcCall(initAllowed)(p)(symbols)
-        case InputCommand(expr) => checkLeftExpr(initAllowed)(expr)(symbols)
-        case OutputCommand(expr) => checkValueExpr(expr)(symbols)
+        case block: BlockCommand 			=> checkBlock(initAllowed)(block)(symbols)
+        case SkipCommand 					=> CheckSuccess(symbols)
+        case AssiCommand(left, right) 		=> ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
+        case CondCommand(expr, cmd1, cmd2) 	=> ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
+        case WhileCommand(expr, cmd) 		=> ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
+        case p: ProcCallCommand 			=> checkProcCall(initAllowed)(p)(symbols)
+        case InputCommand(expr) 			=> checkLeftExpr(initAllowed)(expr)(symbols)
+        case OutputCommand(expr) 			=> checkValueExpr(expr)(symbols)
     }
 
     private def checkProcCall(initAllowed: Boolean)(p: ProcCallCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
     	checkProcCallParameters(initAllowed)(p.exprs)(symbols) match {
-    	    case CheckSuccess(sym) => checkProcCallGlobals(initAllowed)(p.idents)(sym)
+    	    case CheckSuccess(sym) => sym.getProcedureDeclaration(p.f).global match {
+    	        case None if(p.idents == Nil) => CheckSuccess(sym)
+    	        case None 					  => CheckError("No global imports. ", p)
+    	        case Some(glob)				  => if (glob.globals.filter(_.flow == OutFlow).size >= p.idents.size)
+    	            								checkProcCallGlobals(initAllowed)(p.idents)(sym)
+    	            							 else
+    	            							    CheckError("More inits than global out imports. ", p)
+    	    }
     	    case e => e
     	}
-        
     }
 
     private def checkProcCallParameters(initAllowed: Boolean)(exprs: List[Expr])(symbols: SymbolTable): CheckResult[SymbolTable] = {

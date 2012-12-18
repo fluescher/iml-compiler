@@ -1,0 +1,12 @@
+program intDiv
+global
+	proc test(in ref var x:int32)
+	local blub:int32
+	{
+		blub init := x
+	};
+	var m:int32
+{
+	m init := 2;
+	call test(m)
+}

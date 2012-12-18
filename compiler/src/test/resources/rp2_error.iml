@@ -1,0 +1,11 @@
+program intDiv
+global
+	proc test(out copy var x:int32)
+	{
+		x init := 1
+	};
+	const m:int32
+{
+	m init := 2;
+	call test(m)
+}
