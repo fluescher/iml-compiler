@@ -11,7 +11,6 @@ object InitializationChecker extends Checker {
     }
 
     private def initCheck(n: ProgramNode): CheckResult[SymbolTable] = {
-        println(n.cmd)
         checkFunDecls(n) and checkProcDecls(n) and checkBlock(true)(n.cmd)(n.symbols)
     }
 
