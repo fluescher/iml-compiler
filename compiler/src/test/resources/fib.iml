@@ -2,7 +2,6 @@ program fibonacci
 global
 	fun fib(i: int32)
 	returns r: int32
-	global in a
 	requires [ isPos(i) ]
 	ensures [ r >= old(i-1) ]
 	{
@@ -25,7 +24,7 @@ global
 	
 	proc sum(a: int32, b: int32, out var r: int32)
 	{
-		skip
+		r init := a + b
 	};
 	
 	proc add(a: int32, b: int32, out r: int32)

@@ -13,14 +13,25 @@ import ch.fhnw.iml.checker.TypeChecker
 import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.parsing.IMLParsers
+import java.io.File
 
 object imlc extends App {
     
-    val checkers = List(SymbolChecker, TypeChecker, InitializationChecker, FlowChecker)
+    if(args.length != 1) {
+        printUsage()
+        System.exit(1)
+    }
     
-    val code = scala.io.Source.fromFile(args(0)).mkString
+    val checkers = List(SymbolChecker, TypeChecker, FlowChecker, InitializationChecker)
+    val code = if(canReadFile(args(0))) scala.io.Source.fromFile(args(0)).mkString else null
+    			
     
-    compile(code)
+    if(code == null) {
+    	println("Error: Could not read file: " + args(0))
+    }
+    else {
+    	compile(code)   
+    }
     
     def compile(code: String) = {
 		val parser = new IMLParsers
@@ -48,5 +59,15 @@ object imlc extends App {
 	    }
         case e => e
     } 
+    
+    def printUsage() {
+        println("IML Compiler v0.8")
+        println("Usage: imlc <filename>")
+    }
+    
+    def canReadFile(f: String) = {
+        val file = new File(f)
+        file.exists && file.canRead
+    }
 	
 }
