@@ -5,18 +5,15 @@ import ch.fhnw.iml.ast.Node
 import ch.fhnw.iml.ast.ChangeMode
 import ch.fhnw.iml.ast.Type
 import ch.fhnw.iml.ast.Scope
+import scala.util.parsing.input.Positional
 
 
 /**
- * Checkings TODO
+ * 	Checkings TODO
  * 
  *  TODO import check. Called routines may only import globals of the calling routinge
  *  TODO initialisation check
  *  TODO reserved function old check
- *  TODO allow recursive functions by changing symbolchecker
- *  TODO implement reference parameters
- *  TODO prettify error messages in imlc.scala
- *  TODO check pureness of functions (only in vars)
  *  TODO check const to be only initialized and passed to const ref params
  */
 trait Checker {
@@ -56,7 +53,7 @@ case class CheckSuccess[A](a: A) extends CheckResult[A] {
         other
     }
 }
-case class CheckError[A](msg: String, node: Node) extends CheckResult[A] {
+case class CheckError[A](msg: String, node: Positional) extends CheckResult[A] {
      override def and(other: CheckResult[A]) = {
         this
     }

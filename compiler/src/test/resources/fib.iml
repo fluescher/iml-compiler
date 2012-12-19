@@ -25,7 +25,7 @@ global
 	
 	proc sum(a: int32, b: int32, out var r: int32)
 	{
-		r init := a + b
+		skip
 	};
 	
 	proc add(a: int32, b: int32, out r: int32)

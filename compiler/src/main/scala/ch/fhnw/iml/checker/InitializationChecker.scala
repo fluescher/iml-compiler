@@ -71,7 +71,7 @@ object InitializationChecker extends Checker {
         if (symbols.isInitialized(id))
             CheckSuccess(symbols)
         else
-            CheckError("Store must be initialized at the end of a function.", StoreExpr(id, false))
+            CheckError("Store must be initialized at the end of a function.", symbols.stores.get(id).getOrElse(null).id)
     }
 
     private def checkProcDecls(n: ProgramNode): CheckResult[SymbolTable] = {
