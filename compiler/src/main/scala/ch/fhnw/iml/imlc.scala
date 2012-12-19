@@ -10,6 +10,7 @@ import ch.fhnw.iml.checker.SymbolChecker
 import ch.fhnw.iml.checker.CheckSuccess
 import ch.fhnw.iml.checker.TypeChecker
 import ch.fhnw.iml.checker.InitializationChecker
+import ch.fhnw.iml.checker.FlowChecker
 
 object imlc extends App {
     
@@ -24,7 +25,10 @@ object imlc extends App {
 	        case parser.Success(prog, _) => SymbolChecker(AST(prog)) match {
 	            case CheckSuccess(a) => TypeChecker(a) match {
 	                case CheckSuccess(a) => InitializationChecker(a) match {
-		                case CheckSuccess(_) => JVMWriter(a,new File(args(0)).getName())
+		                case CheckSuccess(_) => FlowChecker(a) match {
+		                	case CheckSuccess(_) => JVMWriter(a,new File(args(0)).getName())
+		                	case e => println(e)
+		                }
 		                case e => println(e)
 	                }
 	                case e => println(e)

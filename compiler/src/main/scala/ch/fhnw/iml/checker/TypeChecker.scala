@@ -213,10 +213,5 @@ object TypeChecker extends Checker {
 	    case e => e
 	}
 	
-	private def combineToResult(r1: CheckResult[Type], r2: CheckResult[Type]): CheckResult[Type] = r1 match {
-	    case e: CheckError[Type]		=> e
-	    case r							=> r2
-	}
-	
 	case class TypeCheckScope(p: ProgramNode, inPost: Boolean, symbols: SymbolTable)
 }

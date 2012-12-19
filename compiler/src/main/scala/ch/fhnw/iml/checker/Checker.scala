@@ -39,6 +39,13 @@ trait Checker {
 	        }
 	    case e => e
 	}
+	
+	def combineToResult[T](r1: CheckResult[T], r2: CheckResult[T]): CheckResult[T] = r1 match {
+	    case e: CheckError[T]		=> e
+	    case r						=> r2
+	}
+	
+	def toResult[T >: AnyRef](l: List[CheckResult[T]]) = l.foldLeft(CheckSuccess(null):CheckResult[T])(combineToResult)
 }
 
 abstract class CheckResult[A] {

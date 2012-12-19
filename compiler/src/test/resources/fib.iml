@@ -2,6 +2,7 @@ program fibonacci
 global
 	fun fib(i: int32)
 	returns r: int32
+	global in a
 	requires [ isPos(i) ]
 	ensures [ r >= old(i-1) ]
 	{
