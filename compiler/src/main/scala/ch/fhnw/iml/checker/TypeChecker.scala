@@ -187,11 +187,11 @@ object TypeChecker extends Checker {
 	}
 	
 	private def checkParameter(n: Node)(p: Parameter, expr: Expr)(implicit scope: TypeCheckScope): CheckResult[Type] = p match {
-	    case Parameter(InFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
+	    case Parameter(InFlow, Copy, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkValueExpr(expr))
 	    case Parameter(InFlow, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
-	    case Parameter(OutFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
+	    case Parameter(OutFlow, Copy, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
 	    case Parameter(OutFlow, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
-	    case Parameter(InOutFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkValueExpr(expr))
+	    case Parameter(InOutFlow, Copy, StoreDecl(c, i, t)) 	=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
 	    case Parameter(InOutFlow, Ref, StoreDecl(c, i, t)) 		=> checkType(t)(n)(checkLeftExpr(expr)(scope.symbols))
 	}
 	
