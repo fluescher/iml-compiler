@@ -138,9 +138,9 @@ object InitializationChecker extends Checker {
     }
     
     private def checkFunAndProcCall(n : Node)(symbols: SymbolTable) : CheckResult[SymbolTable] = n match {
-        case f: FunCallExpr 		=> checkGlobalsAreInit(symbols.getFunctionDeclaration(f.i).global)(symbols)
-        case p: ProcCallCommand 	=> checkGlobalsAreInit(symbols.getProcedureDeclaration(p.f).global)(symbols)
-        case other					=> CheckSuccess(symbols)    
+        case f: FunCallExpr 	if symbols.containsFunction(f.i) 	=> checkGlobalsAreInit(symbols.getFunctionDeclaration(f.i).global)(symbols)
+        case p: ProcCallCommand if symbols.containsProcedure(p.f)	=> checkGlobalsAreInit(symbols.getProcedureDeclaration(p.f).global)(symbols)
+        case other													=> CheckSuccess(symbols)    
     }
     
     private def checkGlobalsAreInit(globals : Option[GlobalImportList])(symbols: SymbolTable) : CheckResult[SymbolTable] = globals match {
