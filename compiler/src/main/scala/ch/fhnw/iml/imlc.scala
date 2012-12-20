@@ -41,11 +41,11 @@ object imlc extends App {
 	            case CheckSuccess(ast) 		=> JVMWriter(ast, "/target/"+prog.i.chars+".class")
 	            case e:	CheckError[AST]		=> printCheckError(e)
 	        }
-	        case e => 
+	        case e => println("Error while parsing: " + e)
 	    }
     }
     
-    def printCheckError(e: CheckError[AST]) = e match {
+    def printCheckError(e: CheckError[AST]) =  e match {
         case CheckError(msg, n) => {
             println("Error on line " + n.pos.line + "." + n.pos.column +": " + msg)
             println(n.pos.longString)

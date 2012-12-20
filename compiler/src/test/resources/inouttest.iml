@@ -1,0 +1,13 @@
+program inoutprg
+global
+	
+	proc inc(inout var r: int32)
+	{
+		r := r + 1
+	};
+	var m: int32
+	
+{
+	call inc(m init);
+	! m
+}

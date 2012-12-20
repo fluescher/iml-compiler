@@ -43,8 +43,8 @@ object FlowChecker extends Checker {
     private def checkArguments(args: List[Parameter], f: Parameter => CheckResult[Any]) = toResult(args.map(f))
     
     private def checkProcArgument(arg: Parameter): CheckResult[Any] = arg match {
-        case Parameter(InFlow, Ref, StoreDecl(VarNode, _, _))	=>	CheckError("No in ref var allowed", arg)
-        case Parameter(InOutFlow, _, _)							=>	CheckError("No inout const allowed", arg)
+        case Parameter(InFlow, Ref, StoreDecl(VarNode, _, _))		=>	CheckError("No in ref var allowed", arg)
+        case Parameter(InOutFlow, _, StoreDecl(ConstNode, _, _))	=>	CheckError("No inout const allowed", arg)
         case _ => CheckSuccess(None)
     } 
     
