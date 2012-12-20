@@ -65,6 +65,7 @@ object SymbolChecker extends Checker {
 	
 	private def addFunDecls(global: SymbolTable, l: List[FunDecl]) : CheckResult[SymbolTable] = l match {
 	    case Nil 	 => CheckSuccess(global)
+	    case x::xs  if(x.head.i.chars == "old")				 => CheckError("No function old may be specified. This is a reserved function name", x.head.i)
 	    case x::xs  if(global.functions.contains(x.head.i)) => CheckError("Already defined this function", x)
 	    case x::xs	 => addFunDecls(SymbolTable(global.functions +(x.head.i -> FunctionSymbol(x.head.i, x.head.retVal.t, x)), global.procs, global.stores, global.global), xs)
 	}
