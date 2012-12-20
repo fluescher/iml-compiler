@@ -71,7 +71,7 @@ object InitializationChecker extends Checker {
         if (symbols.isInitialized(id))
             CheckSuccess(symbols)
         else
-            CheckError("Store must be initialized at the end of a function.", symbols.stores.get(id).getOrElse(null).id)
+            CheckError("Store must be initialized.", symbols.stores.get(id).getOrElse(null).id)
     }
 
     private def checkProcDecls(n: ProgramNode): CheckResult[SymbolTable] = {
@@ -132,20 +132,33 @@ object InitializationChecker extends Checker {
         case AssiCommand(left, right) 		=> ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
         case CondCommand(expr, cmd1, cmd2) 	=> ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
         case WhileCommand(expr, cmd) 		=> ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
-        case p: ProcCallCommand 			=> checkProcCall(initAllowed)(p)(symbols)
+        case p: ProcCallCommand 			=> checkFunAndProcCall(p)(symbols) and checkProcCall(initAllowed)(p)(symbols)
         case InputCommand(expr) 			=> checkLeftExpr(initAllowed)(expr)(symbols)
         case OutputCommand(expr) 			=> checkValueExpr(expr)(symbols)
     }
-
+    
+    private def checkFunAndProcCall(n : Node)(symbols: SymbolTable) : CheckResult[SymbolTable] = n match {
+        case f: FunCallExpr 		=> checkGlobalsAreInit(symbols.getFunctionDeclaration(f.i).global)(symbols)
+        case p: ProcCallCommand 	=> checkGlobalsAreInit(symbols.getProcedureDeclaration(p.f).global)(symbols)
+        case other					=> CheckSuccess(symbols)    
+    }
+    
+    private def checkGlobalsAreInit(globals : Option[GlobalImportList])(symbols: SymbolTable) : CheckResult[SymbolTable] = globals match {
+        case Some(global) 	=> global.globals.filter(a => a.flow == InFlow || a.flow == InOutFlow)
+        					   				 .map(a => checkIsInitalized(a.i)(symbols))
+        					   				 .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
+        case None			=> CheckSuccess(symbols)
+    }
+    
     private def checkProcCall(initAllowed: Boolean)(p: ProcCallCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
     	checkProcCallParameters(initAllowed)(p.exprs)(symbols) match {
     	    case CheckSuccess(sym) => sym.getProcedureDeclaration(p.f).global match {
     	        case None if(p.idents == Nil) => CheckSuccess(sym)
     	        case None 					  => CheckError("No global imports. ", p)
-    	        case Some(glob)				  => if (glob.globals.filter(_.flow == OutFlow).size >= p.idents.size)
+    	        case Some(glob)				  => if (p.idents.foldLeft(true)((a,b) => glob.globals.filter(_.flow == OutFlow).map(g => g.i).contains(b)))
     	            								checkProcCallGlobals(initAllowed)(p.idents)(sym)
     	            							 else
-    	            							    CheckError("More inits than global out imports. ", p)
+    	            							    CheckError("Global inits and global imports does not match. ", p)
     	    }
     	    case e => e
     	}
@@ -198,7 +211,7 @@ object InitializationChecker extends Checker {
         case va: StoreExpr 										=> CheckError("Use of not initialized var", va)
         case m: MonadicExpr 									=> checkValueExpr(m.expr)(symbols)
         case d: DyadicExpr 										=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
-        case FunCallExpr(_, exprs, _) 							=> exprs.map(a => (checkValueExpr(a)(symbols)))
+        case f: FunCallExpr 									=> checkFunAndProcCall(f)(symbols) and f.exprs.map(a => (checkValueExpr(a)(symbols)))
             															.foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
     }
 

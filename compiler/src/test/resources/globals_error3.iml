@@ -1,15 +1,17 @@
 program intDiv
 global
 	proc test(in copy var x:int32)
-	global out glob, in m
+	global out glob, out m
 	{
 		glob init := 2;
+		m init := 2;
 		x := 2
 	};
 	var glob:int32;
+	var blub:int32;
 	var m:int32
 {
-	call test(2) init glob, m;
+	call test(2) init glob, blub;
 	! glob;
-	! m
+	! blub
 }
