@@ -251,18 +251,57 @@ object JVMWriter {
         val decl = scope.p.symbols.getProcedureDeclaration(p)
         val pairs = decl.head.params.params.zip(exprs)
         val localEnd = scope.locals
-        var local = localEnd
+        
         /* setup (in)out params */
-        for((p, e) <- pairs if p.flow == OutFlow || p.flow == InOutFlow) { 
+        setupInOutParameter(pairs, localEnd)
+        
+        /* load params & call method */
+        scope.method.visitVarInsn(ALOAD, 0);
+        loadParameter(pairs, localEnd)
+        scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, p.chars, getVMType(decl))
+        
+        /* copy variables back */
+        loadOutParameterValues(pairs, localEnd)
+    }
+    
+   private def loadOutParameterValues(pairs: List[(Parameter, Expr)], localPos: Int)(implicit scope: Scope): Unit = pairs match {
+        case (p, e)::ps if p.flow == OutFlow || p.flow == InOutFlow		=> {
+             saveTo(e, s => {
+	            scope.method.visitVarInsn(ALOAD, localPos)
+	            scope.method.visitInsn(ICONST_0)
+	        	if(p.store.t == Bool) {
+	            	scope.method.visitInsn(BALOAD)
+	        	} else {
+	        	    scope.method.visitInsn(IALOAD)
+	        	}
+            })
+            loadOutParameterValues(ps, localPos + 1)
+        }
+        case _::ps => loadOutParameterValues(ps, localPos)
+        case Nil =>
+    }
+    
+    private def loadParameter(pairs: List[(Parameter, Expr)], localPos: Int)(implicit scope: Scope): Unit = pairs match {
+        case (p, e)::ps if p.flow == OutFlow || p.flow == InOutFlow		=> {
+            scope.method.visitVarInsn(ALOAD, localPos)
+            loadParameter(ps, localPos+1)
+        }
+        case (_, e)::ps => writeExpr(e); setupInOutParameter(ps, localPos)
+        case _::ps => loadParameter(ps, localPos)
+        case Nil =>
+    }
+    
+    private def setupInOutParameter(pairs: List[(Parameter, Expr)], localPos: Int)(implicit scope: Scope): Unit = pairs match {
+        case (p, e)::ps if p.flow == OutFlow || p.flow == InOutFlow		=> {
             scope.method.visitInsn(ICONST_1)
             if(p.store.t == Bool) {
             	scope.method.visitIntInsn(NEWARRAY, T_BOOLEAN)
         	} else {
         	    scope.method.visitIntInsn(NEWARRAY, T_INT)
         	}
-            scope.method.visitVarInsn(ASTORE, local)
+            scope.method.visitVarInsn(ASTORE, localPos)
 	        if(p.flow == InOutFlow) { /* only copy input value if inout */
-	            scope.method.visitVarInsn(ALOAD, local)
+	            scope.method.visitVarInsn(ALOAD, localPos)
 	            scope.method.visitInsn(ICONST_0)
 	            writeExpr(e)
 	            if(p.store.t == Bool) {
@@ -271,37 +310,10 @@ object JVMWriter {
 	        	    scope.method.visitInsn(IASTORE)
 	        	}
 	        }
-            local = local + 1
+            setupInOutParameter(ps, localPos+1)
         }
-        
-        scope.method.visitVarInsn(ALOAD, 0);
-        
-        local = localEnd
-        for((p, e) <- pairs) { /* setup (in)out params */
-            if (p.flow == OutFlow || p.flow == InOutFlow) {
-                 scope.method.visitVarInsn(ALOAD, local)
-                 local = local + 1
-            } else {
-                 writeExpr(e)
-            }
-        }
-
-        scope.method.visitMethodInsn(INVOKEVIRTUAL, scope.className, p.chars, getVMType(decl))
-        
-        /* copy variables back */
-        local = localEnd
-        for((p, e) <- pairs if p.flow == OutFlow || p.flow == InOutFlow) {
-            saveTo(e, s => {
-				            scope.method.visitVarInsn(ALOAD, local)
-				            scope.method.visitInsn(ICONST_0)
-				        	if(p.store.t == Bool) {
-				            	scope.method.visitInsn(BALOAD)
-				        	} else {
-				        	    scope.method.visitInsn(IALOAD)
-				        	}
-            })
-        	local = local + 1
-        }
+        case _::ps => setupInOutParameter(ps, localPos)
+        case Nil =>
     }
     
     def writeCond(expr: Expr, c1: Command, c2: Command)(implicit scope: Scope) {
