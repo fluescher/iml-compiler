@@ -286,7 +286,7 @@ object JVMWriter {
             scope.method.visitVarInsn(ALOAD, localPos)
             loadParameter(ps, localPos+1)
         }
-        case (_, e)::ps => writeExpr(e); setupInOutParameter(ps, localPos)
+        case (_, e)::ps => writeExpr(e); loadParameter(ps, localPos)
         case _::ps => loadParameter(ps, localPos)
         case Nil =>
     }
