@@ -261,14 +261,16 @@ object JVMWriter {
         	    scope.method.visitIntInsn(NEWARRAY, T_INT)
         	}
             scope.method.visitVarInsn(ASTORE, local)
-            scope.method.visitVarInsn(ALOAD, local)
-            scope.method.visitInsn(ICONST_0)
-            writeExpr(e)
-            if(p.store.t == Bool) {
-            	 scope.method.visitInsn(BASTORE)
-        	} else {
-        	    scope.method.visitInsn(IASTORE)
-        	}
+	        if(p.flow == InOutFlow) { /* only copy input value if inout */
+	            scope.method.visitVarInsn(ALOAD, local)
+	            scope.method.visitInsn(ICONST_0)
+	            writeExpr(e)
+	            if(p.store.t == Bool) {
+	            	 scope.method.visitInsn(BASTORE)
+	        	} else {
+	        	    scope.method.visitInsn(IASTORE)
+	        	}
+	        }
             local = local + 1
         }
         
