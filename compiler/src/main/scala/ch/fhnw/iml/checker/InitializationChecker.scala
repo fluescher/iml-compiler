@@ -11,6 +11,7 @@ object InitializationChecker extends Checker {
     }
 
     private def initCheck(n: ProgramNode): CheckResult[SymbolTable] = {
+        println(n.cmd)
         checkFunDecls(n) and checkProcDecls(n) and checkBlock(true)(n.cmd)(n.symbols)
     }
 
@@ -140,7 +141,11 @@ object InitializationChecker extends Checker {
     private def checkFunAndProcCall(n : Node)(symbols: SymbolTable) : CheckResult[SymbolTable] = n match {
         case f: FunCallExpr 	if symbols.containsFunction(f.i) 	=> checkGlobalsAreInit(symbols.getFunctionDeclaration(f.i).global)(symbols)
         case p: ProcCallCommand if symbols.containsProcedure(p.f)	=> checkGlobalsAreInit(symbols.getProcedureDeclaration(p.f).global)(symbols)
-        case other													=> CheckSuccess(symbols)    
+        case other													=> CheckError("No fun or a proc call found.", n)    
+    }
+    
+    private def checkParamsAreInit(params :ParameterList)(symbols: SymbolTable) = {
+
     }
     
     private def checkGlobalsAreInit(globals : Option[GlobalImportList])(symbols: SymbolTable) : CheckResult[SymbolTable] = globals match {
