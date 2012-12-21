@@ -1,0 +1,36 @@
+program intDiv
+global
+	proc divide(out ref var q:int32, out ref var r:int32)
+	global in m, in n
+	{
+		call test();
+		q init := blub();
+		r init := m;
+		while (r >= n) {
+			q := q + 1;
+			r := r - n
+		}
+	};
+	proc test()
+	global in m, in n
+	{
+		skip
+	};
+	fun blub() returns r:int32
+	global in m, in x
+	{
+		r init := 10
+	};
+	var x:int32;
+	var m:int32;
+	var n:int32;
+	var q:int32;
+	var r:int32
+{
+	x init := 2;
+	? m init;
+	? n init;
+	call divide(q init, r init);
+	! q;
+	! r
+}

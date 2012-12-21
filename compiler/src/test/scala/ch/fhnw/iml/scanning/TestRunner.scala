@@ -12,12 +12,13 @@ import ch.fhnw.iml.checker.CheckResult
 import ch.fhnw.iml.checker.TypeChecker
 import ch.fhnw.iml.ast.AST
 import java.io.File
+import ch.fhnw.iml.checker.GlobalImportChecker
 
 object TestRunner extends App {
 	
     val directory = "src/test/resources/"
         
-    val checkers = List(SymbolChecker, TypeChecker, FlowChecker, InitializationChecker)
+    val checkers = List(SymbolChecker, TypeChecker, FlowChecker, InitializationChecker, GlobalImportChecker)
     val files = new java.io.File(directory).listFiles.filter(_.getName.endsWith(".iml"));
     
     for(file <- files){

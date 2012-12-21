@@ -14,6 +14,7 @@ import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.parsing.IMLParsers
 import java.io.File
+import ch.fhnw.iml.checker.GlobalImportChecker
 
 object imlc extends App {
     
@@ -22,7 +23,7 @@ object imlc extends App {
         System.exit(1)
     }
     
-    val checkers = List(SymbolChecker, TypeChecker, FlowChecker, InitializationChecker)
+    val checkers = List(SymbolChecker, TypeChecker, FlowChecker, InitializationChecker, GlobalImportChecker)
     val code = if(canReadFile(args(0))) scala.io.Source.fromFile(args(0)).mkString else null
     			
     

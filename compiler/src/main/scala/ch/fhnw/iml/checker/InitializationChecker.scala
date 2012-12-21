@@ -170,7 +170,7 @@ object InitializationChecker extends Checker {
     
     private def checkProcCall(initAllowed: Boolean)(p: ProcCallCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
     	checkProcCallParameters(initAllowed)(p.exprs)(symbols) match {
-    	    case CheckSuccess(sym) => sym.getProcedureDeclaration(p.f).global match {
+    	    case CheckSuccess(sym) if sym.containsProcedure(p.f) => sym.getProcedureDeclaration(p.f).global match {
     	        case None if(p.idents == Nil) => CheckSuccess(sym)
     	        case None 					  => CheckError("No global imports. ", p)
     	        case Some(glob)				  => if (p.idents.foldLeft(true)((a,b) => glob.globals.filter(_.flow == OutFlow).map(g => g.i).contains(b)))
@@ -178,6 +178,7 @@ object InitializationChecker extends Checker {
     	            							 else
     	            							    CheckError("Global inits and global imports does not match. ", p)
     	    }
+    	    case CheckSuccess(sym) => CheckSuccess(sym)
     	    case e => e
     	}
     }
