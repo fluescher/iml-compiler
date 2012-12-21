@@ -94,7 +94,7 @@ class IMLParsers extends TokenParsers {
             			LBracket ~> condition ~ rep(Comma ~> condition) <~ RBracket			^^ {case cond ~ rest  => ConditionList(cond::rest)}
     				  | LBracket ~ RBracket													^^^ ConditionList(List())
     				  )
-    def condition =positioned( opt(ident <~ Colon) ~ expr									^^ {case i ~ expr => Condition(i, expr) })
+    def condition =positioned( expr	~ opt(Colon ~> ident) 									^^ {case expr ~ i  => Condition(i, expr) })
     
     
     /* Parameter lists */
