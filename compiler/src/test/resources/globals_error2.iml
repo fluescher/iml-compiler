@@ -9,6 +9,6 @@ global
 	var glob:int32;
 	var m:int32
 {
-	call test(m init);
+	call test(m);
 	! m
 }

@@ -3,7 +3,7 @@ global
 	fun inc(i: int32, a: int32)
 	returns r: int32
 	global
-		c
+		in c
 	local 
 		var b: int32
 	{
@@ -24,6 +24,6 @@ global
 {
 	? c init;
 	? o init;
-	call pinc(c, o, r);
+	call pinc(c, o, r init);
 	! r
 }

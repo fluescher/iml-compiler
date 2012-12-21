@@ -5,6 +5,8 @@ global
 		q init := 1;
 		r init := 2
 	};
+	var m:int32;
+	var n:int32;
 	var x:int32;
 	var y:int32
 {

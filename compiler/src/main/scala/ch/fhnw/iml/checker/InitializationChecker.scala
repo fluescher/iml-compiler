@@ -11,7 +11,6 @@ object InitializationChecker extends Checker {
     }
 
     private def initCheck(n: ProgramNode): CheckResult[SymbolTable] = {
-        println(n.cmd)
         checkFunDecls(n) and checkProcDecls(n) and checkBlock(true)(n.cmd)(n.symbols)
     }
 
@@ -143,23 +142,23 @@ object InitializationChecker extends Checker {
             														   checkParamsAreInit(f.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols)
         case p: ProcCallCommand if symbols.containsProcedure(p.f)	=> val decl = symbols.getProcedureDeclaration(p.f)
             														   checkParamsAreInit(p.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols)
-        case other													=> CheckError("No fun or a proc call found.", n)    
+        case other													=> CheckSuccess(symbols)
     }
     
     private def checkParamsAreInit(exprs :List[Expr])(params: ParameterList)(symbols: SymbolTable) = {
-    	exprs.filter(_.isInstanceOf[StoreExpr])
-    		 .map(_.asInstanceOf[StoreExpr])
-    		 .filter(_.isInitialization)
-    		 .map(a => checkParamIsInit(a)(params)(symbols))
-    		 .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
+    	val paramToExpr = params.params.zip(exprs)
+    	paramToExpr.map(a => checkParamToExpr(a)(symbols))
+    			   .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
     }
     
     // TODO: Fix inouttest
-    private def checkParamIsInit(expr: StoreExpr)(params: ParameterList)(symbols: SymbolTable) : CheckResult[SymbolTable] = {
-    	if (params.params.filter(_.flow == OutFlow).contains(expr.i))
-    		CheckSuccess(symbols)      
-    	else 
-    		CheckError("In or InOut has to be initalized", expr)
+    private def checkParamToExpr(paramToExpr : (Param, Expr))(symbols: SymbolTable) : CheckResult[SymbolTable] = paramToExpr match {
+        case (Parameter(OutFlow,_,_), e) 	=>	e match {
+            case s: StoreExpr if !symbols.isInitialized(s.i)	=> CheckSuccess(symbols.markStorageAsInitialized(s.i))
+            case s: StoreExpr if symbols.isInitialized(s.i)		=> CheckError("Out parameters must not be initialzied." , e)
+            case other											=> CheckError("Only store expression allowed", e)
+        }
+        case (p , e)			=> checkValueExpr(e)(symbols)
     }
     
     private def checkGlobalsAreInit(globals : Option[GlobalImportList])(symbols: SymbolTable) : CheckResult[SymbolTable] = globals match {

@@ -1,6 +1,6 @@
 program intDiv
 global
-	proc test(in ref var x:int32)
+	proc test(in ref const x:int32)
 	local blub:int32
 	{
 		blub init := x

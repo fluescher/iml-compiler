@@ -1,6 +1,6 @@
 program intDiv
 global
-	proc test(in copy m:int32, inout copy n:int32, out ref var q:int32, out ref var r:int32)
+	proc test(in copy m:int32, inout copy var n:int32, out ref var q:int32, out ref var r:int32)
 	{
 		q init := 1;
 		r init := 2

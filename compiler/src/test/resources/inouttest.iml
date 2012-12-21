@@ -8,7 +8,6 @@ global
 	var m: int32
 	
 {
-	m init := 2;
-	call inc(m);
+	call inc(m init);
 	! m
 }
