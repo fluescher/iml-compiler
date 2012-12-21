@@ -413,7 +413,7 @@ object JVMWriter {
         case ModOpr					=> writeExpr(e1); writeExpr(e2); scope.method.visitInsn(IREM)
         case AndOpr					=> writeAnd(e1, e2)
         case OrOpr					=> writeOr(e1, e2)
-        case NotOpr					=> /* not used */
+        case NotOpr					=> throw new RuntimeException("ERROR. Checking should have failed") /* not used */
     }
     
     def writeAnd(e1: Expr, e2: Expr)(implicit scope: Scope) {
