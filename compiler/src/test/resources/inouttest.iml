@@ -1,9 +1,9 @@
 program inoutprg
 global
 	
-	proc inc(inout var r: int32)
+	proc inc(out var r: int32)
 	{
-		r := r + 1
+		r init := r + 1
 	};
 	var m: int32
 	

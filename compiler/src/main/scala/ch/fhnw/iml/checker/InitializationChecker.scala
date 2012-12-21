@@ -139,13 +139,27 @@ object InitializationChecker extends Checker {
     }
     
     private def checkFunAndProcCall(n : Node)(symbols: SymbolTable) : CheckResult[SymbolTable] = n match {
-        case f: FunCallExpr 	if symbols.containsFunction(f.i) 	=> checkGlobalsAreInit(symbols.getFunctionDeclaration(f.i).global)(symbols)
-        case p: ProcCallCommand if symbols.containsProcedure(p.f)	=> checkGlobalsAreInit(symbols.getProcedureDeclaration(p.f).global)(symbols)
+        case f: FunCallExpr 	if symbols.containsFunction(f.i) 	=> val decl = symbols.getFunctionDeclaration(f.i)
+            														   checkParamsAreInit(f.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols)
+        case p: ProcCallCommand if symbols.containsProcedure(p.f)	=> val decl = symbols.getProcedureDeclaration(p.f)
+            														   checkParamsAreInit(p.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols)
         case other													=> CheckError("No fun or a proc call found.", n)    
     }
     
-    private def checkParamsAreInit(params :ParameterList)(symbols: SymbolTable) = {
-
+    private def checkParamsAreInit(exprs :List[Expr])(params: ParameterList)(symbols: SymbolTable) = {
+    	exprs.filter(_.isInstanceOf[StoreExpr])
+    		 .map(_.asInstanceOf[StoreExpr])
+    		 .filter(_.isInitialization)
+    		 .map(a => checkParamIsInit(a)(params)(symbols))
+    		 .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
+    }
+    
+    // TODO: Fix inouttest
+    private def checkParamIsInit(expr: StoreExpr)(params: ParameterList)(symbols: SymbolTable) : CheckResult[SymbolTable] = {
+    	if (params.params.filter(_.flow == OutFlow).contains(expr.i))
+    		CheckSuccess(symbols)      
+    	else 
+    		CheckError("In or InOut has to be initalized", expr)
     }
     
     private def checkGlobalsAreInit(globals : Option[GlobalImportList])(symbols: SymbolTable) : CheckResult[SymbolTable] = globals match {
