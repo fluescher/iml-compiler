@@ -125,7 +125,7 @@ class IMLParsers extends TokenParsers {
     
     /* Expressions */ 
     def expr = positioned(term1 ~ rep(boolOpr ~ term1)      ^^ {case t1 ~ rest => toDyadicExpr(t1, rest)})
-    def term1 = positioned( (term2 ~ relOpr ~ term2) 		^^ {case t1 ~ opr ~ t2 => DyadicExpr(opr, t1, t2)}
+    def term1 = positioned( term2 ~ relOpr ~ term2 			^^ {case t1 ~ opr ~ t2 => DyadicExpr(opr, t1, t2)}
 		    			  	| term2 						^^ {case t2 => t2}
 													    			) 
     def term2 = positioned(term3 ~ rep(addOpr ~ factor) 	^^ { case t3 ~ rest => toDyadicExpr(t3, rest)})
@@ -166,8 +166,8 @@ class IMLParsers extends TokenParsers {
     			   		      				| Minus 	^^^ MinusOpr)
     			   
     def multOpr = positioned(  Times 	^^^ TimesOpr
-    			   | Div 	^^^ DivOpr
-    			   | Mod 	^^^ ModOpr)
+			    			   | Div 	^^^ DivOpr
+			    			   | Mod 	^^^ ModOpr)
     			   
     def imlType = (  Int32 				^^^ ch.fhnw.iml.ast.Int32
     			   | Bool 				^^^ ch.fhnw.iml.ast.Bool)

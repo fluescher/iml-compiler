@@ -15,6 +15,8 @@ import ch.fhnw.iml.generation.JVMWriter
 import ch.fhnw.iml.parsing.IMLParsers
 import java.io.File
 import ch.fhnw.iml.checker.GlobalImportChecker
+import scala.util.parsing.input.Positional
+import scala.util.parsing.input.Position
 
 object imlc extends App {
     
@@ -42,13 +44,19 @@ object imlc extends App {
 	            case CheckSuccess(ast) 		=> JVMWriter(ast, "/target/"+prog.i.chars+".class")
 	            case e:	CheckError[AST]		=> printCheckError(e)
 	        }
-	        case e => println("Error while parsing: " + e)
+	        case parser.Failure(e, n) => printParseError(e, n.pos)
+	        case e => println("unknown error: " + e)
 	    }
+    }
+    
+    def printParseError(msg: String, next: Position) {
+        println("Parse error on line " + next.line + "." + next.column +": " + msg)
+    	println(next.longString)
     }
     
     def printCheckError(e: CheckError[AST]) =  e match {
         case CheckError(msg, n) => {
-            println("Error on line " + n.pos.line + "." + n.pos.column +": " + msg)
+            println("Checking error on line " + n.pos.line + "." + n.pos.column +": " + msg)
             println(n.pos.longString)
         }
     }
