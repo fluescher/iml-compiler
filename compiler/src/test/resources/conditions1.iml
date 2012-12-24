@@ -1,0 +1,20 @@
+program square
+global
+	fun sqrt(s:int32)
+	returns r: int32
+	local 	var a: int32;
+			var c: int32
+	requires [s >= 0 : pre]
+	ensures [ r * r = s : post1 , r < s: post2]
+	{
+		a init := 0;
+		while (a * a /= s) {
+			a := a + 1
+		};		
+		r init := a
+	};
+	n: int32
+{
+	? n init;
+	! sqrt(n)	
+}
