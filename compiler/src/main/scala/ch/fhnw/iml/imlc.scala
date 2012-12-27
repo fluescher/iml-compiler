@@ -17,6 +17,8 @@ import java.io.File
 import ch.fhnw.iml.checker.GlobalImportChecker
 import scala.util.parsing.input.Positional
 import scala.util.parsing.input.Position
+import ch.fhnw.iml.checker.FunctionProgramNameChecker
+import ch.fhnw.iml.checker.ConditonLabelUniquenessChecker
 
 object imlc extends App {
     
@@ -25,7 +27,14 @@ object imlc extends App {
         System.exit(1)
     }
     
-    val checkers = List(SymbolChecker, TypeChecker, FlowChecker, InitializationChecker, GlobalImportChecker)
+    val checkers = List(SymbolChecker, 
+            			TypeChecker,
+            			FlowChecker,
+            			InitializationChecker,
+            			GlobalImportChecker,
+            			ConditonLabelUniquenessChecker,
+            			FunctionProgramNameChecker
+            			)
     val code = if(canReadFile(args(0))) scala.io.Source.fromFile(args(0)).mkString else null
     			
     

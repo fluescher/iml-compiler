@@ -13,7 +13,6 @@ import scala.util.parsing.input.Positional
  * 
  *  TODO import check. Called routines may only import globals of the calling routinge
  *  TODO initialisation check
- *  TODO reserved function old check
  *  TODO check const to be only initialized and passed to const ref params
  */
 trait Checker {
@@ -42,19 +41,24 @@ trait Checker {
 	    case r						=> r2
 	}
 	
-	def toResult[T >: AnyRef](l: List[CheckResult[T]]) = l.foldLeft(CheckSuccess(null):CheckResult[T])(combineToResult)
+	def toResult[T >: Any](l: List[CheckResult[T]]) = l.foldLeft(CheckSuccess(null):CheckResult[T])(combineToResult)
 }
 
 abstract class CheckResult[A] {
     def and(other: CheckResult[A]): CheckResult[A]
+    def map(f: A => CheckResult[A]): CheckResult[A]
 }
 case class CheckSuccess[A](a: A) extends CheckResult[A] {
     override def and(other: CheckResult[A]) = {
         other
     }
+    
+    override def map(f: A => CheckResult[A]): CheckResult[A] = f(a)
 }
 case class CheckError[A](msg: String, node: Positional) extends CheckResult[A] {
      override def and(other: CheckResult[A]) = {
         this
     }
+     
+    override def map(f: A => CheckResult[A]): CheckResult[A] = this
 }

@@ -5,7 +5,7 @@ global
 	local 	var a: int32;
 			var c: int32
 	requires [s >= 0 : pre]
-	ensures [ r * r = s : post1 , r < s: post2]
+	ensures [ r * r = s: post1, r < s: post2]
 	{
 		a init := 0;
 		while (a * a /= s) {
