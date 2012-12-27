@@ -52,7 +52,7 @@ requires [n > 0]
 
 \begin{lstlisting}[caption=Pre-/postconditions mit Funktion in der Condition List]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
-requires [positive:isPositive(n)]
+requires [isPositive(n): positive]
 {
     i init := 0;
     r init := m;

@@ -51,7 +51,7 @@ requires [n + 0]
 
 \begin{lstlisting}[caption=Eine Funktion in der Condition List welche keinen boolschen Wert zurückliefert]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
-requires [positive:notBool(n)]
+requires [notBool(n): positive]
 {
     i init := 0;
     r init := m;

@@ -58,5 +58,5 @@ requires        ::= REQUIRES conditionList
 ensures         ::= ENSURES  conditionList
 
 conditionList   ::= LBRACKET [condition {COMMA condition}] RBRACKET
-condition       ::= [IDENT COLON] expr
+condition       ::= expr [COLON IDENT]
 
