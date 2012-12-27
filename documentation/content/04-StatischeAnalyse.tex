@@ -24,12 +24,12 @@ Kontext Checks bereits erreicht. Trotzdem sind einige weitere Einschränkungen n
 in der Parameterliste oder der Global Import List definiert wurden. Auf lokal deklarierte Variablen 
 kann nicht zugegriffen werden. Da out-Parameter nicht initialisiert sind, stehen sie nicht zur
 Verfügung.
-\item In Postconditions kann auf alle Variablen und Konstanten zugegriffen werden, welche auch in 
-Preconditions möglich sind. Zusätzlich sind alle lokal definierten Variablen und Konstanten verfügbar.
+\item In Postconditions kann auf alle Variablen zugegriffen werden, welche auch in 
+Preconditions möglich sind. 
 \item In Postconditions von Funktionen kann auf die Returnvariable zugegriffen werden.
 \item In Postconditions von Prozeduren kann auf out-Parameter zugegriffen werden.
-\item Die Funktion old() kann nicht auf Konstanten benutzt werden.
-\item Die Funktion old() kann nur auf Variablen benutzt werden, welche in der Precondition verfügbar wären.
+\item In einer Postcondition kann mit old() eine Exression im preexecution State ausgeführt werden. Für diese Expression 
+gelten daher auch die Einschränkungen des preexecution state.
 
 \end{itemize}
 
