@@ -199,7 +199,7 @@ object JVMWriter {
     }
 
     def writeEntryPoint()(implicit scope: Scope) {
-        val entry = scope.writer.visitMethod(	ACC_PUBLIC + ACC_FINAL,
+        val entry = scope.writer.visitMethod(	ACC_PUBLIC,
 								                scope.p.i.chars,
 								                "()V",
 												null,

@@ -42,15 +42,15 @@ object imlc extends App {
     	println("Error: Could not read file: " + args(0))
     }
     else {
-    	compile(code)   
+    	compile(code, new File(args(0)).getName)   
     }
     
-    def compile(code: String) = {
+    def compile(code: String, file: String = "dynamic") = {
 		val parser = new IMLParsers
 		
 		parser.parse(code) match {
 	        case parser.Success(prog, _) => runCheckers(checkers, CheckSuccess(AST(prog))) match {
-	            case CheckSuccess(ast) 		=> JVMWriter(ast, "/target/"+prog.i.chars+".class")
+	            case CheckSuccess(ast) 		=> JVMWriter(ast, file)
 	            case e:	CheckError[AST]		=> printCheckError(e)
 	        }
 	        case parser.Failure(e, n) => printParseError(e, n.pos)

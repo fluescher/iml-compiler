@@ -1,0 +1,17 @@
+program outtest
+global
+	proc loadTwice(ref i: int32, out ref a: int32, out ref b: int32)
+	ensures [ a = old(i) ]
+	{
+		a init := i;
+		b init := i
+	};
+	a: int32;
+	b: int32;
+	var v: int32
+{
+	v init := 12;
+	call loadTwice(v, a init, b init);
+	! a;
+	! b
+}

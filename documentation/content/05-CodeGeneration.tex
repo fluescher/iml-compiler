@@ -1,15 +1,184 @@
 \section{Code Generation}
 
-Im weiteren Verlauf des Projekts wird code für die JVM generiert werden. Dies wird 
-im Schlussbericht näher thematisiert.
+Die Zielplattform des generierten Codes ist die Java Virtual Machine \cite{ORACLE:JVM}. Daher
+wird Java Bytecode generiert. Dies kann mit den selben Prinzipien angegangen werden, welche auch
+bei der Generierung von Maschinen Code oder Code für die im Unterricht zur Verfügung gestellte 
+VM gelten. Da die JVM jedoch von Beginn an auf die Sprache Java zugeschnitten wurde, gibt es bei
+der Abbildung eines IML Programmes auf die Struktur eines JVM Programmes einige Spezialitäten, 
+auf welche in diesem Abschnitt eingegangen wird.
 
-%\newpage
+\subsection {Strukturierung}
 
-%\begin{figure*}[h]
-%	\begin{center}
-%		\includegraphics[width=0.9\textwidth]{images/Zuwanderungssaldo_Bericht_2.png}
-%	\end{center}
-%	\caption{Verlauf der Zuwanderung nach Herkunftsländern in Tausend \cite[S. 18]{ADMIN:Bericht}}
-%	\label{fig:zuwanderungsaldi}
-%\end{figure*}
+Die JVM ist wie die Sprache Java objektorientiert aufgebaut. Aus diesem Grund muss ein 
+IML Programm auf die Klassenstruktur der JVM abgebildet werden. In diesem Abschnitt wird 
+anhand des Beispielprogramms aus Listing \ref{lst:outtest} die Abbildung auf eine JVM Klasse
+erläutert. Dieses IML Programm wird zu einer Klasse, welcher der Klassendeklaration in Listing 
+\ref{lst:outtest_class} entspricht. Dabei wurde folgende Abbilung gewählt:
+
+\begin{itemize}
+    \item \textbf{Program}: Ein IML Programm wird auf eine Klasse mit gleichem Namen abgebildet.
+                            Um die Kompatibilität mit andern JVM Sprachen zu gewährleisten werden die globalen
+                            Variablen im Konstruktor mit Defaultwerten initialisiert. Die Klasse wurde als final 
+                            gekennzeichnet, um späteres überschreiben von Methoden zu verhindern.
+    \item \textbf{Globale Variablen}: Globale Variablen werden zu privaten Feldern der Klasse des Programms.
+    \item \textbf{Program Body}: Die Commands des IML Programms werden zu einer neuen Funktion der Klasse,
+                                 welche den Namen der Klasse hat, kompiliert. Der Vorteil im Gegensatz zum 
+                                 direkten kompilieren in die main Methode liegt darin, dass die globalen Variablen 
+                                 und Routinen nicht \textit{static} sein müssen und so mehrere Instanzen des 
+                                 IML Programms in der selben VM aktiv sein können, ohne Zustand teilen zu müssen. 
+                                 Dies würde es auch erlauben Bibliotheksfunktionen in IML zu entwickeln und 
+                                 in anderen JVM Sprachen zu verwenden.
+    \item \textbf{Routinen}: Routinen werden zu Funktionen der Klasse. Wenn keine out-Parameter verwendet
+                             werden entsprechen diese Funktionen normalen JVM Funktionen und stehen ohne 
+                             spezielle Konventionen an den Aufruf zur Verfügung. Wie out-Parameter abgebildet 
+                             werden ist im nächsten Abschnitt erläutert.
+    \item \textbf{Eintrittpunkt}: Falls die JVM eine Klasse ausführen will, so ruft sie die Funktion \textbf{main}
+                                  auf. Daher wird ebenfalls eine solche generiert, welche eine neue Instanz der 
+                                  Klasse erzeugt und die Methode mit dem gleichen Namen der Klasse ausführt.
+\end{itemize}
+\vspace{0.5cm}
+\begin{lstlisting}[caption=Laden eines Int-Wertes in zwei Speicherstellen über out Parameter,label={lst:outtest}]
+program outtest
+global
+    proc loadTwice(ref i: int32, out ref a: int32, out ref b: int32)
+    requires[ i > 0 : exampleCondition ]
+    ensures[ a = old(i), b = old(i) ]
+    {
+        a init := i;
+        b init := i
+    };
+    a: int32;
+    b: int32;
+    var v: int32
+{
+    v init := 12;
+    call loadTwice(v, a init, b init);
+    ! a;
+    ! b
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Struktur der Klasse,language=Java,label={lst:outtest_class}]
+public final class outtest {
+    public void loadTwice(int, int[], int[]);
+    public outtest();
+    public void outtest();
+    public static void main(java.lang.String[]);
+}
+\end{lstlisting}
+
+
+\subsection {Parameterübergabe}
+
+IML unterstüzt ein sehr ausgefeiltes Handling von Parameterwerten. Die JVM jedoch erlaubt 
+das Übergeben von Parametern lediglich \textit{by-value}. Zudem ist es in IML möglich 
+festzulegen ob ein Parameter ein Eingabeparameter, Ausgabeparameter oder beides ist. Auch hier 
+erlaubt die JVM lediglich Eingabeparameter. Um Parameter von IML vollständig abbilden zu können 
+werden auch \textit{ref} Parameter wie \textit{copy} Parameter behandelt. \textit{out}-Parameter 
+können so jedoch nicht realisiert werden, da die JVM dafür Referenzen auf primitive Typen 
+unterstützen müsste. Um nun das Schreiben von Informationen in den Speicherbereich des Aufrufers
+zu erlauben, könnte eine Hilfsklasse (z.B. IntRef) erzeugt werden. Dies würde jedoch eine 
+Abhängigkeit zu dieser Klasse für den generierten Code und jeden, der diesen Benutzen möchte, 
+zur Folge haben. Dies kann umgangen werden, wenn der entsprechende Parameter in ein Array mit
+der Länge 1 umgewandelt wird. So können \textit{out} Parameter auf der JVM elegant implementiert werden.
+Dies bedeutet für den Aufrufer jedoch mehr Aufwand, da er zunächst für jeden \textit{out} Parameter 
+ein neues Array erzeugen und den zu übergebenden Wert(im Falle von \textit{inout}) hineinkopieren muss. 
+Im Anschluss an den Methodenaufruf muss der Wert im Array wieder an die Speicherstelle des ursprünglichen 
+Wertes kopiert werden. Für den Aufgerufenen fällt jedoch keinerlei Zusatzaufwand an, wie in Listing 
+\ref{lst:loadtwice_code} zu sehen ist.
+\newline
+
+\begin{lstlisting}[caption=Bytecode der loadTwice Prozedur ohne conditions,label={lst:loadtwice_code}]
+public void loadTwice(int, int[], int[]);
+    flags: ACC_PUBLIC
+    Code:
+      stack=3, locals=4, args_size=4
+        0: aload_2          // Laden des 2. Parameters auf Stack (Array Referenz)
+        1: iconst_0         // Laden von 0 auf den Stack (Pos in Array)
+        2: iload_1          // Laden des ersten Parameters auf Stack (zu speichernder Wert)
+        3: iastore          // Speichern (int array store)
+        4: aload_3       
+        5: iconst_0      
+        6: iload_1       
+        7: iastore       
+        8: return
+\end{lstlisting}
+
+
+\subsection{Pre-/Postconditions}
+
+Für das Umsetzen der Pre-/Postconditions kann gewöhnlicher Code generiert werden. Falls eine der Conditions
+jedoch fehlschlägt, muss die Programmausführung unterbrochen werden. Da Java bereits ein Konstruktr für 
+Assertions unterstützt, gibt es bereits in der Standartbibliothek die AssertionError Exception.
+Diese kann auch für die Conditions in IML verwendet werden, wobei das Label der Condition, falls vorhanden,
+als Exception Message verwendet wird.
+\newline
+
+\begin{lstlisting}[caption=Bytecode der loadTwice Prozedur mit precondition,label={lst:loadtwice_code_precond}]
+public void loadTwice(int, int[], int[]);
+    flags: ACC_PUBLIC
+    Code:
+      stack=3, locals=4, args_size=4
+         0: iload_1       
+         1: bipush        0
+         3: if_icmple     10
+         6: iconst_1      
+         7: goto          11
+        10: iconst_0      
+        11: ifeq          17
+        14: goto          27              // Weiter mit normalem Code
+        17: new           #9              // class java/lang/AssertionError
+        20: dup         
+        21: ldc           #11             // Laden der String Konstante "exampleCondition"
+        23: invokespecial #15             // Method java/lang/AssertionError."<init>"
+        26: athrow                        // Werfen der Exception
+        27: aload_2       
+        28: iconst_0      
+        29: iload_1       
+        30: iastore       
+        31: aload_3       
+        32: iconst_0      
+        33: iload_1       
+        34: iastore       
+        35: return  
+\end{lstlisting}
+
+\subsubsection{Speichern des Preexecution States}
+
+Der Preexecution State wird im Stack Frame der Methode als lokale Variable gespeichert. Wenn nun 
+die Postcondtitions ausgewertet werden, wird im Falle eines Calls der \textit{old} Funktion der Wert 
+an der entsprechenden Position der lokalen Variable geliefert.
+\newline
+\begin{lstlisting}[caption=Bytecode der loadTwice Prozedur mit postcondition mit Zugriff auf old State. Damit der Code etwas Übersichtlicher ist\, wurde nur die erste Postcondtition kompiliert.,label={lst:loadtwice_code_old}]
+public void loadTwice(int, int[], int[]);
+    flags: ACC_PUBLIC
+    Code:
+      stack=3, locals=5, args_size=4
+         0: iload_1                 // Expression in old(i) -> i 
+         1: istore        4         // Speichern an lokalem variablen Index 4
+         3: aload_2                 // Normaler Code
+         4: iconst_0      
+         5: iload_1       
+         6: iastore       
+         7: aload_3       
+         8: iconst_0      
+         9: iload_1       
+        10: iastore       
+        11: aload_2       
+        12: iconst_0      
+        13: iaload        
+        14: iload         4         // Zuvor gespeicherter Wert laden
+        16: if_icmpne     23
+        19: iconst_1      
+        20: goto          24
+        23: iconst_0      
+        24: ifeq          30
+        27: goto          38
+        30: new           #9        // class java/lang/AssertionError
+        33: dup           
+        34: invokespecial #13       // Method java/lang/AssertionError."<init>":()V
+        37: athrow        
+        38: return
+\end{lstlisting}
+
 
