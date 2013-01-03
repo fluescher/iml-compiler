@@ -1,0 +1,28 @@
+program calc
+global
+	fun gcd(in copy var a:int32, in copy var b:int32) returns var r:int32
+	requires [a > 0, b > 0]
+	ensures [r > 0]
+	{
+	    r init := 0;
+	    
+	    if (a = 0) {
+	        r := b
+	    } else {
+	        while (b /= 0) {
+	            if (a > b) {
+	                a := a - b
+	            } else {
+	                b := b - a
+	            }
+	        };
+	        r := a
+	    }
+	};
+	var m:int32;
+	var n:int32
+{
+	? m init;
+	? n init;
+	! gcd(m,n)
+}

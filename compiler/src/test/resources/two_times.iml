@@ -1,0 +1,14 @@
+program two
+global
+	proc twoTimes(in copy m:int32, out ref r:int32)
+	ensures [old(m) = (r - m)]
+	{
+	    r init := m + m
+	};
+	var m:int32;
+	var n:int32
+{
+	? m init;
+	call twoTimes(m, n init);
+	! n
+}

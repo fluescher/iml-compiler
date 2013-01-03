@@ -1,0 +1,25 @@
+program calc
+global
+	fun multiply(in copy m:int32, in copy n:int32) returns var r:int32
+	local var i:int32
+	requires [isPositive(n) : mustBePositive]
+	{
+	    i init := 1;
+	    r init := m;
+	
+	    while (i < n) {
+	        i := i + 1;
+	        r := r + m
+	    }
+	};
+	fun isPositive(in copy n:int32) returns r:bool
+	{
+	    r init := n > 0
+	};
+	var m:int32;
+	var n:int32
+{
+	? m init;
+	? n init;
+	! multiply(m,n)
+}
