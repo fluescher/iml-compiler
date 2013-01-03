@@ -140,7 +140,7 @@ object InitializationChecker extends Checker {
     
     private def checkFunAndProcCall(n : Node)(symbols: Scope) : CheckResult[SymbolTable] = n match {
         case f: FunCallExpr 	if f.i.chars == "old"				=> println("old")
-            															checkValueExpr(f.exprs.head)(Scope(symbols.global, symbols.pre, symbols.pre))
+            														   checkValueExpr(f.exprs.head)(Scope(symbols.global, symbols.pre, symbols.pre))
         case f: FunCallExpr											=> val decl = symbols.global.getFunctionDeclaration(f.i)
             														   checkParamsAreInit(f.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols.current)
         case p: ProcCallCommand										=> val decl = symbols.global.getProcedureDeclaration(p.f)
