@@ -2,7 +2,7 @@ program fibonacci
 global
 	fun fib(i: int32)
 	returns r: int32
-	requires [ isPos(i) ]
+	requires [ isPos(i): InputHasToBePositive ]
 	ensures [ r >= old(i-1) ]
 	{
 		if(i = 0) {
@@ -38,7 +38,5 @@ global
 	var r: int32
 {
 	? a init;
-	? b init;
-	call add(a,b,r init);
-	! r	
+	! fib(a)
 }
