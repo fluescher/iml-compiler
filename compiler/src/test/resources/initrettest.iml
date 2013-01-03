@@ -1,0 +1,12 @@
+program outtest
+global
+	fun blubb(i: int32)
+	returns r: int32
+	local b: int32
+	{
+		b init := r;
+		r init := i
+	}
+{
+	! blubb(12)
+}
