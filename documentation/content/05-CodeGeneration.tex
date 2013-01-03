@@ -114,13 +114,13 @@ public void outtest();
         3: putfield      #24               // Field v:I
          6: iconst_1                       // Array Size 1
          7: newarray       int             // Array erzeugen
-         9: astore_1                       // Speichern an lokalem index 1
+         9: astore_1                       // Speichern an lokalem Index 1
         10: iconst_1                       // Array Size 1
         11: newarray       int             // Array erzeugen
-        13: astore_2                       // Speichern an lokalem index 2
-        14: aload_0                        // this - Methoden Aufruf
-        15: aload_0                        // this - globale Variable
-        16: getfield      #24              // Globale variable v laden
+        13: astore_2                       // Speichern an lokalem Index 2
+        14: aload_0                        // this - fuer Methoden Aufruf
+        15: aload_0                        // this - fuer Laden der globalen Variable
+        16: getfield      #24              // Globale Variable v laden
         19: aload_1                        // Array fuer a fuer Call laden
         20: aload_2                        // Array fuer b fuer Call laden
         21: invokevirtual #26              // Method loadTwice:(I[I[I)V call
@@ -191,7 +191,7 @@ die Postcondtitions ausgewertet werden, wird im Falle eines Calls der \textit{ol
 an der entsprechenden Position der lokalen Variable geliefert. Die Position entspricht der Reihenfolge 
 des Vorkommens in der Postcondition.
 \newline
-\begin{lstlisting}[caption=Bytecode der loadTwice Prozedur mit postcondition mit Zugriff auf old State. Damit der Code etwas Übersichtlicher ist\, wurde nur die erste Postcondtition kompiliert.,label={lst:loadtwice_code_old}]
+\begin{lstlisting}[caption=Bytecode der loadTwice Prozedur mit postcondition mit Zugriff auf old State. Damit der Code etwas übersichtlicher ist\, wurde nur die erste Postcondtition kompiliert.,label={lst:loadtwice_code_old}]
 public void loadTwice(int, int[], int[]);
     flags: ACC_PUBLIC
     Code:
