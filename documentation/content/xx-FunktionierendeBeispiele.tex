@@ -50,6 +50,34 @@ requires [n > 0]
 }
 \end{lstlisting}
 
+\begin{lstlisting}[caption=Berechnen einer ganzzahligen Quadratwurzel. Verwendung mehrerer Conditions]
+fun sqrt(s:int32)
+returns r: int32
+local   var a: int32
+requires [s >= 0 : pre]
+ensures [ r * r <= s, r <= s]
+{
+    a init := 1;
+    while (a * a <= s) {
+        a := a + 1
+    };      
+    r init := a - 1
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Evaluieren einer Expression im preexecution State]
+proc swapAndIncrement(inout var a: int32, inout var b: int32)
+local 
+    var tmp: int32
+requires []
+ensures  [ a = old(b + 1), b = old(a + 1) ]
+{
+     tmp init := a + 1;
+    a := b + 1;
+    b := tmp
+}
+\end{lstlisting}
+
 \begin{lstlisting}[caption=Pre-/postconditions mit Funktion in der Condition List]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
 requires [isPositive(n): positive]

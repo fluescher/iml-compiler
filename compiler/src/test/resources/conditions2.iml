@@ -1,0 +1,23 @@
+program swapit
+global
+	proc swapAndIncrement(inout var a: int32, inout var b: int32)
+	local 
+		var tmp: int32
+	requires [ ]
+	ensures  [ a = old(b + 1), b = old(a + 1) ]
+	{
+		tmp init := a + 1;
+		a := b + 1;
+		b := tmp
+	};
+	var a: int32;
+	var b: int32
+{
+	a init := 2;
+	b init := 8;
+	! a;
+	! b;
+	call swapAndIncrement(a, b);
+	! a;
+	! b
+}
