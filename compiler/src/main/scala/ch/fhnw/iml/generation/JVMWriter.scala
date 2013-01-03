@@ -1,14 +1,13 @@
 package ch.fhnw.iml.generation
 
 import java.io.FileOutputStream
-
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes._
-
 import ch.fhnw.iml.ast._
 import ch.fhnw.iml.checker.TypeChecker
+import scala.annotation.tailrec
 
 object JVMWriter {
     
@@ -96,7 +95,7 @@ object JVMWriter {
         }
         case None 		=> (calculateLocalCount, None)
     }
-    
+
     def writeSavePreExecutionExpressions(curLocals: Int, exprs: List[Expr])(implicit scope: Scope): (Int, List[Expr]) = exprs match {
         case Nil 	=> (curLocals, exprs)
         case e::es 	=> writeSavePreExecutionExpression(curLocals, e) match {
@@ -264,6 +263,7 @@ object JVMWriter {
         loadOutParameterValues(pairs, localEnd)
     }
     
+   @tailrec
    private def loadOutParameterValues(pairs: List[(Parameter, Expr)], localPos: Int)(implicit scope: Scope): Unit = pairs match {
         case (p, e)::ps if p.flow == OutFlow || p.flow == InOutFlow		=> {
              saveTo(e, s => {
@@ -281,6 +281,7 @@ object JVMWriter {
         case Nil =>
     }
     
+   @tailrec
     private def loadParameter(pairs: List[(Parameter, Expr)], localPos: Int)(implicit scope: Scope): Unit = pairs match {
         case (p, e)::ps if p.flow == OutFlow || p.flow == InOutFlow		=> {
             scope.method.visitVarInsn(ALOAD, localPos)
@@ -291,6 +292,7 @@ object JVMWriter {
         case Nil =>
     }
     
+   @tailrec
     private def setupInOutParameter(pairs: List[(Parameter, Expr)], localPos: Int)(implicit scope: Scope): Unit = pairs match {
         case (p, e)::ps if p.flow == OutFlow || p.flow == InOutFlow		=> {
             scope.method.visitInsn(ICONST_1)
