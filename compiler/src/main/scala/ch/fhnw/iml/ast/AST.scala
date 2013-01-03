@@ -145,6 +145,8 @@ case class SymbolTable(functions: Map[Ident,FunctionSymbol], procs: Map[Ident,Pr
 	        case None => null
 		}
     }
+    
+    def getStore(id: Ident): StorageSymbol =  stores.get(id).getOrElse(null)
 }
 object EmptyTable extends SymbolTable(Map.empty, Map.empty, Map.empty, null)
 

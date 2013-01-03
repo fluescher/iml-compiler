@@ -45,6 +45,7 @@ import ch.fhnw.iml.ast.WhileCommand
 import ch.fhnw.iml.ast.InFlow
 import ch.fhnw.iml.ast.OutFlow
 import ch.fhnw.iml.ast.InOutFlow
+import ch.fhnw.iml.ast.StorageSymbol
 
 object TypeChecker extends Checker {
 	override def apply(ast: AST) = {
@@ -137,7 +138,10 @@ object TypeChecker extends Checker {
 	    case BoolLiteralExpression(_) 									=> CheckSuccess(Bool)
 	    case IntLiteralExpression(_) 									=> CheckSuccess(Int32)
 	    case StoreExpr(id, true)	 									=> CheckError("No init on right side allowed", expr)
-	    case StoreExpr(id, false) 	if scope.symbols.containsStore(id)	=> CheckSuccess(scope.symbols.getStoreType(id))
+	    case StoreExpr(id, false) 	if scope.symbols.containsStore(id)  => scope.symbols.getStore(id) match {
+	        case StorageSymbol(_, _, _, false, false, false, _, _, _, _) if scope.inPost => CheckError("No usage of local allowed in condition", id)
+	        case _ => CheckSuccess(scope.symbols.getStoreType(id))
+	    }
 	    case StoreExpr(id, _)											=> CheckError("Use of undeclared store.", expr)
 	    case m: MonadicExpr	 											=> checkMonadicExpr(m)
 	    case d: DyadicExpr												=> checkDyadicExpr(d)

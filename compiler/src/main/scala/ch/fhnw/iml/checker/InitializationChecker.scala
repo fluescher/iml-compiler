@@ -230,7 +230,7 @@ object InitializationChecker extends Checker {
         case BoolLiteralExpression(_) 									=> CheckSuccess(symbols.current)
         case IntLiteralExpression(_) 									=> CheckSuccess(symbols.current)
         case StoreExpr(id, false) if symbols.current.isInitialized(id)	=> CheckSuccess(symbols.current)
-        case va: StoreExpr 												=> CheckError("Use of not initialized var", va)
+        case va: StoreExpr 												=> CheckError("Use of uninitialized var", va)
         case m: MonadicExpr 											=> checkValueExpr(m.expr)(symbols)
         case d: DyadicExpr 												=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
         case f: FunCallExpr 											=> checkFunAndProcCall(f)(symbols) and f.exprs.map(a => (checkValueExpr(a)(symbols)))
