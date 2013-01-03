@@ -1,0 +1,14 @@
+program rec
+global
+	fun inc(i: int32)
+	returns r: int32
+	ensures [r - 1 = i]
+	{
+		r init := i + 1
+	};
+	fun old(a: int32)
+	returns r: int32
+	{
+		r init := a - 1
+	}
+{	! inc(12)    }
