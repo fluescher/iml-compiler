@@ -1,4 +1,4 @@
-\begin{lstlisting}[caption=Wert einer Variable in der pre-/postcondition ändern]
+\begin{lstlisting}[caption=Fehler: Wert einer Variable in der pre-/postcondition ändern]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
 requires [n := 0]
 ensures [r := 12 + 1]
@@ -13,7 +13,7 @@ ensures [r := 12 + 1]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Zugriff auf nicht vorhandene Variable in der old Funktion]
+\begin{lstlisting}[caption=Fehler: Zugriff auf nicht vorhandene Variable in der old Funktion]
 fun gcd(in copy a:int32, in copy b:int32) returns r:int32
 requires [a > 0, b > 0]
 ensures [old(x) > 0]
@@ -35,7 +35,7 @@ ensures [old(x) > 0]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Eine nicht Boolsche Expression in der Condition List]
+\begin{lstlisting}[caption=Fehler: Eine nicht Boolsche Expression in der Condition List]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
 requires [n + 0]
 {
@@ -49,7 +49,7 @@ requires [n + 0]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Eine Funktion in der Condition List welche keinen boolschen Wert zurückliefert]
+\begin{lstlisting}[caption=Fehler: Eine Funktion in der Condition List welche keinen boolschen Wert zurückliefert]
 fun multiply(in copy m:int32, in copy n:int32) returns r:int32
 requires [notBool(n): positive]
 {
@@ -68,7 +68,7 @@ fun notBool(in copy n:int32) returns r:int32
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Beispiel mit Zugriff auf globale Variable welche nicht in der globalImportList importiert wurde]
+\begin{lstlisting}[caption=Fehler: Beispiel mit Zugriff auf globale Variable welche nicht in der globalImportList importiert wurde]
 proc twoTimes(in copy m:int32, out ref r:int32)
 ensures [g > 10]
 {
@@ -79,7 +79,7 @@ var g:int32
 
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Zugriff auf out Parameter in precondition.]
+\begin{lstlisting}[caption=Fehler: Zugriff auf out Parameter in precondition.]
 proc twoTimes(in copy m:int32, out ref r:int32)
 requires [r > 10]
 {
@@ -87,7 +87,7 @@ requires [r > 10]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Gleiche Labels in Conditions derselben Routine.]
+\begin{lstlisting}[caption=Fehler: Gleiche Labels in Conditions derselben Routine.]
 proc twoTimes(in copy m:int32, out ref r:int32)
 requires [m > 10: cond, m > 11: cond2]
 ensures [ m > 20: cond ]
@@ -96,7 +96,7 @@ ensures [ m > 20: cond ]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Auf die Funktion old darf im preexecution State nicht zugegriffen werden.]
+\begin{lstlisting}[caption=Fehler: Auf die Funktion old darf im preexecution State nicht zugegriffen werden.]
 proc swapAndIncrement(inout var a: int32, inout var b: int32)
 local 
     var tmp: int32
@@ -110,7 +110,7 @@ ensures  [ a = old(old(b) + 1), b = old(old(a) + 1) ]
 
 \end{lstlisting}
                                                                          
-\begin{lstlisting}[caption=Zugriff auf uninitialisierter Wert in preexecution State mittels old]
+\begin{lstlisting}[caption=Fehler: Zugriff auf uninitialisierter Wert in preexecution State mittels old]
 fun sqrt(s:int32)
 returns r: int32
 local 
@@ -127,7 +127,7 @@ ensures [ r * r <= s, r <= s, old(r) <= s]
 \end{lstlisting}
 
 
-\begin{lstlisting}[caption=Zugriff auf Funktion old in precondition]
+\begin{lstlisting}[caption=Fehler: Zugriff auf Funktion old in precondition]
 fun sqrt(s:int32)
 returns r: int32
 local 
@@ -143,7 +143,7 @@ ensures [ r * r <= s, r <= s]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Rekursiver Aufruf in condition.]
+\begin{lstlisting}[caption=Fehler: Rekursiver Aufruf in condition.]
 program rec
 global
     fun inc(i: int32)

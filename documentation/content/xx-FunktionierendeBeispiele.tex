@@ -79,7 +79,7 @@ ensures  [ a = old(b + 1), b = old(a + 1) ]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Pre-/postconditions mit Funktion in der Condition List]
+\begin{lstlisting}[caption=Pre-/postconditions mit Funktion in der Condition List und Label]
 fun multiply(in copy m:int32, in copy n:int32) returns var r:int32
 local var i:int32
 requires [isPositive(n): positive]
@@ -99,7 +99,7 @@ fun isPositive(in copy n:int32) returns r:bool
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Pre-/postconditions mit old Funktion]
+\begin{lstlisting}[caption=Pre-/postconditions mit old Funktion und Zugriff auf out Parameter]
 proc twoTimes(in copy m:int32, out ref r:int32)
 ensures [old(m) = (r - m)]
 {
@@ -107,7 +107,7 @@ ensures [old(m) = (r - m)]
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Pre-/postconditions mit old Funktion]
+\begin{lstlisting}[caption=Pre-/postconditions mit old Funktion und Zugriff auf Return Wert]
 fun fib(i: int32)
     returns r: int32
     requires [ isPos(i): InputHasToBePositive ]

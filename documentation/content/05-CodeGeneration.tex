@@ -185,9 +185,11 @@ public void loadTwice(int, int[], int[]);
 
 \subsubsection{Speichern des Preexecution States}
 
-Der Preexecution State wird im Stack Frame der Methode als lokale Variable gespeichert. Wenn nun 
+Der Preexecution State wird innerhalb der Methode als lokale Variable gespeichert, bevor die erste Anweisung 
+des Routingen Bodies ausgeführt wird.  Wenn nun 
 die Postcondtitions ausgewertet werden, wird im Falle eines Calls der \textit{old} Funktion der Wert 
-an der entsprechenden Position der lokalen Variable geliefert.
+an der entsprechenden Position der lokalen Variable geliefert. Die Position entspricht der Reihenfolge 
+des Vorkommens in der Postcondition.
 \newline
 \begin{lstlisting}[caption=Bytecode der loadTwice Prozedur mit postcondition mit Zugriff auf old State. Damit der Code etwas Übersichtlicher ist\, wurde nur die erste Postcondtition kompiliert.,label={lst:loadtwice_code_old}]
 public void loadTwice(int, int[], int[]);
