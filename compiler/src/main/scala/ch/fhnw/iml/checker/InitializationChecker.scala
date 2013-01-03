@@ -151,7 +151,6 @@ object InitializationChecker extends Checker {
     			   .foldLeft(CheckSuccess[SymbolTable](symbols): CheckResult[SymbolTable])(combineToResult)
     }
     
-    // TODO: Fix inouttest
     private def checkParamToExpr(paramToExpr : (Param, Expr))(symbols: SymbolTable) : CheckResult[SymbolTable] = paramToExpr match {
         case (Parameter(OutFlow,_,_), e) 	=>	e match {
             case s: StoreExpr if !symbols.isInitialized(s.i)	=> CheckSuccess(symbols.markStorageAsInitialized(s.i))
@@ -169,7 +168,8 @@ object InitializationChecker extends Checker {
     }
     
     private def checkProcCall(initAllowed: Boolean)(p: ProcCallCommand)(symbols: SymbolTable): CheckResult[SymbolTable] = {
-    	checkProcCallParameters(initAllowed)(p.exprs)(symbols) match {
+    	val paramsToExprs = if(symbols.containsProcedure(p.f)) symbols.getProcedureDeclaration(p.f).head.params.params.zip(p.exprs) else List()
+        checkProcCallParameters(paramsToExprs)(initAllowed)(p.exprs)(symbols) match {
     	    case CheckSuccess(sym) if sym.containsProcedure(p.f) => sym.getProcedureDeclaration(p.f).global match {
     	        case None if(p.idents == Nil) => CheckSuccess(sym)
     	        case None 					  => CheckError("No global imports. ", p)
@@ -183,22 +183,22 @@ object InitializationChecker extends Checker {
     	}
     }
 
-    private def checkProcCallParameters(initAllowed: Boolean)(exprs: List[Expr])(symbols: SymbolTable): CheckResult[SymbolTable] = {
-        exprs match {
-            case Nil => CheckSuccess(symbols)
-            case x :: xs => x match {
-                case StoreExpr(_, _) 		=> checkLeftExpr(initAllowed)(x)(symbols) match {
-                    case CheckSuccess(sym) 	=> checkProcCallParameters(initAllowed)(xs)(sym)
-                    case e => e
-                }
-                case other => checkValueExpr(x)(symbols) match {
-                    case CheckSuccess(sym) 	=> checkProcCallParameters(initAllowed)(xs)(sym)
-                    case e 					=> e
-                }
-            }
-        }
+    private def checkProcCallParameters(paramsToExprs : List[(Param, Expr)])(initAllowed: Boolean)(exprs: List[Expr])(symbols: SymbolTable): CheckResult[SymbolTable] = paramsToExprs match{
+    	case Nil 	=> CheckSuccess(symbols)
+    	case x::xs 	=> checkProcCallParameter(x)(initAllowed)(symbols) match {
+    	    case CheckSuccess(sym) => checkProcCallParameters(xs)(initAllowed)(exprs)(sym)
+    	    case e => e
+    	}
     }
     
+    private def checkProcCallParameter(paramToExpr : (Param, Expr))(initAllowed: Boolean)(symbols: SymbolTable) =  paramToExpr match  {
+        case (Parameter(InFlow,_,_), e) 	=>	checkValueExpr(e)(symbols)
+        case (p , e) 						=>	e match {
+            case  StoreExpr(_, _)	=> checkLeftExpr(initAllowed)(e)(symbols)
+            case  other 			=> checkValueExpr(e)(symbols)
+        }
+    }
+
     private def checkProcCallGlobals(initAllowed: Boolean)(idents: List[Ident])(symbols: SymbolTable): CheckResult[SymbolTable] = {
         idents match {
             case Nil 		=> CheckSuccess(symbols)
