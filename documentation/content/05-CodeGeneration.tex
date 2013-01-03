@@ -14,15 +14,15 @@ Die JVM ist wie die Sprache Java objektorientiert aufgebaut. Aus diesem Grund mu
 IML Programm auf die Klassenstruktur der JVM abgebildet werden. In diesem Abschnitt wird 
 anhand des Beispielprogramms aus Listing \ref{lst:outtest} die Abbildung auf eine JVM Klasse
 erläutert. Dieses IML Programm wird zu einer Klasse, welcher der Klassendeklaration in Listing 
-\ref{lst:outtest_class} entspricht. Dabei wurde folgende Abbilung gewählt:
+\ref{lst:outtest_class} entspricht. Dabei wurde folgende Abbildung gewählt:
 
 \begin{itemize}
-    \item \textbf{Program}: Ein IML Programm wird auf eine Klasse mit gleichem Namen abgebildet.
+    \item \textbf{Programm}: Ein IML Programm wird auf eine Klasse mit gleichem Namen abgebildet.
                             Um die Kompatibilität mit andern JVM Sprachen zu gewährleisten werden die globalen
                             Variablen im Konstruktor mit Defaultwerten initialisiert. Die Klasse wurde als final 
                             gekennzeichnet, um späteres überschreiben von Methoden zu verhindern.
     \item \textbf{Globale Variablen}: Globale Variablen werden zu privaten Feldern der Klasse des Programms.
-    \item \textbf{Program Body}: Die Commands des IML Programms werden zu einer neuen Funktion der Klasse,
+    \item \textbf{Programm Body}: Die Commands des IML Programms werden zu einer neuen Funktion der Klasse,
                                  welche den Namen der Klasse hat, kompiliert. Der Vorteil im Gegensatz zum 
                                  direkten kompilieren in die main Methode liegt darin, dass die globalen Variablen 
                                  und Routinen nicht \textit{static} sein müssen und so mehrere Instanzen des 
@@ -71,7 +71,7 @@ public final class outtest {
 
 \subsection {Parameterübergabe}
 
-IML unterstüzt ein sehr ausgefeiltes Handling von Parameterwerten. Die JVM jedoch erlaubt 
+IML unterstützt ein sehr ausgefeiltes Handling von Parameterwerten. Die JVM jedoch erlaubt 
 das Übergeben von Parametern lediglich \textit{by-value}. Zudem ist es in IML möglich 
 festzulegen, ob ein Parameter ein Eingabeparameter, Ausgabeparameter oder beides ist. Auch hier 
 erlaubt die JVM lediglich Eingabeparameter. Um Parameter von IML vollständig abbilden zu können 
@@ -83,7 +83,7 @@ Abhängigkeit zu dieser Klasse für den generierten Code und jeden, der diesen B
 zur Folge haben. Dies kann umgangen werden, wenn der entsprechende Parameter in ein Array mit
 der Länge 1 umgewandelt wird. So können \textit{out} Parameter auf der JVM elegant implementiert werden.
 Dies bedeutet für den Aufrufer jedoch mehr Aufwand, da er zunächst für jeden \textit{out} Parameter 
-ein neues Array erzeugen und den zu übergebenden Wert(im Falle von \textit{inout}) hineinkopieren muss. 
+ein neues Array erzeugen und den zu übergebenden Wert(im Falle von \textit{inout}) hinein kopieren muss. 
 Im Anschluss an den Methodenaufruf muss der Wert im Array wieder an die Speicherstelle des ursprünglichen 
 Wertes kopiert werden. Für den Aufgerufenen fällt jedoch keinerlei Zusatzaufwand an, wie in Listing 
 \ref{lst:loadtwice_code} zu sehen ist.
