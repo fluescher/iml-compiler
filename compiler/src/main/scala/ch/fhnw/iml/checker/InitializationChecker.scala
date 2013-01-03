@@ -24,8 +24,7 @@ object InitializationChecker extends Checker {
     }
 
     private def checkFunDecl(n: ProgramNode)(f: FunDecl): CheckResult[SymbolTable] = {
-        var funSymbols = markInParameters(f.head.params.params)(f.symbols);
-        funSymbols = markGlobalImport(f.global)(funSymbols)
+        val funSymbols = markGlobalImport(f.global)(markInParameters(f.head.params.params)(f.symbols))
         checkConditions(f.pre)(Scope(n.symbols, funSymbols, funSymbols)) match {
             case CheckSuccess(symbls) => checkBlock(true)(f.cmd)(Scope(n.symbols, funSymbols, funSymbols)) match {
                 case CheckSuccess(sym) => checkConditions(f.post)(Scope(n.symbols, funSymbols, sym)) match {
@@ -139,8 +138,7 @@ object InitializationChecker extends Checker {
     }
     
     private def checkFunAndProcCall(n : Node)(symbols: Scope) : CheckResult[SymbolTable] = n match {
-        case f: FunCallExpr 	if f.i.chars == "old"				=> println("old")
-            														   checkValueExpr(f.exprs.head)(Scope(symbols.global, symbols.pre, symbols.pre))
+        case f: FunCallExpr 	if f.i.chars == "old"				=> checkValueExpr(f.exprs.head)(Scope(symbols.global, symbols.pre, symbols.pre))
         case f: FunCallExpr											=> val decl = symbols.global.getFunctionDeclaration(f.i)
             														   checkParamsAreInit(f.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols.current)
         case p: ProcCallCommand										=> val decl = symbols.global.getProcedureDeclaration(p.f)
@@ -232,7 +230,7 @@ object InitializationChecker extends Checker {
         case StoreExpr(id, false) if symbols.current.isInitialized(id)	=> CheckSuccess(symbols.current)
         case va: StoreExpr 												=> CheckError("Use of uninitialized var", va)
         case m: MonadicExpr 											=> checkValueExpr(m.expr)(symbols)
-        case d: DyadicExpr 												=> ignoreSecond(checkValueExpr(d.expr1)(symbols), checkValueExpr(d.expr1)(symbols))
+        case d: DyadicExpr 												=> checkValueExpr(d.expr1)(symbols) and checkValueExpr(d.expr2)(symbols)
         case f: FunCallExpr 											=> checkFunAndProcCall(f)(symbols) and f.exprs.map(a => (checkValueExpr(a)(symbols)))
             																	.foldLeft(CheckSuccess[SymbolTable](symbols.current): CheckResult[SymbolTable])(combineToResult)
     }
@@ -240,7 +238,7 @@ object InitializationChecker extends Checker {
     private def checkLeftExpr(initAllowed: Boolean)(expr: Expr)(symbols: SymbolTable): CheckResult[SymbolTable] = expr match {
         case StoreExpr(id, true) if !initAllowed 				=> CheckError("Its not allowed to initalized a store in this command.", expr)
         case StoreExpr(id, true) if !symbols.isInitialized(id) 	=> CheckSuccess(symbols.markStorageAsInitialized(id))
-        case StoreExpr(id, true) if symbols.isInitialized(id) 	=> CheckError("You can only once initialized a store.", expr)
+        case StoreExpr(id, true) if symbols.isInitialized(id) 	=> CheckError("You can only initialize a store once.", expr)
         case StoreExpr(id, false) if symbols.isConst(id) 		=> CheckError("Its only allowed to write once to a const.", expr)
         case StoreExpr(id, false) if symbols.isInitialized(id) 	=> CheckSuccess(symbols)
         case other 												=> CheckError("Use of not initalized store", expr)
