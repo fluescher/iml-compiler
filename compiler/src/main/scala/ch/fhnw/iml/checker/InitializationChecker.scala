@@ -84,8 +84,7 @@ object InitializationChecker extends Checker {
     }
 
     private def checkProcDecl(n: ProgramNode)(p: ProcDecl): CheckResult[SymbolTable] = {
-        var procSymbols = markInParameters(p.head.params.params)(p.symbols);
-        procSymbols = markGlobalImport(p.global)(procSymbols)
+        val procSymbols = markGlobalImport(p.global)( markInParameters(p.head.params.params)(p.symbols));
 
         checkConditions(p.pre)(Scope(n.symbols, procSymbols, procSymbols)) match {
             case CheckSuccess(symbls) => checkBlock(true)(p.cmd)(Scope(n.symbols, procSymbols, procSymbols)) match {
@@ -140,7 +139,8 @@ object InitializationChecker extends Checker {
     }
     
     private def checkFunAndProcCall(n : Node)(symbols: Scope) : CheckResult[SymbolTable] = n match {
-        case f: FunCallExpr 	if f.i.chars == "old"				=> checkValueExpr(f.exprs.head)(Scope(symbols.global, symbols.pre, symbols.pre))
+        case f: FunCallExpr 	if f.i.chars == "old"				=> println("old")
+            															checkValueExpr(f.exprs.head)(Scope(symbols.global, symbols.pre, symbols.pre))
         case f: FunCallExpr											=> val decl = symbols.global.getFunctionDeclaration(f.i)
             														   checkParamsAreInit(f.exprs)(decl.head.params)(symbols) and checkGlobalsAreInit(decl.global)(symbols.current)
         case p: ProcCallCommand										=> val decl = symbols.global.getProcedureDeclaration(p.f)
