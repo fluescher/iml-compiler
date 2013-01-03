@@ -129,7 +129,7 @@ object InitializationChecker extends Checker {
     private def checkCommand(initAllowed: Boolean)(cmd: Command)(symbols: SymbolTable): CheckResult[SymbolTable] = cmd match {
         case block: BlockCommand 			=> checkBlock(initAllowed)(block)(symbols)
         case SkipCommand 					=> CheckSuccess(symbols)
-        case AssiCommand(left, right) 		=> ignoreSecond(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
+        case AssiCommand(left, right) 		=> combineToResult(checkLeftExpr(initAllowed)(left)(symbols), checkValueExpr(right)(symbols))
         case CondCommand(expr, cmd1, cmd2) 	=> ignoreSecond(mergeResults(symbols, checkCommand(true)(cmd1)(symbols), checkCommand(true)(cmd2)(symbols)), checkValueExpr(expr)(symbols))
         case WhileCommand(expr, cmd) 		=> ignoreSecond(checkCommand(false)(cmd)(symbols), checkValueExpr(expr)(symbols))
         case p: ProcCallCommand 			=> checkFunAndProcCall(p)(symbols) and checkProcCall(initAllowed)(p)(symbols)
@@ -243,9 +243,9 @@ object InitializationChecker extends Checker {
         case other 												=> CheckError("Use of not initalized store", expr)
     }
 
-    private def combineToResult(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r1 match {
+    private def combineToResult(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r2 match {
         case e: CheckError[SymbolTable] => e
-        case r => r2
+        case r => r1
     }
 
     private def ignoreFirst(r1: CheckResult[SymbolTable], r2: CheckResult[SymbolTable]): CheckResult[SymbolTable] = r2 match {
