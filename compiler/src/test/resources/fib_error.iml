@@ -1,0 +1,19 @@
+program fibonacci
+global
+	proc add(a: int32, b: int32, out r: int32, out q: int32)
+	ensures [ r >= old(q) ]
+	{
+		q init := 1;
+		r init := 2
+	};
+	
+	var a: int32;
+	var b: int32;
+	var t: int32;
+	var r: int32
+{
+	? a init;
+	? b init;
+	call add(a,b,r init, t init);
+	! r	
+}
