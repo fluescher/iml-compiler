@@ -19,6 +19,7 @@ import scala.util.parsing.input.Positional
 import scala.util.parsing.input.Position
 import ch.fhnw.iml.checker.FunctionProgramNameChecker
 import ch.fhnw.iml.checker.ConditonLabelUniquenessChecker
+import ch.fhnw.iml.checker.RecursionInConditionChecker
 
 object imlc extends App {
     
@@ -30,6 +31,7 @@ object imlc extends App {
     val checkers = List(SymbolChecker, 
             			TypeChecker,
             			FlowChecker,
+            			RecursionInConditionChecker,
             			InitializationChecker,
             			GlobalImportChecker,
             			ConditonLabelUniquenessChecker,

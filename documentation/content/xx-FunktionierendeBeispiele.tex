@@ -73,7 +73,7 @@ local
 requires []
 ensures  [ a = old(b + 1), b = old(a + 1) ]
 {
-     tmp init := a + 1;
+    tmp init := a + 1;
     a := b + 1;
     b := tmp
 }
