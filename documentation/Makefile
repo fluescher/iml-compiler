@@ -8,7 +8,7 @@ BUILD_DIR = ./build/
 OUT_DIR = ./out/
 
 MAIN_FILE =report
-OUT_FILE =cpib_HS-2012_Team02_ZB_V1
+OUT_FILE =cpib_HS-2012_Team02_SB_V1
 LOG_FILE = ${BUILD_DIR}creation.log
 
 all: clean pdf

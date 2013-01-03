@@ -20,8 +20,8 @@ object ConditonLabelUniquenessChecker extends Checker {
 	private def nameCheck(implicit p: ProgramNode) =  checkProcDecls(p.cps.decls) and checkFunDecls(p.cps.decls)
 	
 	private def checkProcDecls(decls: List[Decl])(implicit p: ProgramNode) = {
-		toResult (decls	.filter(_.isInstanceOf[FunDecl])
-				    	.map(_.asInstanceOf[FunDecl])
+		toResult (decls	.filter(_.isInstanceOf[ProcDecl])
+				    	.map(_.asInstanceOf[ProcDecl])
 						.map(a => checkConditions(a.pre)(Nil).map(checkConditions(a.post)))
 						.map(_.asInstanceOf[CheckResult[Any]]))
 	}

@@ -15,6 +15,7 @@ import java.io.File
 import ch.fhnw.iml.checker.GlobalImportChecker
 import ch.fhnw.iml.checker.ConditonLabelUniquenessChecker
 import ch.fhnw.iml.checker.FunctionProgramNameChecker
+import ch.fhnw.iml.checker.RecursionInConditionChecker
 
 object TestRunner extends App {
 	
@@ -23,6 +24,7 @@ object TestRunner extends App {
     val checkers = List(SymbolChecker, 
             			TypeChecker,
             			FlowChecker,
+            			RecursionInConditionChecker,
             			InitializationChecker,
             			GlobalImportChecker,
             			ConditonLabelUniquenessChecker,

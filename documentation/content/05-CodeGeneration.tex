@@ -27,7 +27,7 @@ erläutert. Dieses IML Programm wird zu einer Klasse, welcher der Klassendeklara
                                  direkten kompilieren in die main Methode liegt darin, dass die globalen Variablen 
                                  und Routinen nicht \textit{static} sein müssen und so mehrere Instanzen des 
                                  IML Programms in der selben VM aktiv sein können, ohne Zustand teilen zu müssen. 
-                                 Dies würde es auch erlauben Bibliotheksfunktionen in IML zu entwickeln und 
+                                 Dies würde es auch erlauben, Bibliotheksfunktionen in IML zu entwickeln und 
                                  in anderen JVM Sprachen zu verwenden.
     \item \textbf{Routinen}: Routinen werden zu Funktionen der Klasse. Wenn keine out-Parameter verwendet
                              werden entsprechen diese Funktionen normalen JVM Funktionen und stehen ohne 
@@ -88,7 +88,6 @@ Im Anschluss an den Methodenaufruf muss der Wert im Array wieder an die Speicher
 Wertes kopiert werden. Für den Aufgerufenen fällt jedoch keinerlei Zusatzaufwand an, wie in Listing 
 \ref{lst:loadtwice_code} zu sehen ist.
 \newline
-
 \begin{lstlisting}[caption=Bytecode der loadTwice Prozedur ohne conditions,label={lst:loadtwice_code}]
 public void loadTwice(int, int[], int[]);
     flags: ACC_PUBLIC
@@ -105,12 +104,52 @@ public void loadTwice(int, int[], int[]);
         8: return
 \end{lstlisting}
 
+\begin{lstlisting}[caption=Bytecode des Aufrufs der loadTwice Prozedur][H]
+public void outtest();
+    flags: ACC_PUBLIC
+    Code:
+      stack=4, locals=3, args_size=1
+         0: aload_0       
+         1: bipush        12
+        3: putfield      #24               // Field v:I
+         6: iconst_1                       // Array Size 1
+         7: newarray       int             // Array erzeugen
+         9: astore_1                       // Speichern an lokalem index 1
+        10: iconst_1                       // Array Size 1
+        11: newarray       int             // Array erzeugen
+        13: astore_2                       // Speichern an lokalem index 2
+        14: aload_0                        // this - Methoden Aufruf
+        15: aload_0                        // this - globale Variable
+        16: getfield      #24              // Globale variable v laden
+        19: aload_1                        // Array fuer a fuer Call laden
+        20: aload_2                        // Array fuer b fuer Call laden
+        21: invokevirtual #26              // Method loadTwice:(I[I[I)V call
+        24: aload_0                        // this
+        25: aload_1                        // Array fuer a laden
+        26: iconst_0                       // Position in Array
+        27: iaload                         // Laden des int aus Array auf den Stack
+        28: putfield      #20              // Field a:I out Wert speichern
+        31: aload_0                        // wie obiger Code
+        32: aload_2       
+        33: iconst_0      
+        34: iaload        
+        35: putfield      #22              // Field b:I out Wert Speichern
+        38: getstatic     #32              //Field java/lang/System.out:Ljava/io/PrintStream;
+        41: aload_0       
+        42: getfield      #20              // Field a:I
+        45: invokevirtual #38              // Method java/io/PrintStream.println:(I)V
+        48: getstatic     #32              //Field java/lang/System.out:Ljava/io/PrintStream;
+        51: aload_0       
+        52: getfield      #22              // Field b:I
+        55: invokevirtual #38              // Method java/io/PrintStream.println:(I)V
+        58: return       
+\end{lstlisting}
 
 \subsection{Pre-/Postconditions}
 
 Für das Umsetzen der Pre-/Postconditions kann gewöhnlicher Code generiert werden. Falls eine der Conditions
 jedoch fehlschlägt, muss die Programmausführung unterbrochen werden. Da Java bereits ein Konstrukt für 
-Assertions unterstützt, gibt es bereits in der Standartbibliothek die AssertionError Exception.
+Assertions unterstützt, gibt es bereits in der Standartbibliothek die \textit{AssertionError} Exception.
 Diese kann auch für die Conditions in IML verwendet werden, wobei das Label der Condition, falls vorhanden,
 als Exception Message verwendet wird.
 \newline
@@ -120,13 +159,13 @@ public void loadTwice(int, int[], int[]);
     flags: ACC_PUBLIC
     Code:
       stack=3, locals=4, args_size=4
-         0: iload_1       
-         1: bipush        0
-         3: if_icmple     10
-         6: iconst_1      
-         7: goto          11
-        10: iconst_0      
-        11: ifeq          17
+         0: iload_1                       // i auf Stack laden
+         1: bipush        0               // 0 auf Stack laden
+         3: if_icmple     10              // conditional jump (less equals)
+         6: iconst_1                      // true laden
+         7: goto          11              // ans Ende springen
+        10: iconst_0                      // false laden
+        11: ifeq          17              // falls Ergebnis false zu AssertionError springen
         14: goto          27              // Weiter mit normalem Code
         17: new           #9              // class java/lang/AssertionError
         20: dup         
@@ -165,16 +204,16 @@ public void loadTwice(int, int[], int[]);
          8: iconst_0      
          9: iload_1       
         10: iastore       
-        11: aload_2       
-        12: iconst_0      
-        13: iaload        
-        14: iload         4         // Zuvor gespeicherter Wert laden
-        16: if_icmpne     23
-        19: iconst_1      
-        20: goto          24
-        23: iconst_0      
-        24: ifeq          30
-        27: goto          38
+        11: aload_2                 // Array Referenz fuer a laden
+        12: iconst_0                // Position 0
+        13: iaload                  // Laden des aktuellen Wertes von a
+        14: iload         4         // Zuvor gespeicherter Wert aus Index 4 Laden
+        16: if_icmpne     23        // Falls Werte ungleich zu 23 springen
+        19: iconst_1                // true auf Stack laden
+        20: goto          24        // zu check springen
+        23: iconst_0                // false auf Stack laden
+        24: ifeq          30        // falls false zu AssertionError springen
+        27: goto          38        // Ans Ende des Checks springen
         30: new           #9        // class java/lang/AssertionError
         33: dup           
         34: invokespecial #13       // Method java/lang/AssertionError."<init>":()V
