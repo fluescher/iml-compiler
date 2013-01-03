@@ -108,3 +108,19 @@ ensures [ r * r <= s, r <= s, old(r) <= s]
     r init := a - 1
 }
 \end{lstlisting}
+
+\begin{lstlisting}[caption=Rekursiver Aufruf in condition.]
+program rec
+global
+    fun inc(i: int32)
+    returns r: int32
+    ensures [r = old(inc(i))]
+    {
+        r init := i + 1
+    };
+    a: int32
+{
+    ? a init;
+    ! inc(a)    
+}
+\end{lstlisting}
