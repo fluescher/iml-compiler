@@ -59,7 +59,7 @@ global
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption=Struktur der Klasse,language=Java,label={lst:outtest_class}]
+\begin{lstlisting}[caption=Struktur der erzeugten Java-Klasse,language=Java,label={lst:outtest_class}]
 public final class outtest {
     public void loadTwice(int, int[], int[]);
     public outtest();
@@ -73,7 +73,7 @@ public final class outtest {
 
 IML unterstüzt ein sehr ausgefeiltes Handling von Parameterwerten. Die JVM jedoch erlaubt 
 das Übergeben von Parametern lediglich \textit{by-value}. Zudem ist es in IML möglich 
-festzulegen ob ein Parameter ein Eingabeparameter, Ausgabeparameter oder beides ist. Auch hier 
+festzulegen, ob ein Parameter ein Eingabeparameter, Ausgabeparameter oder beides ist. Auch hier 
 erlaubt die JVM lediglich Eingabeparameter. Um Parameter von IML vollständig abbilden zu können 
 werden auch \textit{ref} Parameter wie \textit{copy} Parameter behandelt. \textit{out}-Parameter 
 können so jedoch nicht realisiert werden, da die JVM dafür Referenzen auf primitive Typen 
@@ -109,7 +109,7 @@ public void loadTwice(int, int[], int[]);
 \subsection{Pre-/Postconditions}
 
 Für das Umsetzen der Pre-/Postconditions kann gewöhnlicher Code generiert werden. Falls eine der Conditions
-jedoch fehlschlägt, muss die Programmausführung unterbrochen werden. Da Java bereits ein Konstruktr für 
+jedoch fehlschlägt, muss die Programmausführung unterbrochen werden. Da Java bereits ein Konstrukt für 
 Assertions unterstützt, gibt es bereits in der Standartbibliothek die AssertionError Exception.
 Diese kann auch für die Conditions in IML verwendet werden, wobei das Label der Condition, falls vorhanden,
 als Exception Message verwendet wird.
@@ -156,7 +156,7 @@ public void loadTwice(int, int[], int[]);
     Code:
       stack=3, locals=5, args_size=4
          0: iload_1                 // Expression in old(i) -> i 
-         1: istore        4         // Speichern an lokalem variablen Index 4
+         1: istore        4         // Speichern an lokalem Variablen Index 4
          3: aload_2                 // Normaler Code
          4: iconst_0      
          5: iload_1       

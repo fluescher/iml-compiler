@@ -26,7 +26,7 @@ Eingaben funktioniert.
 \newline
 \begin{lstlisting}[caption=Beispiele von pre-/postconditions,label={lst:first}]
 proc divide(in copy m:int32, in copy n:int32, out ref q:int32, out ref r:int32)
-requires [n > 0, dumbCondition: unnecessary(m, n)]
+requires [n > 0, unnecessary(m, n): dumbCondition]
 ensures [r >= 0]
 {
     q init := 0;
