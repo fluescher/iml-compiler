@@ -1,0 +1,23 @@
+program prime 
+global
+	fun isPrime(in n:int32) returns var r:bool
+	local var i:int32
+	requires [n > 1 : hasToBePositive]
+	{
+		i init := 2;
+		r init := true;
+
+		while(i < n) {
+			if (n mod i = 0) {
+				r := false
+			} else {
+				skip
+			};
+			i := i + 1
+		}
+	};
+	const test:int32
+{	
+	? test init;
+	! isPrime(test)
+}
