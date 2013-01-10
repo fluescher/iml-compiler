@@ -128,7 +128,7 @@ class IMLParsers extends TokenParsers {
     def term1 = positioned( term2 ~ relOpr ~ term2 			^^ {case t1 ~ opr ~ t2 => DyadicExpr(opr, t1, t2)}
 		    			  	| term2 						^^ {case t2 => t2}
 													    			) 
-    def term2 = positioned(term3 ~ rep(addOpr ~ factor) 	^^ { case t3 ~ rest => toDyadicExpr(t3, rest)})
+    def term2 = positioned(term3 ~ rep(addOpr ~ term3) 	^^ { case t3 ~ rest => toDyadicExpr(t3, rest)})
     def term3 = positioned(factor ~ rep(multOpr ~ factor) 	^^ { case fac ~ rest => toDyadicExpr(fac, rest) })
     
     def toDyadicExpr(e:Expr, l:List[Opr ~ Expr]) : Expr = l match {

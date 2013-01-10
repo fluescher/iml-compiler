@@ -24,7 +24,7 @@ global
 	
 	proc sum(a: int32, b: int32, out var r: int32)
 	{
-		r init := a + b
+		r init := 2 + 2 * 3 + 2 + 1
 	};
 	
 	proc add(a: int32, b: int32, out r: int32)
@@ -37,6 +37,6 @@ global
 	var b: int32;
 	var r: int32
 {
-	? a init;
-	! fib(a)
+	call sum(12, 3, a init);
+	!a
 }
