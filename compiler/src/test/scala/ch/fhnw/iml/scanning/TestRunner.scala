@@ -1,21 +1,25 @@
 package ch.fhnw.iml.scanning
 
-import ch.fhnw.iml.parsing.IMLParsers
-import ch.fhnw.iml.checker.SymbolChecker
-import ch.fhnw.iml.checker.CheckSuccess
-import ch.fhnw.iml.checker.FlowChecker
-import ch.fhnw.iml.checker.CheckError
-import ch.fhnw.iml.generation.JVMWriter
-import ch.fhnw.iml.checker.InitializationChecker
-import ch.fhnw.iml.checker.Checker
-import ch.fhnw.iml.checker.CheckResult
-import ch.fhnw.iml.checker.TypeChecker
-import ch.fhnw.iml.ast.AST
 import java.io.File
-import ch.fhnw.iml.checker.GlobalImportChecker
+
+import scala.collection.immutable.List.apply
+
+import ch.fhnw.iml.ast.AST
+import ch.fhnw.iml.checker.CheckError
+import ch.fhnw.iml.checker.CheckResult
+import ch.fhnw.iml.checker.CheckSuccess
+import ch.fhnw.iml.checker.Checker
 import ch.fhnw.iml.checker.ConditonLabelUniquenessChecker
+import ch.fhnw.iml.checker.FlowChecker
 import ch.fhnw.iml.checker.FunctionProgramNameChecker
+import ch.fhnw.iml.checker.GlobalImportChecker
+import ch.fhnw.iml.checker.InitializationChecker
 import ch.fhnw.iml.checker.RecursionInConditionChecker
+import ch.fhnw.iml.checker.SymbolChecker
+import ch.fhnw.iml.checker.TypeChecker
+import ch.fhnw.iml.generation.JVMWriter
+import ch.fhnw.iml.generation.JVMWriter.apply
+import ch.fhnw.iml.parsing.IMLParsers
 
 object TestRunner extends App {
 	
