@@ -20,7 +20,7 @@ object JVMWriter {
     case class Scope(p: ProgramNode, className: String, writer: ClassWriter, method: MethodVisitor, symbols: SymbolTable, inFun: Boolean, params: ParameterList, global: Option[GlobalImportList], locals: Int = 0)
     
     def apply(ast: AST, filename : String = "dynamic") {
-        val fileWriter = new FileOutputStream("target/" + ast.root.i.chars + ".class")
+        val fileWriter = new FileOutputStream(ast.root.i.chars + ".class")
         fileWriter.write(generateClass(ast, filename))
         fileWriter.close
     }
