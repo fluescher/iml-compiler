@@ -23,8 +23,8 @@ class IMLParsers extends TokenParsers {
         			LBracket, RBracket, Ensures, Requires}
     
     /* Programs */
-    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b,null) }
-    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,null,b, null) }
+    def program = positioned(  (Program ~ ident ~ Global ~ cpsDecl ~ blockCmd) 	^^ {case _ ~ i ~ _ ~ c ~ b => ProgramNode(i,c,b,EmptyTable) }
+    						|  (Program ~ ident ~ blockCmd)						^^ {case _ ~ i ~ b => ProgramNode(i,CpsDecl(Nil),b, EmptyTable) }
     						)
     
     /* declarations */

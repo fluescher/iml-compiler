@@ -1,2 +1,2 @@
 #!/bin/bash
-java -jar /home/florian/Desktop/FHNW/Module/S05/cpib/repo/compiler/imlc.jar
+java -jar /home/florian/Desktop/FHNW/Module/S05/cpib/repo/compiler/imlc.jar $@
