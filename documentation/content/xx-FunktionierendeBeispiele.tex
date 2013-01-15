@@ -14,6 +14,15 @@ ensures [r >= 0]
 }
 \end{lstlisting}
 
+\begin{lstlisting}[caption=Pre-/postconditions in Prozeduren mit old Funktion]
+proc incrementPositive(inout var a: int32)
+requires [ a > 0 : ParameterShouldBePositive]
+ensures  [ a = old(a + 1), a > 0 : ResultShouldBePositive]
+{
+	a := a + 1
+}
+\end{lstlisting}
+
 \begin{lstlisting}[caption=Pre-/postconditions in Funktionen mit mehreren Conditions]
 fun gcd(in copy var a:int32, in copy var b:int32) returns var r:int32
 requires [a > 0, b > 0]
