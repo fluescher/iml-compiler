@@ -16,8 +16,15 @@ global
 			i := i + 1
 		}
 	};
+	proc test(inout copy var v:int32)
+	{
+		v := 2
+	};
+	var a:int32;
 	const test:int32
 {	
 	? test init;
+	a init := 2;
+	call test(a);
 	! isPrime(test)
 }

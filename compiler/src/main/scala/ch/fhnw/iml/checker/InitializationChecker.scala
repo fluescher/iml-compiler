@@ -153,12 +153,8 @@ object InitializationChecker extends Checker {
     }
     
     private def checkParamToExpr(paramToExpr : (Param, Expr))(symbols: Scope) : CheckResult[SymbolTable] = paramToExpr match {
-        case (Parameter(OutFlow,_,_), e) 	=>	e match {
-            case s: StoreExpr if !symbols.current.isInitialized(s.i)	=> CheckSuccess(symbols.current.markStorageAsInitialized(s.i))
-            case s: StoreExpr if symbols.current.isInitialized(s.i)		=> CheckError("Out parameters must not be initialzied." , e)
-            case other													=> CheckError("Only store expression allowed", e)
-        }
-        case (p , e)			=> checkValueExpr(e)(symbols)
+        case (Parameter(OutFlow,_,_), e) 	=> checkLeftExpr(true)(e)(symbols.current)
+        case (p , e)						=> checkValueExpr(e)(symbols)
     }
     
     private def checkGlobalsAreInit(globals : Option[GlobalImportList])(symbols: SymbolTable) : CheckResult[SymbolTable] = globals match {
