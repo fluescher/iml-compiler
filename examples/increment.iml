@@ -1,0 +1,14 @@
+program increment
+global
+	proc incrementPositive(inout var a: int32)
+	requires [ a > 0 : ParameterShouldBePositive]
+	ensures  [ a = old(a + 1), a > 0 : ResultShouldBePositive]
+	{
+		a := a + 1
+	};
+	var n: int32
+{
+	? n init;
+	call incrementPositive(n);
+	! n
+}
