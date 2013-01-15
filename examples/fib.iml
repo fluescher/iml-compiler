@@ -1,0 +1,33 @@
+program fibonacci
+global
+	fun fib(i: int32)
+	returns 
+        var r: int32
+    local
+        var o: int32
+	requires [ isPos(i): InputHasToBePositive ]
+    ensures  [ r >= old(i-1): Dumb ]
+	{
+		if(i = 0) {
+			r init := 0
+		} else {
+			if(i = 1){
+				r init := 1
+			} else {
+				r init := fib(i - 1) + fib(i - 2)
+			}
+		};
+        o init := r
+	};
+	
+	fun isPos(i:int32)
+	returns b: bool
+	{
+		b init := i >= 0 
+	};
+		
+	until: int32
+{
+    ? until init;
+	! fib(until)
+}
